@@ -1,0 +1,36 @@
+{
+  "name": "@services/accounting",
+  "version": "0.1.1",
+  "description": "TypeScript library for invoice generation, compliance, and digital signing.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "tsc -p tsconfig.json && node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "test": "echo 'Tests come later' && exit 0"
+  },
+  "keywords": [
+    "invoice",
+    "factur-x",
+    "UBL",
+    "digital-signature"
+  ],
+  "author": "YourName",
+  "license": "MIT",
+  "dependencies": {
+    "@pdf-lib/fontkit": "^1.1.1",
+    "libxmljs": "^1.0.11",
+    "node-xmllint": "^1.0.0",
+    "pdf-lib": "^1.17.1",
+    "puppeteer": "^24.2.1",
+    "validate-with-xmllint": "^1.2.1",
+    "xmlbuilder2": "^3.0.2",
+    "xmllint": "^0.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.4",
+    "ts-node": "^10.9.2",
+    "typescript": "^4.9.5"
+  }
+}
