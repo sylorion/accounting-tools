@@ -28,7 +28,7 @@ export class FacturxEngine<T extends BaseInvoiceItem> {
     const pdfDoc = await PDFDocument.load(pdfBytes);
 
     // 4. Attacher le fichier XML en tant qu'embedded file
-    const embeddedFile = await pdfDoc.attach(
+    const _ = await pdfDoc.attach(
       xmlBuffer,
       'facturx.xml',
       {

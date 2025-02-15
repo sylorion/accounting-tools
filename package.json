@@ -9,6 +9,8 @@
     "start": "tsc -p tsconfig.json && node dist/index.js",
     "dev": "ts-node src/index.ts",
     "invoice": "ts-node src/example-invoice.ts",
+    "xml": "ts-node src/example-xml.ts",
+    "xsd": "ts-node src/example-validation.ts",
     "order": "ts-node src/example-order.ts",
     "test": "echo 'Tests come later' && exit 0"
   },
@@ -22,17 +24,18 @@
   "license": "MIT",
   "dependencies": {
     "@pdf-lib/fontkit": "^1.1.1",
-    "libxmljs": "^1.0.11",
-    "node-xmllint": "^1.0.0",
     "@signpdf/placeholder-pdf-lib": "^3.2.4",
     "@signpdf/placeholder-plain": "^3.2.4",
     "@signpdf/signer-p12": "^3.2.4",
     "@signpdf/signpdf": "^3.2.4",
+    "libxmljs": "^1.0.11",
+    "lodash": "^4.17.21",
     "node-forge": "^1.3.1",
+    "node-libxml": "^5.0.6",
+    "node-xmllint": "^1.0.0",
     "pdf-lib": "^1.17.1",
     "xmlbuilder2": "^3.0.2",
-    "xmllint": "^0.1.1",
-    "lodash": "^4.17.21"
+    "xmllint": "^0.1.1"
   },
   "devDependencies": {
     "@types/node": "^22.13.4",

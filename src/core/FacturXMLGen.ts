@@ -1,7 +1,46 @@
 // Enumérations utiles pour certains codes
+/**
+ * schemeID	Signification
+0002	SIRET (France)
+0004	INSEE (France) – plus rare, concerne NNE unique
+0007	EAN (European Article Number)
+0088	GLN (Global Location Number, GS1)
+0106	DUNS (D-U-N-S Number, Dun & Bradstreet)
+0142	ATU (numéro TVA Autriche) – parfois utilisé
+0177	OIN (Organisational ID Number) – usage variable
+9906	USt-IdNr (numéro TVA allemand)
+9907	Autres identifiants pays DE (Steuernummer)
+FRVAT	Identifiant TVA au format FRxx… (rarement sous cette forme)
+
+Pour Factur-X / ZUGFeRD, on utilise une liste restreinte de codes (souvent référencée depuis UNTDID 5305 ou la recommandation EN 16931). Les codes fréquemment rencontrés sont :
+
+Code	Signification
+S	Standard Rate (taux normal de TVA)
+AA	Reduced Rate (taux réduit)
+Z	Zero rated (taux zéro, facturé à 0%)
+E	Exempt (exonération de TVA)
+AE	Reverse charge (autoliquidation, le client est le redevable)
+O	Services hors scope (non taxable, ex. hors UE)
+G	Exportation (soumis à un taux 0 “exonération export”)
+(“G” et “O” sont parfois interchangeables selon le contexte ; EN 16931 mentionne G pour export, O pour hors-champ de TVA.)
+
+
+ * 
+ */
 enum Profile { BASIC = "BASIC", EN16931 = "EN16931", EXTENDED = "EXTENDED" }
 enum DocTypeCode { INVOICE = "380", CREDIT_NOTE = "381" }  // 380 = Invoice, 381 = Credit note
 enum TaxCategoryCode { STANDARD = "S", VAT_EXEMPT = "E", ZERO = "Z", REVERSE_CHARGE = "AE" /* etc. */ }
+
+export enum LegalOrganizationScheme {
+  SIRET_0002 = "0002",
+  INSEE_0004 = "0004",
+  EAN_0007 = "0007",
+  GLN_0088 = "0088",
+  DUNS_0106 = "0106",
+  OIN_0177 = "0177",
+  USTID_9906 = "9906",
+  STEUERNR_9907 = "9907"
+}
 
 // Classe Adresse postale
 class PostalAddress {
