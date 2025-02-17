@@ -1,5 +1,5 @@
 // example-validation.ts
-import { FacturXInvoice, FacturxProfile, InvoiceHeader, TradeParty, PostalAddress, PaymentDetails, InvoiceLine, generateFacturxXml } from './core/FactureXXMLGen';
+import { FacturXInvoice, FacturxProfile, InvoiceHeader, TradeParty, PostalAddress, PaymentDetails, InvoiceLine, generateFacturxXml } from './core/FacturXInvoice';
 import { validate  } from './validate-xml';
 import fs from 'fs';
 // xmlValidator.ts
@@ -13,45 +13,36 @@ import * as libxmljs from 'libxmljs';
  * @param xsdFilePath Chemin du fichier XSD (schéma) à utiliser pour la validation.
  * @returns Tableau des erreurs de validation (vide si aucune erreur).
  */
-export function validateXmlWithXsd(xmlFilePath: string, xsdFilePath: string): string[] {
+
+function validateXmlMultiXsd(
+  xmlPath: string,
+  xsdPaths: string[]
+): string[] {
   const errors: string[] = [];
-
   try {
-    // Chargement du contenu XML et XSD depuis les fichiers
-    const xmlData = fs.readFileSync(path.resolve(xmlFilePath), 'utf8');
-    const xsdData = fs.readFileSync(path.resolve(xsdFilePath), 'utf8');
- // 1. Construire l'objet FacturX
- const seller = new TradeParty("Ma Société", new PostalAddress("12 Rue Principale", "Paris", "75000"));
- const buyer  = new TradeParty("Mon Client", new PostalAddress("45 Avenue Ach", "Paris", "75010"));
- const payment = new PaymentDetails("58", "FR7630004000031234567890143", "BNPAFRPP", new Date(2025, 0, 30));
- const header = new InvoiceHeader("FAC-2025-XYZ", new Date(2025,0,15));
- const invoice = new FacturXInvoice(FacturxProfile.EN16931, header, seller, buyer, payment);
- // Lignes
- invoice.lines.push(new InvoiceLine("1", "Produit A", 2, 50, 0.20));
- invoice.lines.push(new InvoiceLine("2", "Service B", 1, 100, 0.20));
-
- // 2. Générer l'XML
- const xml = generateFacturxXml(invoice);
-
-    // Parsing des contenus en documents XML
+    // Charger le XML
+    const xmlData = fs.readFileSync(xmlPath, 'utf8');
     const xmlDoc = libxmljs.parseXml(xmlData);
-    const xsdDoc = libxmljs.parseXml(xsdData);
 
-    // Validation du XML contre le XSD
-    const isValid = xmlDoc.validate(xsdDoc);
+    // Charger tous les schémas
+    // xsdPaths doit inclure : le schéma principal (CrossIndustryInvoice.xsd)
+    // et les 3 schémas importés
+    const xsdDocs = xsdPaths.map((p) => {
+      const data = fs.readFileSync(p, 'utf8');
+      return libxmljs.parseXml(data);
+    });
+
+    // Valider en passant le tableau des schémas
+    const isValid = xmlDoc.validate(xsdDocs.at(0)!);
     if (!isValid) {
-      // En cas d'échec, collecter les messages d'erreur détaillés
+      // Récupérer les erreurs
       for (const err of xmlDoc.validationErrors) {
-        // Chaque erreur contient typiquement un message descriptif
         errors.push(err.message);
       }
     }
-  } catch (e:any) {
-    // Erreur lors du parsing du XML ou du XSD (fichier introuvable, XML mal formé, XSD invalide, etc.)
+  } catch (e: any) {
     errors.push(`Exception lors de la validation : ${e.message}`);
-    throw new Error("Validation Error: " + e);
   }
-
   return errors;
 }
 

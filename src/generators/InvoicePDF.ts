@@ -15,7 +15,7 @@ export interface PDFOption {
   // Additional permissions or encryption options could go here.
 }
 
-export class InvoicePDF<TLine>  {
+export class InvoicePDF {
   constructor(
     private pdfBytes: Uint8Array,
     private invoice: Invoice

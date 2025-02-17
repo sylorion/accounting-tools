@@ -2,26 +2,30 @@
 import { BaseInvoiceItem } from './models/BaseInvoiceItem';
 import { InvoiceData } from './models/InvoiceData';
 import { BaseInvoiceTemplate } from './templates/BaseInvoiceTemplate';
-import { FacturxXmlBuilder } from './FacturxXmlBuilder';
-import { FacturxProfiles } from './core/FacturxProfiles';
+import { FacturXInvoice } from './core/FacturXInvoice';
+
+import { FacturxProfile } from './core/EnumInvoiceType';
+import {
+  markAsPdfA3,
+} from './core/PDFA3Conformance';
 
 import { PDFDocument } from 'pdf-lib';
 
 export class FacturxEngine<T extends BaseInvoiceItem> {
   constructor(
     private template: BaseInvoiceTemplate<T>,
-    private profile: FacturxProfiles
+    private profile: FacturxProfile
   ) {}
 
   /**
    * Génère le PDF + XML Factur-X et renvoie le PDF final (PDF/A-3).
    */
-  public async generate(invoiceData: InvoiceData<T>): Promise<Uint8Array> {
+  public async generate(invoice: FacturXInvoice): Promise<Uint8Array> {
     // 1. Génération du PDF principal (visuel)
-    const pdfBytes = await this.template.render(invoiceData);
+    const pdfBytes = await this.template.render(invoice);
 
     // 2. Construction du XML
-    const xmlBuilder = new FacturxXmlBuilder<T>(invoiceData, this.profile);
+    const xmlBuilder = invoice.generateXml(true);
     const xmlBuffer = xmlBuilder.buildXml();
 
     // 3. Charger le PDF pour y insérer le XML

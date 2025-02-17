@@ -4,13 +4,15 @@ import { InvoiceData } from '../models/InvoiceData';
 import { BaseInvoiceItem } from '../models/BaseInvoiceItem';
 
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
+import { FacturXInvoice } from '../core/FacturXInvoice';
+import { RendererOption } from '../generators/templates/RendererOption';
 
 /**
  * Un template minimaliste, codé "en dur".
  * On peut imaginer un template plus riche (logos, backgrounds, etc.).
  */
-export class InvoiceTemplateSimple<T extends BaseInvoiceItem> extends BaseInvoiceTemplate<T> {
-  async render(invoiceData: InvoiceData<T>): Promise<Uint8Array> {
+export class InvoiceTemplateSimple<T extends BaseInvoiceItem>{
+  async render(invoice: FacturXInvoice): Promise<Uint8Array> {
     // 1. Créer un nouveau document PDF
     const pdfDoc = await PDFDocument.create();
     const page = pdfDoc.addPage([595.28, 841.89]); // approx A4
@@ -32,14 +34,14 @@ export class InvoiceTemplateSimple<T extends BaseInvoiceItem> extends BaseInvoic
 
     // 4. Infos principales
     let currentY = height - 90;
-    page.drawText(`N° : ${invoiceData.invoiceNumber}`, {
+    page.drawText(`N° : ${invoice}`, {
       x: 50,
       y: currentY,
       size: 10,
       font: fontRegular,
     });
     currentY -= 15;
-    page.drawText(`Date : ${invoiceData.invoiceDate.toLocaleDateString('fr-FR')}`, {
+    page.drawText(`Date : ${invoice.header.invoiceDate.toLocaleDateString('fr-FR')}`, {
       x: 50,
       y: currentY,
       size: 10,
@@ -48,14 +50,14 @@ export class InvoiceTemplateSimple<T extends BaseInvoiceItem> extends BaseInvoic
 
     // 5. Seller / Buyer
     currentY -= 25;
-    page.drawText(`Vendeur : ${invoiceData.seller.name}`, {
+    page.drawText(`Vendeur : ${invoice.seller.name}`, {
       x: 50,
       y: currentY,
       size: 10,
       font: fontBold,
     });
     currentY -= 12;
-    page.drawText(`${invoiceData.seller.street} - ${invoiceData.seller.city}`, {
+    page.drawText(`${invoice.seller.postalAddress.line1} - ${invoice.seller.postalAddress.city} ${invoice.seller.postalAddress.countryCode}`, {
       x: 50,
       y: currentY,
       size: 10,
@@ -63,14 +65,14 @@ export class InvoiceTemplateSimple<T extends BaseInvoiceItem> extends BaseInvoic
     });
 
     currentY -= 20;
-    page.drawText(`Acheteur : ${invoiceData.buyer.name}`, {
+    page.drawText(`Acheteur : ${invoice.buyer.name}`, {
       x: 50,
       y: currentY,
       size: 10,
       font: fontBold,
     });
     currentY -= 12;
-    page.drawText(`${invoiceData.buyer.street} - ${invoiceData.buyer.city}`, {
+    page.drawText(`${invoice.buyer.postalAddress.line1} - ${invoice.buyer.postalAddress.city} ${invoice.buyer.postalAddress.countryCode}`, {
       x: 50,
       y: currentY,
       size: 10,
@@ -88,7 +90,7 @@ export class InvoiceTemplateSimple<T extends BaseInvoiceItem> extends BaseInvoic
 
     currentY -= 15;
     let subtotal = 0;
-    for (const item of invoiceData.items) {
+    for (const item of invoice.lines) {
       const lineTotal = item.quantity * item.unitPrice;
       subtotal += lineTotal;
       const line = [
@@ -103,27 +105,27 @@ export class InvoiceTemplateSimple<T extends BaseInvoiceItem> extends BaseInvoic
     }
 
     // 7. Calcul TVA & total
-    const totalVat = invoiceData.items.reduce(
+    const totalVat = invoice.lines.reduce(
       (acc, i) => acc + i.quantity * i.unitPrice * i.vatRate,
       0
     );
     const total = subtotal + totalVat;
     currentY -= 10;
-    page.drawText(`Sous-Total : ${subtotal.toFixed(2)} ${invoiceData.currency}`, {
+    page.drawText(`Sous-Total : ${subtotal.toFixed(2)} ${invoice.currency}`, {
       x: 50,
       y: currentY,
       size: 10,
       font: fontRegular,
     });
     currentY -= 12;
-    page.drawText(`TVA : ${totalVat.toFixed(2)} ${invoiceData.currency}`, {
+    page.drawText(`TVA : ${totalVat.toFixed(2)} ${invoice.currency}`, {
       x: 50,
       y: currentY,
       size: 10,
       font: fontRegular,
     });
     currentY -= 12;
-    page.drawText(`Total : ${total.toFixed(2)} ${invoiceData.currency}`, {
+    page.drawText(`Total : ${total.toFixed(2)} ${invoice.currency}`, {
       x: 50,
       y: currentY,
       size: 10,
@@ -131,25 +133,38 @@ export class InvoiceTemplateSimple<T extends BaseInvoiceItem> extends BaseInvoic
     });
 
     // 8. Disclaimers & notes
-    if (invoiceData.disclaimers && invoiceData.disclaimers.length > 0) {
-      currentY -= 20;
-      page.drawText('Disclaimers:', { x: 50, y: currentY, size: 10, font: fontBold });
-      currentY -= 12;
-      for (const disc of invoiceData.disclaimers) {
-        page.drawText(`- ${disc}`, { x: 60, y: currentY, size: 9, font: fontRegular });
+    function drawDisclaimers(page: any, x: number, y: number, invoice: any, fontBold: any, fontRegular: any) {
+      if (invoice.disclaimers && invoice.disclaimers.length > 0) {
+        let currentY = y;
+    
+        // Dessiner le titre "Disclaimers" en gras à gauche
+        page.drawText('Disclaimers:', { x, y: currentY, size: 10, font: fontBold });
         currentY -= 12;
+    
+        // Dessiner chaque disclaimer à droite
+        const offsetX = 300; // Décalage pour positionner le texte à droite du titre
+        for (const disc of invoice.disclaimers) {
+          page.drawText(`- ${disc}`, { x: x + offsetX, y: currentY, size: 9, font: fontRegular });
+          currentY -= 12;
+        }
       }
     }
-    if (invoiceData.notes && invoiceData.notes.length > 0) {
+    drawDisclaimers(page, 50, currentY, invoice, fontBold, fontRegular);
+
+    if (invoice.notes && invoice.notes.length > 0) {
       currentY -= 20;
       page.drawText('Notes:', { x: 50, y: currentY, size: 10, font: fontBold });
       currentY -= 12;
-      for (const note of invoiceData.notes) {
+      for (const note of invoice.notes) {
         page.drawText(`- ${note}`, { x: 60, y: currentY, size: 9, font: fontRegular });
         currentY -= 12;
       }
     }
-
+    
+    // const footerText = "Thank you for your business!";
+    // currentY -= 20;
+    // page.drawText(footerText, { x: 50, y: currentY, size: 8, font: fontRegular });
+    
     // 9. Finaliser
     const pdfBytes = await pdfDoc.save();
     return pdfBytes;
