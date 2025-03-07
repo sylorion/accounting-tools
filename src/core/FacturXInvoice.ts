@@ -42,6 +42,13 @@ export class FacturXInvoice {
   public notes?: string;
   public disclaimers?: string[];
   public paymentTerms?: string;
+
+  // Optionals for Extended profile:
+  /** Destinataire de livraison (profil Extended) */
+  public deliveryParty?: TradeParty;   // destinataire livraison (optionnel)
+
+  public payeeParty?: TradeParty;      // bénéficiaire paiement si distinct
+  public buyerOrderReference?: string; // référence commande client
   
   /** Documents référencés / pièces jointes */
   public additionalDocs: AdditionalDocument[] = [];
@@ -57,13 +64,6 @@ export class FacturXInvoice {
    */
   private calculator = new TaxCalculator('line');
   public taxTotals: TaxTotal[] = [];
-
-  // Optionals for Extended profile:
-  /** Destinataire de livraison (profil Extended) */
-  public deliveryParty?: TradeParty;   // destinataire livraison (optionnel)
-
-  public payeeParty?: TradeParty;      // bénéficiaire paiement si distinct
-  public buyerOrderReference?: string; // référence commande client
   
   constructor(
     public profile: FacturxProfile,
