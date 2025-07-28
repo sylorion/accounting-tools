@@ -62,8 +62,10 @@ export class InvoiceLine implements InvoiceLineData {
     public unitPrice: number,
     public vatRate: number, // ex. 0.20 = 20%
     public taxCategoryCode: string = "S", // par défaut "S"
-    public unitCode: string = "C62"
-    
+    public unitCode: string = "C62",
+    public billingPeriodStart?: Date,
+    public billingPeriodEnd?: Date,
+    public deliveredQuantity?: number, // pour les livraisons partielles
   ) {}
   /** Montant HT brut (avant remises-ligne, si on en gère) */
   get lineTotal(): number {

@@ -8,20 +8,33 @@ export interface TaxSummary {
   /** ex. "S" (standard), "AA" (reduced), "Z", "E", etc. */
   category: string;
   /** Base HT soumise à cette taxe */
-  taxable: Big;
+  taxable: number;
   /** Montant de taxe */
-  taxAmount: Big;
+  taxAmount: number;
 }
 
 export interface MonetarySummary {
   /** total HT brut des lignes (avant remises globales ou charges globales) */
-  lineTotal: Big;
+  lineTotal: number;
   /** base imposable finale après prise en compte des allowances/charges (doc-level + line-level) */
-  taxBasis: Big;
+  taxBasis: number;
   /** somme de toutes les taxes */
-  taxTotal: Big;
+  taxTotal: number;
   /** TTC final (taxBasis + taxTotal) */
-  grandTotal: Big;
+  grandTotal: number;
+  /** total des allowances (remises) appliquées */
+  // Note: allowanceTotal is optional because it may not always be applicable
+  // depending on the invoice structure or if no allowances are applied.
+  // If allowances are not used, this can be omitted.
+  // If used, it should represent the total amount of allowances applied.
+  // This is useful for invoices that have both allowances and charges.
+  allowanceTotal?: number;
+  /** total des charges (frais) appliquées */
+  // Note: chargeTotal is optional for the same reason as allowanceTotal.
+  // If charges are not used, this can be omitted.
+  // If used, it should represent the total amount of charges applied.
+  // This is useful for invoices that have both allowances and charges.
+  chargeTotal?: number; // Total des charges appliquées
   /** détail par taux/catégorie */
   taxSummaries: TaxSummary[];
 }
@@ -51,24 +64,24 @@ export class TaxCalculator {
   ): MonetarySummary {
 
     // 1) lineTotal (somme HT brute des lignes sans doc-level)
-    let lineTotal = new Big(0);
+    let lineTotal = 0;
 
     // On indexe la TVA par (rate, category) => { taxable, tax? }
-    const vatMap = new Map<string, { taxable: Big, tax?: Big }>();
+    const vatMap = new Map<string, { taxable: number, tax?: number }>();
 
     // Traitement des LIGNES
     for (const line of lines) {
-      const qty = new Big(line.quantity);
-      const up = new Big(line.unitPrice);
-      const lineHT = qty.mul(up);
-      lineTotal = lineTotal.add(lineHT);
+      const qty = line.quantity;
+      const up = line.unitPrice;
+      const lineHT = qty * up;
+      lineTotal += lineHT;
 
       const lineRate = line.vatRate ?? 0;
       const lineCat  = line.taxCategoryCode ?? "S"; // par défaut "S"
 
       if (this.roundMode === 'line') {
         // calcul TVA de la ligne
-        const tva = lineHT.mul(lineRate).round(2);
+        const tva = lineHT * lineRate;
         updateVatMap(vatMap, lineRate, lineCat, lineHT, tva);
       } else {
         // on ajoute juste la base, on calculera la TVA plus tard
@@ -79,43 +92,43 @@ export class TaxCalculator {
       const lineAllowances = line.allowances.concat(line.charges || []);
       if (lineAllowances && lineAllowances.length > 0) {
         for (const lac of lineAllowances) {
-          const lacAmount = new Big(lac.actualAmount);
+          const lacAmount = lac.actualAmount || 0;
           // sign : + si charge, - si remise
           const sign = lac.chargeIndicator ? +1 : -1;
-          const partialBase = lacAmount.mul(sign);
+          const partialBase = lacAmount * sign;
 
           // par défaut, on applique la TVA du lac ou (lineRate + lineCat)
           const lacRate = (lac.taxRate !== undefined) ? lac.taxRate : lineRate;
           const lacCat  = (lac.taxCategoryCode) ? lac.taxCategoryCode : lineCat;
 
           if (this.roundMode === 'line') {
-            const partialTax = partialBase.mul(lacRate).round(2);
+            const partialTax = partialBase * lacRate;
             updateVatMap(vatMap, lacRate, lacCat, partialBase, partialTax);
           } else {
             updateVatMap(vatMap, lacRate, lacCat, partialBase);
           }
 
           // Cela modifie la base lineTotal
-          lineTotal = lineTotal.add(partialBase);
+          lineTotal += partialBase;
         }
       }
       
     }
 
     // 2) doc-level allowances/charges
-    let docBase = new Big(0);
+    let docBase = 0;
     for (const dac of docAllowancesCharges) {
-      const dacAmt = new Big(dac.actualAmount);
+      const dacAmt = dac.actualAmount || 0;
       const sign   = dac.chargeIndicator ? +1 : -1;
-      const partialBase = dacAmt.mul(sign);
+      const partialBase = dacAmt * sign;
 
-      docBase = docBase.add(partialBase);
+      docBase += partialBase;
 
       const rate = dac.taxRate ?? 0;
       const cat  = dac.taxCategoryCode ?? "S";
 
       if (this.roundMode === 'line') {
-        const partialTax = partialBase.mul(rate).round(2);
+        const partialTax = partialBase * rate;
         updateVatMap(vatMap, rate, cat, partialBase, partialTax);
       } else {
         updateVatMap(vatMap, rate, cat, partialBase);
@@ -123,7 +136,7 @@ export class TaxCalculator {
     }
 
     // => base imposable
-    const taxBasis = lineTotal.add(docBase);
+    const taxBasis = lineTotal + docBase;
 
     // 3) Si roundMode='global', on calcule la TVA maintenant
     if (this.roundMode === 'global') {
@@ -132,21 +145,21 @@ export class TaxCalculator {
           // on récupère (rate, category) 
           const [rStr, cStr] = decodeKey(key); 
           const rate = Number(rStr);
-          const tva = val.taxable.mul(rate).round(2);
+          const tva = val.taxable * rate;
           val.tax = tva;
         }
       }
     }
 
     // 4) totalTax => somme de val.tax
-    let totalTax = new Big(0);
+    let totalTax = 0;
     const results: TaxSummary[] = [];
     for (const [key, val] of vatMap.entries()) {
       const [rStr, cStr] = decodeKey(key);
       if (!val.tax) {
-        val.tax = new Big(0);
+        val.tax = 0;
       }
-      totalTax = totalTax.add(val.tax);
+      totalTax += val.tax;
       results.push({
         rate: Number(rStr)*100,
         category: cStr,
@@ -156,7 +169,7 @@ export class TaxCalculator {
     }
 
     // => grandTotal
-    const grandTotal = taxBasis.add(totalTax);
+    const grandTotal = taxBasis + totalTax;
 
     // => on renvoie
     return {
@@ -188,17 +201,17 @@ function decodeKey(key: string): [string, string] {
  * sinon on la calculera plus tard (roundMode='global').
  */
 function updateVatMap(
-  vatMap: Map<string, { taxable: Big; tax?: Big }>,
+  vatMap: Map<string, { taxable: number; tax?: number }>,
   rate: number,
   category: string,
-  taxable: Big,
-  tax?: Big
+  taxable: number,
+  tax?: number
 ) {
   const key = encodeKey(rate, category);
-  const existing = vatMap.get(key) || { taxable: new Big(0), tax: undefined };
-  existing.taxable = existing.taxable.add(taxable);
+  const existing = vatMap.get(key) || { taxable: 0, tax: undefined };
+  existing.taxable += taxable;
   if (tax !== undefined) {
-    existing.tax = (existing.tax || new Big(0)).add(tax);
+    existing.tax = (existing.tax || 0) + tax;
   }
   vatMap.set(key, existing);
 }

@@ -43,6 +43,9 @@ export class TradeParty {
     public name: string,
     public postalAddress: PostalAddress,
     public vatNumber?: string,
+    public registrationNumber?: string, // Nom légal (SIRET, etc.)
+    public electronicAddress?: string, // Email, site web, etc.
+    public phone?: string, // Téléphone
     public contacts: TradeContact[] = []
   ) {}
 

@@ -9,12 +9,12 @@ import { PaymentDetails } from './core/PaymentDetails';
 import { InvoiceLine } from './core/InvoiceLine';
 import { AllowanceCharge } from './core/AllowanceCharge';
 // import { FacturXEngine } from './FacturxEngine';
-import { InvoicePDF } from './core/pdf'; 
+// import { InvoicePDF } from './core/pdf'; 
 import { PDFOption } from './generators/InvoicePDF';
 // src/models/ExtendedTradeParty.ts
 import { InvoiceTemplateFancy } from './templates/InvoiceTemplateFancy';
 import { InvoiceTemplateBrand } from './templates/InvoiceTemplateBrand';
-import { PDFDocument } from 'pdf-lib';
+import { PDFDocument, utf8Encode } from 'pdf-lib';
 
 export class ExtendedTradeParty {
   constructor(
@@ -74,7 +74,7 @@ export class ExtendedTradeParty {
 
   // 5. Création de la facture Factur-X
   const invoice = new FacturXInvoice(
-    FacturxProfile.EXTENDED,
+    FacturxProfile.EXTENDED, // Profile
     header,
     // On “cast” seller/buyer en TradeParty => ou on modifie FacturXInvoice pour accepter ExtendedTradeParty
     seller as any,
@@ -87,13 +87,18 @@ export class ExtendedTradeParty {
   // On peut le mentionner dans "header.notes" ou en docAllowanceCharge reason.
   invoice.header.notes.push("Logo: /resources/images/mon-entreprise-logo.png");
 
-  // 7. Générer 30 lignes
-  for (let i = 1; i <= 65; i++) {
+  // 7. Générer 15 lignes avec différents taux de TVA
+  for (let i = 1; i <= 15; i++) {
     const desc = `Article #${i} : Description complète de l'article SKU-ABC-${i}.`;
     // Variation du prix et de la TVA
     const price = Math.random() * (10 + i * 2);     //  ex. 10 + i*2 => 12, 14, 16...
     const qty   = Math.round(1 + Math.random() * i);             //  La quantité = i
-    const vat   = 0.20;          //  20% 
+    
+    // Différents taux de TVA pour tester le détail
+    let vat = 0.20; // 20% par défaut
+    if (i <= 5) vat = 0.10; // 10% pour les 5 premiers
+    if (i > 10) vat = 0.055; // 5.5% pour les derniers
+    
     invoice.lines.push(new InvoiceLine(
       i.toString(),
       desc,
@@ -129,7 +134,7 @@ export class ExtendedTradeParty {
 
   // 10. Générer l'XML
   try {
-    const xml = invoice.generateXml();
+    const xml = invoice.generateXml(true);
     fs.writeFileSync("facture-extended-lots-of-items.xml", xml);
     console.log("Facture générée avec succès : facture-extended-lots-of-items.xml");
   } catch (err) {
@@ -142,16 +147,43 @@ const options: PDFOption = {
   author: 'Awesome Seller Corp.',
   subject: 'B2B Invoice Document',
   keywords: ['invoice', 'factur-x', 'b2b'],
-  creator: 'SMP Accounting',
-  producer: '@services/accounting',
+  creator: 'Services CEO',
+  producer: 'smp/accounting',
   summary: 'This invoice covers services provided during the consultation phase.',
   provider: 'SMP Accounting Services'
 };
   // 12. Générer le PDF
-  const template = new InvoiceTemplateBrand();
+  // const template = new InvoiceTemplateBrand();
+  const template = new InvoiceTemplateFancy();
   try {
     const pdfBytes = await template.render(invoice);
+
+    // 2. Construction du XML
+    const xmlBuilder = invoice.generateXml(true);
+    // const xmlBuffer = xmlBuilder.buildXml();
+
+    // 3. Charger le PDF pour y insérer le XML
     const pdfDoc = await PDFDocument.load(pdfBytes);
+
+    // 4. Attacher le fichier XML en tant qu'embedded file
+    const _ = await pdfDoc.attach(
+      utf8Encode(xmlBuilder),
+      'factur-x.xml',
+      {
+        mimeType: 'application/xml',
+        description: 'Factur-X XML file',
+        creationDate: new Date(),
+        modificationDate: new Date()
+      }
+    );
+
+    // 5. PDF/A-3 => On doit mettre à jour les métadonnées (PDF/A Conformance)
+    //   5.1. pdf-lib ne gère pas nativement l’entièreté de PDF/A-3
+    //        Il faut ajouter manuellement l’objet /AF, le schema XMP, etc.
+    //   5.2. Pour la démo, on ajoute un tri minimal :
+    pdfDoc.setTitle('Facture Factur-X');
+    pdfDoc.setSubject('Facture électronique (Factur-X)');
+
     if (options?.title) pdfDoc.setTitle(options.title);
     if (options?.subject) pdfDoc.setSubject(options.subject);
     if (options?.author) pdfDoc.setAuthor(options.author);

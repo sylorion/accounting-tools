@@ -36,7 +36,8 @@ export class AllowanceCharge {
      * (Optionnel) Mode de calcul, ex. pourcent => 0.10 => 10%. 
      * Si set, on peut calculer actualAmount en fonction du "basis" 
      */
-    public percentage?: number
+    public percentage?: number,
+    public basisAmount?: number // Base de calcul si percentage est utilisé
   ) {
   } 
 }

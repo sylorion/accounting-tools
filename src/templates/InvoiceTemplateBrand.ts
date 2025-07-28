@@ -1,4 +1,3 @@
-import { RenameInfoSuccess } from './../../../mu-contract/node_modules/typescript/lib/typescript.d';
 import { PDFDocument, StandardFonts, PDFPage, rgb } from 'pdf-lib';
 import { FacturXInvoice } from '../core/FacturXInvoice';
 import { BaseInvoiceItem } from '../models/BaseInvoiceItem';

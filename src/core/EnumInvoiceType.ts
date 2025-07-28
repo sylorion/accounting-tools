@@ -10,6 +10,8 @@
  * Cf. UNTDID 1001 ou EN16931. 
  */
 export enum FacturxProfile {
+  MINIMUM = "MINIMUM", 
+  BASICWL = "BASICWL", // Basic with WL (Web Label)
   BASIC = "BASIC",
   EN16931 = "EN16931",
   EXTENDED = "EXTENDED"

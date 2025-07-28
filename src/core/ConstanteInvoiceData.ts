@@ -10,14 +10,29 @@ export interface ProfileConstraints {
   forbiddenFields: string[];
   optionalFields?: string[];
 }
-  
-export const PROFILE_POLICIES: Record<FacturxProfile, ProfileConstraints> = {
+  export const PROFILE_POLICIES: Record<FacturxProfile, ProfileConstraints> = {
+  MINIMUM: {
+    mandatoryFields: [
+      "header.invoiceNumber",
+      "header.invoiceDate",
+      "seller",
+      "buyer",
+      "monetary.totalAmount"
+    ],
+    forbiddenFields: [
+      "lineItems",
+      "delivery",
+      "paymentMeans",
+      "taxes"
+    ]
+  },
   BASIC: {
     mandatoryFields: [
       "header.invoiceNumber",
       "header.invoiceDate",
       "seller",
-      "buyer"
+      "buyer",
+      "lineItems"
     ],
     forbiddenFields: [
       "deliveryParty",
@@ -25,12 +40,32 @@ export const PROFILE_POLICIES: Record<FacturxProfile, ProfileConstraints> = {
       "additionalDocs"
     ]
   },
+  BASICWL: {
+    mandatoryFields: [
+      "header.invoiceNumber",
+      "header.invoiceDate",
+      "seller",
+      "buyer",
+      "lineItems",
+      "paymentMeans",
+      "taxes"
+    ],
+    forbiddenFields: [
+      "buyer.contact",
+      "deliveryParty"
+    ]
+  },
   EN16931: {
     mandatoryFields: [
       "header.invoiceNumber",
       "header.invoiceDate",
       "seller",
-      "buyer"
+      "buyer",
+      "lineItems",
+      "paymentMeans",
+      "taxes",
+      "delivery",
+      "legalMonetaryTotal"
     ],
     forbiddenFields: []
   },
@@ -39,9 +74,8 @@ export const PROFILE_POLICIES: Record<FacturxProfile, ProfileConstraints> = {
       "header.invoiceNumber",
       "header.invoiceDate",
       "seller",
-      "buyer"
+      "buyer", 
     ],
     forbiddenFields: []
   }
 };
-
