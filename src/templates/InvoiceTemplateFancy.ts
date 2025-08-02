@@ -806,7 +806,8 @@ export class InvoiceTemplateFancy<T extends BaseInvoiceItem> {
     yPosition = await this.drawBillingShippingSections(invoice);
     this.updateCurrentPageY(yPosition);
 
-    // 5. Espace après l'en-tête (header) avant la table 
+    // 5. Espace après l'en-tête (header) avant la table
+    yPosition -= 30; // Espace après l'en-tête
     this.updateCurrentPageY(yPosition);
   }
 
@@ -816,6 +817,7 @@ export class InvoiceTemplateFancy<T extends BaseInvoiceItem> {
   private async drawItemsTable(invoice: FacturXInvoice): Promise<void> {
     const { page } = this.pages[this.currentPageIndex];
     let { currentY: yPosition } = this.pages[this.currentPageIndex];
+
     // Dessiner l'en-tête du tableau
     yPosition = await this.drawTableHeader(yPosition);
     this.updateCurrentPageY(yPosition);
@@ -830,7 +832,6 @@ export class InvoiceTemplateFancy<T extends BaseInvoiceItem> {
         this.createNewPage();
         // Dessiner header sur nouvelle page
         yPosition = await this.drawPageHeader(invoice);
-        yPosition -= 28.35; // Espace avant l'en-tête
         // Redessiner l'en-tête du tableau
         yPosition = await this.drawTableHeader(yPosition);
         this.updateCurrentPageY(yPosition);

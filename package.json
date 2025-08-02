@@ -41,12 +41,14 @@
     "node-xmllint": "^1.0.0",
     "pdf-lib": "^1.17.1",
     "puppeteer": "^24.2.1",
+    "qrcode": "^1.5.4",
     "xmlbuilder2": "^3.0.2",
     "xmllint": "^0.1.1"
   },
   "devDependencies": {
     "@types/big.js": "^6.2.2",
     "@types/node": "^22.13.4",
+    "@types/qrcode": "^1.5.5",
     "ts-node": "^10.9.2",
     "typescript": "^4.9.5"
   }

@@ -78,35 +78,35 @@
         </ram:CategoryTradeTax>
       </ram:SpecifiedTradeAllowanceCharge>
       <ram:ApplicableTradeTax>
-        <ram:CalculatedAmount>13.87</ram:CalculatedAmount>
+        <ram:CalculatedAmount>15.48</ram:CalculatedAmount>
         <ram:TypeCode>VAT</ram:TypeCode>
-        <ram:BasisAmount>138.73</ram:BasisAmount>
+        <ram:BasisAmount>154.80</ram:BasisAmount>
         <ram:CategoryCode>S</ram:CategoryCode>
         <ram:RateApplicablePercent>10.00</ram:RateApplicablePercent>
       </ram:ApplicableTradeTax>
       <ram:ApplicableTradeTax>
-        <ram:CalculatedAmount>63.36</ram:CalculatedAmount>
+        <ram:CalculatedAmount>62.80</ram:CalculatedAmount>
         <ram:TypeCode>VAT</ram:TypeCode>
-        <ram:BasisAmount>316.82</ram:BasisAmount>
+        <ram:BasisAmount>313.98</ram:BasisAmount>
         <ram:CategoryCode>S</ram:CategoryCode>
         <ram:RateApplicablePercent>20.00</ram:RateApplicablePercent>
       </ram:ApplicableTradeTax>
       <ram:ApplicableTradeTax>
-        <ram:CalculatedAmount>37.24</ram:CalculatedAmount>
+        <ram:CalculatedAmount>44.66</ram:CalculatedAmount>
         <ram:TypeCode>VAT</ram:TypeCode>
-        <ram:BasisAmount>677.18</ram:BasisAmount>
+        <ram:BasisAmount>811.93</ram:BasisAmount>
         <ram:CategoryCode>S</ram:CategoryCode>
         <ram:RateApplicablePercent>5.50</ram:RateApplicablePercent>
       </ram:ApplicableTradeTax>
       <ram:TaxTotal>
-        <ram:TaxTotalAmount>114.48</ram:TaxTotalAmount>
+        <ram:TaxTotalAmount>122.93</ram:TaxTotalAmount>
       </ram:TaxTotal>
       <ram:SpecifiedTradeSettlementHeaderMonetarySummation>
-        <ram:LineTotalAmount>1137.74</ram:LineTotalAmount>
-        <ram:TaxBasisTotalAmount>1132.74</ram:TaxBasisTotalAmount>
-        <ram:TaxTotalAmount>114.48</ram:TaxTotalAmount>
-        <ram:GrandTotalAmount>1247.22</ram:GrandTotalAmount>
-        <ram:DuePayableAmount>1247.22</ram:DuePayableAmount>
+        <ram:LineTotalAmount>1285.71</ram:LineTotalAmount>
+        <ram:TaxBasisTotalAmount>1280.71</ram:TaxBasisTotalAmount>
+        <ram:TaxTotalAmount>122.93</ram:TaxTotalAmount>
+        <ram:GrandTotalAmount>1403.64</ram:GrandTotalAmount>
+        <ram:DuePayableAmount>1403.64</ram:DuePayableAmount>
       </ram:SpecifiedTradeSettlementHeaderMonetarySummation>
       <ram:SpecifiedTradePaymentMeans>
         <ram:TypeCode>58</ram:TypeCode>
@@ -133,11 +133,11 @@
       </ram:SpecifiedTradeProduct>
       <ram:SpecifiedLineTradeAgreement>
         <ram:GrossPriceProductTradePrice>
-          <ram:ChargeAmount>3.20</ram:ChargeAmount>
+          <ram:ChargeAmount>5.97</ram:ChargeAmount>
           <ram:BasisQuantity unitCode="C62">1</ram:BasisQuantity>
         </ram:GrossPriceProductTradePrice>
         <ram:NetPriceProductTradePrice>
-          <ram:ChargeAmount>3.20</ram:ChargeAmount>
+          <ram:ChargeAmount>5.97</ram:ChargeAmount>
           <ram:BasisQuantity unitCode="C62">1</ram:BasisQuantity>
         </ram:NetPriceProductTradePrice>
       </ram:SpecifiedLineTradeAgreement>
@@ -152,7 +152,7 @@
         </ram:ApplicableTradeTax>
         <ram:BillingSpecifiedPeriod/>
         <ram:SpecifiedTradeSettlementLineMonetarySummation>
-          <ram:LineTotalAmount>3.20</ram:LineTotalAmount>
+          <ram:LineTotalAmount>5.97</ram:LineTotalAmount>
         </ram:SpecifiedTradeSettlementLineMonetarySummation>
       </ram:SpecifiedLineTradeSettlement>
     </ram:IncludedSupplyChainTradeLineItem>
@@ -165,43 +165,11 @@
       </ram:SpecifiedTradeProduct>
       <ram:SpecifiedLineTradeAgreement>
         <ram:GrossPriceProductTradePrice>
-          <ram:ChargeAmount>6.75</ram:ChargeAmount>
+          <ram:ChargeAmount>9.85</ram:ChargeAmount>
           <ram:BasisQuantity unitCode="C62">1</ram:BasisQuantity>
         </ram:GrossPriceProductTradePrice>
         <ram:NetPriceProductTradePrice>
-          <ram:ChargeAmount>6.75</ram:ChargeAmount>
-          <ram:BasisQuantity unitCode="C62">1</ram:BasisQuantity>
-        </ram:NetPriceProductTradePrice>
-      </ram:SpecifiedLineTradeAgreement>
-      <ram:SpecifiedLineTradeDelivery>
-        <ram:BilledQuantity unitCode="C62">3</ram:BilledQuantity>
-      </ram:SpecifiedLineTradeDelivery>
-      <ram:SpecifiedLineTradeSettlement>
-        <ram:ApplicableTradeTax>
-          <ram:TypeCode>VAT</ram:TypeCode>
-          <ram:CategoryCode>S</ram:CategoryCode>
-          <ram:RateApplicablePercent>10.00</ram:RateApplicablePercent>
-        </ram:ApplicableTradeTax>
-        <ram:BillingSpecifiedPeriod/>
-        <ram:SpecifiedTradeSettlementLineMonetarySummation>
-          <ram:LineTotalAmount>20.25</ram:LineTotalAmount>
-        </ram:SpecifiedTradeSettlementLineMonetarySummation>
-      </ram:SpecifiedLineTradeSettlement>
-    </ram:IncludedSupplyChainTradeLineItem>
-    <ram:IncludedSupplyChainTradeLineItem>
-      <ram:AssociatedDocumentLineDocument>
-        <ram:LineID>3</ram:LineID>
-      </ram:AssociatedDocumentLineDocument>
-      <ram:SpecifiedTradeProduct>
-        <ram:Name>Article #3 : Description complète de l'article SKU-ABC-3.</ram:Name>
-      </ram:SpecifiedTradeProduct>
-      <ram:SpecifiedLineTradeAgreement>
-        <ram:GrossPriceProductTradePrice>
-          <ram:ChargeAmount>11.44</ram:ChargeAmount>
-          <ram:BasisQuantity unitCode="C62">1</ram:BasisQuantity>
-        </ram:GrossPriceProductTradePrice>
-        <ram:NetPriceProductTradePrice>
-          <ram:ChargeAmount>11.44</ram:ChargeAmount>
+          <ram:ChargeAmount>9.85</ram:ChargeAmount>
           <ram:BasisQuantity unitCode="C62">1</ram:BasisQuantity>
         </ram:NetPriceProductTradePrice>
       </ram:SpecifiedLineTradeAgreement>
@@ -216,7 +184,39 @@
         </ram:ApplicableTradeTax>
         <ram:BillingSpecifiedPeriod/>
         <ram:SpecifiedTradeSettlementLineMonetarySummation>
-          <ram:LineTotalAmount>22.88</ram:LineTotalAmount>
+          <ram:LineTotalAmount>19.71</ram:LineTotalAmount>
+        </ram:SpecifiedTradeSettlementLineMonetarySummation>
+      </ram:SpecifiedLineTradeSettlement>
+    </ram:IncludedSupplyChainTradeLineItem>
+    <ram:IncludedSupplyChainTradeLineItem>
+      <ram:AssociatedDocumentLineDocument>
+        <ram:LineID>3</ram:LineID>
+      </ram:AssociatedDocumentLineDocument>
+      <ram:SpecifiedTradeProduct>
+        <ram:Name>Article #3 : Description complète de l'article SKU-ABC-3.</ram:Name>
+      </ram:SpecifiedTradeProduct>
+      <ram:SpecifiedLineTradeAgreement>
+        <ram:GrossPriceProductTradePrice>
+          <ram:ChargeAmount>14.92</ram:ChargeAmount>
+          <ram:BasisQuantity unitCode="C62">1</ram:BasisQuantity>
+        </ram:GrossPriceProductTradePrice>
+        <ram:NetPriceProductTradePrice>
+          <ram:ChargeAmount>14.92</ram:ChargeAmount>
+          <ram:BasisQuantity unitCode="C62">1</ram:BasisQuantity>
+        </ram:NetPriceProductTradePrice>
+      </ram:SpecifiedLineTradeAgreement>
+      <ram:SpecifiedLineTradeDelivery>
+        <ram:BilledQuantity unitCode="C62">1</ram:BilledQuantity>
+      </ram:SpecifiedLineTradeDelivery>
+      <ram:SpecifiedLineTradeSettlement>
+        <ram:ApplicableTradeTax>
+          <ram:TypeCode>VAT</ram:TypeCode>
+          <ram:CategoryCode>S</ram:CategoryCode>
+          <ram:RateApplicablePercent>10.00</ram:RateApplicablePercent>
+        </ram:ApplicableTradeTax>
+        <ram:BillingSpecifiedPeriod/>
+        <ram:SpecifiedTradeSettlementLineMonetarySummation>
+          <ram:LineTotalAmount>14.92</ram:LineTotalAmount>
         </ram:SpecifiedTradeSettlementLineMonetarySummation>
       </ram:SpecifiedLineTradeSettlement>
     </ram:IncludedSupplyChainTradeLineItem>
@@ -229,16 +229,16 @@
       </ram:SpecifiedTradeProduct>
       <ram:SpecifiedLineTradeAgreement>
         <ram:GrossPriceProductTradePrice>
-          <ram:ChargeAmount>5.37</ram:ChargeAmount>
+          <ram:ChargeAmount>12.11</ram:ChargeAmount>
           <ram:BasisQuantity unitCode="C62">1</ram:BasisQuantity>
         </ram:GrossPriceProductTradePrice>
         <ram:NetPriceProductTradePrice>
-          <ram:ChargeAmount>5.37</ram:ChargeAmount>
+          <ram:ChargeAmount>12.11</ram:ChargeAmount>
           <ram:BasisQuantity unitCode="C62">1</ram:BasisQuantity>
         </ram:NetPriceProductTradePrice>
       </ram:SpecifiedLineTradeAgreement>
       <ram:SpecifiedLineTradeDelivery>
-        <ram:BilledQuantity unitCode="C62">3</ram:BilledQuantity>
+        <ram:BilledQuantity unitCode="C62">4</ram:BilledQuantity>
       </ram:SpecifiedLineTradeDelivery>
       <ram:SpecifiedLineTradeSettlement>
         <ram:ApplicableTradeTax>
@@ -248,7 +248,7 @@
         </ram:ApplicableTradeTax>
         <ram:BillingSpecifiedPeriod/>
         <ram:SpecifiedTradeSettlementLineMonetarySummation>
-          <ram:LineTotalAmount>16.11</ram:LineTotalAmount>
+          <ram:LineTotalAmount>48.46</ram:LineTotalAmount>
         </ram:SpecifiedTradeSettlementLineMonetarySummation>
       </ram:SpecifiedLineTradeSettlement>
     </ram:IncludedSupplyChainTradeLineItem>
@@ -261,16 +261,16 @@
       </ram:SpecifiedTradeProduct>
       <ram:SpecifiedLineTradeAgreement>
         <ram:GrossPriceProductTradePrice>
-          <ram:ChargeAmount>15.26</ram:ChargeAmount>
+          <ram:ChargeAmount>16.44</ram:ChargeAmount>
           <ram:BasisQuantity unitCode="C62">1</ram:BasisQuantity>
         </ram:GrossPriceProductTradePrice>
         <ram:NetPriceProductTradePrice>
-          <ram:ChargeAmount>15.26</ram:ChargeAmount>
+          <ram:ChargeAmount>16.44</ram:ChargeAmount>
           <ram:BasisQuantity unitCode="C62">1</ram:BasisQuantity>
         </ram:NetPriceProductTradePrice>
       </ram:SpecifiedLineTradeAgreement>
       <ram:SpecifiedLineTradeDelivery>
-        <ram:BilledQuantity unitCode="C62">5</ram:BilledQuantity>
+        <ram:BilledQuantity unitCode="C62">4</ram:BilledQuantity>
       </ram:SpecifiedLineTradeDelivery>
       <ram:SpecifiedLineTradeSettlement>
         <ram:ApplicableTradeTax>
@@ -280,7 +280,7 @@
         </ram:ApplicableTradeTax>
         <ram:BillingSpecifiedPeriod/>
         <ram:SpecifiedTradeSettlementLineMonetarySummation>
-          <ram:LineTotalAmount>76.29</ram:LineTotalAmount>
+          <ram:LineTotalAmount>65.75</ram:LineTotalAmount>
         </ram:SpecifiedTradeSettlementLineMonetarySummation>
       </ram:SpecifiedLineTradeSettlement>
     </ram:IncludedSupplyChainTradeLineItem>
@@ -293,16 +293,16 @@
       </ram:SpecifiedTradeProduct>
       <ram:SpecifiedLineTradeAgreement>
         <ram:GrossPriceProductTradePrice>
-          <ram:ChargeAmount>16.98</ram:ChargeAmount>
+          <ram:ChargeAmount>2.27</ram:ChargeAmount>
           <ram:BasisQuantity unitCode="C62">1</ram:BasisQuantity>
         </ram:GrossPriceProductTradePrice>
         <ram:NetPriceProductTradePrice>
-          <ram:ChargeAmount>16.98</ram:ChargeAmount>
+          <ram:ChargeAmount>2.27</ram:ChargeAmount>
           <ram:BasisQuantity unitCode="C62">1</ram:BasisQuantity>
         </ram:NetPriceProductTradePrice>
       </ram:SpecifiedLineTradeAgreement>
       <ram:SpecifiedLineTradeDelivery>
-        <ram:BilledQuantity unitCode="C62">6</ram:BilledQuantity>
+        <ram:BilledQuantity unitCode="C62">2</ram:BilledQuantity>
       </ram:SpecifiedLineTradeDelivery>
       <ram:SpecifiedLineTradeSettlement>
         <ram:ApplicableTradeTax>
@@ -312,7 +312,7 @@
         </ram:ApplicableTradeTax>
         <ram:BillingSpecifiedPeriod/>
         <ram:SpecifiedTradeSettlementLineMonetarySummation>
-          <ram:LineTotalAmount>101.86</ram:LineTotalAmount>
+          <ram:LineTotalAmount>4.54</ram:LineTotalAmount>
         </ram:SpecifiedTradeSettlementLineMonetarySummation>
       </ram:SpecifiedLineTradeSettlement>
     </ram:IncludedSupplyChainTradeLineItem>
@@ -325,43 +325,11 @@
       </ram:SpecifiedTradeProduct>
       <ram:SpecifiedLineTradeAgreement>
         <ram:GrossPriceProductTradePrice>
-          <ram:ChargeAmount>14.41</ram:ChargeAmount>
+          <ram:ChargeAmount>13.90</ram:ChargeAmount>
           <ram:BasisQuantity unitCode="C62">1</ram:BasisQuantity>
         </ram:GrossPriceProductTradePrice>
         <ram:NetPriceProductTradePrice>
-          <ram:ChargeAmount>14.41</ram:ChargeAmount>
-          <ram:BasisQuantity unitCode="C62">1</ram:BasisQuantity>
-        </ram:NetPriceProductTradePrice>
-      </ram:SpecifiedLineTradeAgreement>
-      <ram:SpecifiedLineTradeDelivery>
-        <ram:BilledQuantity unitCode="C62">3</ram:BilledQuantity>
-      </ram:SpecifiedLineTradeDelivery>
-      <ram:SpecifiedLineTradeSettlement>
-        <ram:ApplicableTradeTax>
-          <ram:TypeCode>VAT</ram:TypeCode>
-          <ram:CategoryCode>S</ram:CategoryCode>
-          <ram:RateApplicablePercent>20.00</ram:RateApplicablePercent>
-        </ram:ApplicableTradeTax>
-        <ram:BillingSpecifiedPeriod/>
-        <ram:SpecifiedTradeSettlementLineMonetarySummation>
-          <ram:LineTotalAmount>43.24</ram:LineTotalAmount>
-        </ram:SpecifiedTradeSettlementLineMonetarySummation>
-      </ram:SpecifiedLineTradeSettlement>
-    </ram:IncludedSupplyChainTradeLineItem>
-    <ram:IncludedSupplyChainTradeLineItem>
-      <ram:AssociatedDocumentLineDocument>
-        <ram:LineID>8</ram:LineID>
-      </ram:AssociatedDocumentLineDocument>
-      <ram:SpecifiedTradeProduct>
-        <ram:Name>Article #8 : Description complète de l'article SKU-ABC-8.</ram:Name>
-      </ram:SpecifiedTradeProduct>
-      <ram:SpecifiedLineTradeAgreement>
-        <ram:GrossPriceProductTradePrice>
-          <ram:ChargeAmount>7.35</ram:ChargeAmount>
-          <ram:BasisQuantity unitCode="C62">1</ram:BasisQuantity>
-        </ram:GrossPriceProductTradePrice>
-        <ram:NetPriceProductTradePrice>
-          <ram:ChargeAmount>7.35</ram:ChargeAmount>
+          <ram:ChargeAmount>13.90</ram:ChargeAmount>
           <ram:BasisQuantity unitCode="C62">1</ram:BasisQuantity>
         </ram:NetPriceProductTradePrice>
       </ram:SpecifiedLineTradeAgreement>
@@ -376,7 +344,39 @@
         </ram:ApplicableTradeTax>
         <ram:BillingSpecifiedPeriod/>
         <ram:SpecifiedTradeSettlementLineMonetarySummation>
-          <ram:LineTotalAmount>44.08</ram:LineTotalAmount>
+          <ram:LineTotalAmount>83.41</ram:LineTotalAmount>
+        </ram:SpecifiedTradeSettlementLineMonetarySummation>
+      </ram:SpecifiedLineTradeSettlement>
+    </ram:IncludedSupplyChainTradeLineItem>
+    <ram:IncludedSupplyChainTradeLineItem>
+      <ram:AssociatedDocumentLineDocument>
+        <ram:LineID>8</ram:LineID>
+      </ram:AssociatedDocumentLineDocument>
+      <ram:SpecifiedTradeProduct>
+        <ram:Name>Article #8 : Description complète de l'article SKU-ABC-8.</ram:Name>
+      </ram:SpecifiedTradeProduct>
+      <ram:SpecifiedLineTradeAgreement>
+        <ram:GrossPriceProductTradePrice>
+          <ram:ChargeAmount>16.36</ram:ChargeAmount>
+          <ram:BasisQuantity unitCode="C62">1</ram:BasisQuantity>
+        </ram:GrossPriceProductTradePrice>
+        <ram:NetPriceProductTradePrice>
+          <ram:ChargeAmount>16.36</ram:ChargeAmount>
+          <ram:BasisQuantity unitCode="C62">1</ram:BasisQuantity>
+        </ram:NetPriceProductTradePrice>
+      </ram:SpecifiedLineTradeAgreement>
+      <ram:SpecifiedLineTradeDelivery>
+        <ram:BilledQuantity unitCode="C62">4</ram:BilledQuantity>
+      </ram:SpecifiedLineTradeDelivery>
+      <ram:SpecifiedLineTradeSettlement>
+        <ram:ApplicableTradeTax>
+          <ram:TypeCode>VAT</ram:TypeCode>
+          <ram:CategoryCode>S</ram:CategoryCode>
+          <ram:RateApplicablePercent>20.00</ram:RateApplicablePercent>
+        </ram:ApplicableTradeTax>
+        <ram:BillingSpecifiedPeriod/>
+        <ram:SpecifiedTradeSettlementLineMonetarySummation>
+          <ram:LineTotalAmount>65.44</ram:LineTotalAmount>
         </ram:SpecifiedTradeSettlementLineMonetarySummation>
       </ram:SpecifiedLineTradeSettlement>
     </ram:IncludedSupplyChainTradeLineItem>
@@ -389,16 +389,16 @@
       </ram:SpecifiedTradeProduct>
       <ram:SpecifiedLineTradeAgreement>
         <ram:GrossPriceProductTradePrice>
-          <ram:ChargeAmount>1.27</ram:ChargeAmount>
+          <ram:ChargeAmount>20.37</ram:ChargeAmount>
           <ram:BasisQuantity unitCode="C62">1</ram:BasisQuantity>
         </ram:GrossPriceProductTradePrice>
         <ram:NetPriceProductTradePrice>
-          <ram:ChargeAmount>1.27</ram:ChargeAmount>
+          <ram:ChargeAmount>20.37</ram:ChargeAmount>
           <ram:BasisQuantity unitCode="C62">1</ram:BasisQuantity>
         </ram:NetPriceProductTradePrice>
       </ram:SpecifiedLineTradeAgreement>
       <ram:SpecifiedLineTradeDelivery>
-        <ram:BilledQuantity unitCode="C62">1</ram:BilledQuantity>
+        <ram:BilledQuantity unitCode="C62">8</ram:BilledQuantity>
       </ram:SpecifiedLineTradeDelivery>
       <ram:SpecifiedLineTradeSettlement>
         <ram:ApplicableTradeTax>
@@ -408,7 +408,7 @@
         </ram:ApplicableTradeTax>
         <ram:BillingSpecifiedPeriod/>
         <ram:SpecifiedTradeSettlementLineMonetarySummation>
-          <ram:LineTotalAmount>1.27</ram:LineTotalAmount>
+          <ram:LineTotalAmount>162.93</ram:LineTotalAmount>
         </ram:SpecifiedTradeSettlementLineMonetarySummation>
       </ram:SpecifiedLineTradeSettlement>
     </ram:IncludedSupplyChainTradeLineItem>
@@ -421,11 +421,11 @@
       </ram:SpecifiedTradeProduct>
       <ram:SpecifiedLineTradeAgreement>
         <ram:GrossPriceProductTradePrice>
-          <ram:ChargeAmount>18.77</ram:ChargeAmount>
+          <ram:ChargeAmount>0.38</ram:ChargeAmount>
           <ram:BasisQuantity unitCode="C62">1</ram:BasisQuantity>
         </ram:GrossPriceProductTradePrice>
         <ram:NetPriceProductTradePrice>
-          <ram:ChargeAmount>18.77</ram:ChargeAmount>
+          <ram:ChargeAmount>0.38</ram:ChargeAmount>
           <ram:BasisQuantity unitCode="C62">1</ram:BasisQuantity>
         </ram:NetPriceProductTradePrice>
       </ram:SpecifiedLineTradeAgreement>
@@ -440,7 +440,7 @@
         </ram:ApplicableTradeTax>
         <ram:BillingSpecifiedPeriod/>
         <ram:SpecifiedTradeSettlementLineMonetarySummation>
-          <ram:LineTotalAmount>131.37</ram:LineTotalAmount>
+          <ram:LineTotalAmount>2.67</ram:LineTotalAmount>
         </ram:SpecifiedTradeSettlementLineMonetarySummation>
       </ram:SpecifiedLineTradeSettlement>
     </ram:IncludedSupplyChainTradeLineItem>
@@ -453,16 +453,16 @@
       </ram:SpecifiedTradeProduct>
       <ram:SpecifiedLineTradeAgreement>
         <ram:GrossPriceProductTradePrice>
-          <ram:ChargeAmount>3.26</ram:ChargeAmount>
+          <ram:ChargeAmount>19.84</ram:ChargeAmount>
           <ram:BasisQuantity unitCode="C62">1</ram:BasisQuantity>
         </ram:GrossPriceProductTradePrice>
         <ram:NetPriceProductTradePrice>
-          <ram:ChargeAmount>3.26</ram:ChargeAmount>
+          <ram:ChargeAmount>19.84</ram:ChargeAmount>
           <ram:BasisQuantity unitCode="C62">1</ram:BasisQuantity>
         </ram:NetPriceProductTradePrice>
       </ram:SpecifiedLineTradeAgreement>
       <ram:SpecifiedLineTradeDelivery>
-        <ram:BilledQuantity unitCode="C62">9</ram:BilledQuantity>
+        <ram:BilledQuantity unitCode="C62">8</ram:BilledQuantity>
       </ram:SpecifiedLineTradeDelivery>
       <ram:SpecifiedLineTradeSettlement>
         <ram:ApplicableTradeTax>
@@ -472,7 +472,7 @@
         </ram:ApplicableTradeTax>
         <ram:BillingSpecifiedPeriod/>
         <ram:SpecifiedTradeSettlementLineMonetarySummation>
-          <ram:LineTotalAmount>29.35</ram:LineTotalAmount>
+          <ram:LineTotalAmount>158.73</ram:LineTotalAmount>
         </ram:SpecifiedTradeSettlementLineMonetarySummation>
       </ram:SpecifiedLineTradeSettlement>
     </ram:IncludedSupplyChainTradeLineItem>
@@ -485,75 +485,11 @@
       </ram:SpecifiedTradeProduct>
       <ram:SpecifiedLineTradeAgreement>
         <ram:GrossPriceProductTradePrice>
-          <ram:ChargeAmount>24.48</ram:ChargeAmount>
+          <ram:ChargeAmount>24.26</ram:ChargeAmount>
           <ram:BasisQuantity unitCode="C62">1</ram:BasisQuantity>
         </ram:GrossPriceProductTradePrice>
         <ram:NetPriceProductTradePrice>
-          <ram:ChargeAmount>24.48</ram:ChargeAmount>
-          <ram:BasisQuantity unitCode="C62">1</ram:BasisQuantity>
-        </ram:NetPriceProductTradePrice>
-      </ram:SpecifiedLineTradeAgreement>
-      <ram:SpecifiedLineTradeDelivery>
-        <ram:BilledQuantity unitCode="C62">11</ram:BilledQuantity>
-      </ram:SpecifiedLineTradeDelivery>
-      <ram:SpecifiedLineTradeSettlement>
-        <ram:ApplicableTradeTax>
-          <ram:TypeCode>VAT</ram:TypeCode>
-          <ram:CategoryCode>S</ram:CategoryCode>
-          <ram:RateApplicablePercent>5.50</ram:RateApplicablePercent>
-        </ram:ApplicableTradeTax>
-        <ram:BillingSpecifiedPeriod/>
-        <ram:SpecifiedTradeSettlementLineMonetarySummation>
-          <ram:LineTotalAmount>269.29</ram:LineTotalAmount>
-        </ram:SpecifiedTradeSettlementLineMonetarySummation>
-      </ram:SpecifiedLineTradeSettlement>
-    </ram:IncludedSupplyChainTradeLineItem>
-    <ram:IncludedSupplyChainTradeLineItem>
-      <ram:AssociatedDocumentLineDocument>
-        <ram:LineID>13</ram:LineID>
-      </ram:AssociatedDocumentLineDocument>
-      <ram:SpecifiedTradeProduct>
-        <ram:Name>Article #13 : Description complète de l'article SKU-ABC-13.</ram:Name>
-      </ram:SpecifiedTradeProduct>
-      <ram:SpecifiedLineTradeAgreement>
-        <ram:GrossPriceProductTradePrice>
-          <ram:ChargeAmount>2.44</ram:ChargeAmount>
-          <ram:BasisQuantity unitCode="C62">1</ram:BasisQuantity>
-        </ram:GrossPriceProductTradePrice>
-        <ram:NetPriceProductTradePrice>
-          <ram:ChargeAmount>2.44</ram:ChargeAmount>
-          <ram:BasisQuantity unitCode="C62">1</ram:BasisQuantity>
-        </ram:NetPriceProductTradePrice>
-      </ram:SpecifiedLineTradeAgreement>
-      <ram:SpecifiedLineTradeDelivery>
-        <ram:BilledQuantity unitCode="C62">3</ram:BilledQuantity>
-      </ram:SpecifiedLineTradeDelivery>
-      <ram:SpecifiedLineTradeSettlement>
-        <ram:ApplicableTradeTax>
-          <ram:TypeCode>VAT</ram:TypeCode>
-          <ram:CategoryCode>S</ram:CategoryCode>
-          <ram:RateApplicablePercent>5.50</ram:RateApplicablePercent>
-        </ram:ApplicableTradeTax>
-        <ram:BillingSpecifiedPeriod/>
-        <ram:SpecifiedTradeSettlementLineMonetarySummation>
-          <ram:LineTotalAmount>7.31</ram:LineTotalAmount>
-        </ram:SpecifiedTradeSettlementLineMonetarySummation>
-      </ram:SpecifiedLineTradeSettlement>
-    </ram:IncludedSupplyChainTradeLineItem>
-    <ram:IncludedSupplyChainTradeLineItem>
-      <ram:AssociatedDocumentLineDocument>
-        <ram:LineID>14</ram:LineID>
-      </ram:AssociatedDocumentLineDocument>
-      <ram:SpecifiedTradeProduct>
-        <ram:Name>Article #14 : Description complète de l'article SKU-ABC-14.</ram:Name>
-      </ram:SpecifiedTradeProduct>
-      <ram:SpecifiedLineTradeAgreement>
-        <ram:GrossPriceProductTradePrice>
-          <ram:ChargeAmount>37.04</ram:ChargeAmount>
-          <ram:BasisQuantity unitCode="C62">1</ram:BasisQuantity>
-        </ram:GrossPriceProductTradePrice>
-        <ram:NetPriceProductTradePrice>
-          <ram:ChargeAmount>37.04</ram:ChargeAmount>
+          <ram:ChargeAmount>24.26</ram:ChargeAmount>
           <ram:BasisQuantity unitCode="C62">1</ram:BasisQuantity>
         </ram:NetPriceProductTradePrice>
       </ram:SpecifiedLineTradeAgreement>
@@ -568,7 +504,71 @@
         </ram:ApplicableTradeTax>
         <ram:BillingSpecifiedPeriod/>
         <ram:SpecifiedTradeSettlementLineMonetarySummation>
-          <ram:LineTotalAmount>370.44</ram:LineTotalAmount>
+          <ram:LineTotalAmount>242.60</ram:LineTotalAmount>
+        </ram:SpecifiedTradeSettlementLineMonetarySummation>
+      </ram:SpecifiedLineTradeSettlement>
+    </ram:IncludedSupplyChainTradeLineItem>
+    <ram:IncludedSupplyChainTradeLineItem>
+      <ram:AssociatedDocumentLineDocument>
+        <ram:LineID>13</ram:LineID>
+      </ram:AssociatedDocumentLineDocument>
+      <ram:SpecifiedTradeProduct>
+        <ram:Name>Article #13 : Description complète de l'article SKU-ABC-13.</ram:Name>
+      </ram:SpecifiedTradeProduct>
+      <ram:SpecifiedLineTradeAgreement>
+        <ram:GrossPriceProductTradePrice>
+          <ram:ChargeAmount>9.51</ram:ChargeAmount>
+          <ram:BasisQuantity unitCode="C62">1</ram:BasisQuantity>
+        </ram:GrossPriceProductTradePrice>
+        <ram:NetPriceProductTradePrice>
+          <ram:ChargeAmount>9.51</ram:ChargeAmount>
+          <ram:BasisQuantity unitCode="C62">1</ram:BasisQuantity>
+        </ram:NetPriceProductTradePrice>
+      </ram:SpecifiedLineTradeAgreement>
+      <ram:SpecifiedLineTradeDelivery>
+        <ram:BilledQuantity unitCode="C62">2</ram:BilledQuantity>
+      </ram:SpecifiedLineTradeDelivery>
+      <ram:SpecifiedLineTradeSettlement>
+        <ram:ApplicableTradeTax>
+          <ram:TypeCode>VAT</ram:TypeCode>
+          <ram:CategoryCode>S</ram:CategoryCode>
+          <ram:RateApplicablePercent>5.50</ram:RateApplicablePercent>
+        </ram:ApplicableTradeTax>
+        <ram:BillingSpecifiedPeriod/>
+        <ram:SpecifiedTradeSettlementLineMonetarySummation>
+          <ram:LineTotalAmount>19.03</ram:LineTotalAmount>
+        </ram:SpecifiedTradeSettlementLineMonetarySummation>
+      </ram:SpecifiedLineTradeSettlement>
+    </ram:IncludedSupplyChainTradeLineItem>
+    <ram:IncludedSupplyChainTradeLineItem>
+      <ram:AssociatedDocumentLineDocument>
+        <ram:LineID>14</ram:LineID>
+      </ram:AssociatedDocumentLineDocument>
+      <ram:SpecifiedTradeProduct>
+        <ram:Name>Article #14 : Description complète de l'article SKU-ABC-14.</ram:Name>
+      </ram:SpecifiedTradeProduct>
+      <ram:SpecifiedLineTradeAgreement>
+        <ram:GrossPriceProductTradePrice>
+          <ram:ChargeAmount>11.54</ram:ChargeAmount>
+          <ram:BasisQuantity unitCode="C62">1</ram:BasisQuantity>
+        </ram:GrossPriceProductTradePrice>
+        <ram:NetPriceProductTradePrice>
+          <ram:ChargeAmount>11.54</ram:ChargeAmount>
+          <ram:BasisQuantity unitCode="C62">1</ram:BasisQuantity>
+        </ram:NetPriceProductTradePrice>
+      </ram:SpecifiedLineTradeAgreement>
+      <ram:SpecifiedLineTradeDelivery>
+        <ram:BilledQuantity unitCode="C62">7</ram:BilledQuantity>
+      </ram:SpecifiedLineTradeDelivery>
+      <ram:SpecifiedLineTradeSettlement>
+        <ram:ApplicableTradeTax>
+          <ram:TypeCode>VAT</ram:TypeCode>
+          <ram:CategoryCode>S</ram:CategoryCode>
+          <ram:RateApplicablePercent>5.50</ram:RateApplicablePercent>
+        </ram:ApplicableTradeTax>
+        <ram:BillingSpecifiedPeriod/>
+        <ram:SpecifiedTradeSettlementLineMonetarySummation>
+          <ram:LineTotalAmount>80.78</ram:LineTotalAmount>
         </ram:SpecifiedTradeSettlementLineMonetarySummation>
       </ram:SpecifiedLineTradeSettlement>
     </ram:IncludedSupplyChainTradeLineItem>
@@ -581,16 +581,16 @@
       </ram:SpecifiedTradeProduct>
       <ram:SpecifiedLineTradeAgreement>
         <ram:GrossPriceProductTradePrice>
-          <ram:ChargeAmount>0.26</ram:ChargeAmount>
+          <ram:ChargeAmount>38.85</ram:ChargeAmount>
           <ram:BasisQuantity unitCode="C62">1</ram:BasisQuantity>
         </ram:GrossPriceProductTradePrice>
         <ram:NetPriceProductTradePrice>
-          <ram:ChargeAmount>0.26</ram:ChargeAmount>
+          <ram:ChargeAmount>38.85</ram:ChargeAmount>
           <ram:BasisQuantity unitCode="C62">1</ram:BasisQuantity>
         </ram:NetPriceProductTradePrice>
       </ram:SpecifiedLineTradeAgreement>
       <ram:SpecifiedLineTradeDelivery>
-        <ram:BilledQuantity unitCode="C62">3</ram:BilledQuantity>
+        <ram:BilledQuantity unitCode="C62">8</ram:BilledQuantity>
       </ram:SpecifiedLineTradeDelivery>
       <ram:SpecifiedLineTradeSettlement>
         <ram:ApplicableTradeTax>
@@ -600,7 +600,7 @@
         </ram:ApplicableTradeTax>
         <ram:BillingSpecifiedPeriod/>
         <ram:SpecifiedTradeSettlementLineMonetarySummation>
-          <ram:LineTotalAmount>0.79</ram:LineTotalAmount>
+          <ram:LineTotalAmount>310.78</ram:LineTotalAmount>
         </ram:SpecifiedTradeSettlementLineMonetarySummation>
       </ram:SpecifiedLineTradeSettlement>
     </ram:IncludedSupplyChainTradeLineItem>
