@@ -126,6 +126,116 @@ export enum UnitCode {
   KILOMETER = 'KMT',
 }
 
+/**
+ * Currency codes (ISO 4217)
+ * @see https://www.iso.org/iso-4217-currency-codes.html
+ */
+export enum CurrencyCode {
+  /** Euro */
+  EUR = 'EUR',
+  /** US Dollar */
+  USD = 'USD',
+  /** British Pound Sterling */
+  GBP = 'GBP',
+  /** Swiss Franc */
+  CHF = 'CHF',
+  /** Japanese Yen */
+  JPY = 'JPY',
+  /** Canadian Dollar */
+  CAD = 'CAD',
+  /** Australian Dollar */
+  AUD = 'AUD',
+  /** Chinese Yuan Renminbi */
+  CNY = 'CNY',
+  /** Swedish Krona */
+  SEK = 'SEK',
+  /** Norwegian Krone */
+  NOK = 'NOK',
+  /** Danish Krone */
+  DKK = 'DKK',
+  /** Polish Zloty */
+  PLN = 'PLN',
+  /** Czech Koruna */
+  CZK = 'CZK',
+  /** Hungarian Forint */
+  HUF = 'HUF',
+  /** Romanian Leu */
+  RON = 'RON',
+  /** Brazilian Real */
+  BRL = 'BRL',
+  /** Mexican Peso */
+  MXN = 'MXN',
+  /** South African Rand */
+  ZAR = 'ZAR',
+  /** Indian Rupee */
+  INR = 'INR',
+  /** Singapore Dollar */
+  SGD = 'SGD',
+  /** Hong Kong Dollar */
+  HKD = 'HKD',
+  /** New Zealand Dollar */
+  NZD = 'NZD',
+  /** Turkish Lira */
+  TRY = 'TRY',
+  /** Russian Ruble */
+  RUB = 'RUB',
+  /** United Arab Emirates Dirham */
+  AED = 'AED',
+  /** Saudi Riyal */
+  SAR = 'SAR',
+  /** Thai Baht */
+  THB = 'THB',
+  /** Malaysian Ringgit */
+  MYR = 'MYR',
+}
+
+/**
+ * E-invoicing compliance standards
+ */
+export enum ComplianceType {
+  /** French/German Factur-X (ZUGFeRD) standard */
+  FACTUR_X = 'FACTUR_X',
+  /** Universal Business Language (OASIS UBL 2.1) */
+  UBL = 'UBL',
+  /** PEPPOL BIS Billing 3.0 (European) */
+  PEPPOL = 'PEPPOL',
+  /** Italian FatturaPA */
+  FATTURA_PA = 'FATTURA_PA',
+  /** Spanish FacturaE */
+  FACTURAE = 'FACTURAE',
+  /** Dutch UBL-OHNL */
+  UBL_OHNL = 'UBL_OHNL',
+  /** Belgian e-invoicing */
+  BELGIAN_EINVOICE = 'BELGIAN_EINVOICE',
+  /** Swiss e-invoicing */
+  SWISS_EINVOICE = 'SWISS_EINVOICE',
+  /** Custom/Other regional standard */
+  OTHER = 'OTHER',
+}
+
+/**
+ * Regional settings and rules
+ */
+export interface RegionalConfig {
+  /** ISO 3166-1 alpha-2 country code */
+  readonly countryCode: string;
+  /** Compliance standard for this region */
+  readonly compliance: ComplianceType;
+  /** Default currency for this region */
+  readonly defaultCurrency: CurrencyCode;
+  /** Default language code (ISO 639-1) */
+  readonly defaultLanguage: string;
+  /** Tax identifier label (e.g., "VAT", "GST", "TVA") */
+  readonly taxIdLabel?: string;
+  /** Date format pattern */
+  readonly dateFormat?: string;
+  /** Number format (decimal separator, thousands separator) */
+  readonly numberFormat?: {
+    decimalSeparator: string;
+    thousandsSeparator: string;
+  };
+}
+
 // ============================================================================
 // CORE INTERFACES
 // ============================================================================

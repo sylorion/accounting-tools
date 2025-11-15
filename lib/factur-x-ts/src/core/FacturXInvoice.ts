@@ -23,6 +23,9 @@ import {
   InvoiceLine,
   AllowanceCharge,
   MonetarySummary,
+  CurrencyCode,
+  ComplianceType,
+  RegionalConfig,
 } from '../types';
 import { TaxCalculator } from './TaxCalculator';
 import {
@@ -49,7 +52,10 @@ export class FacturXInvoice {
     public readonly buyer: TradeParty,
     public readonly payment: PaymentDetails,
     public readonly lines: InvoiceLine[] = [],
-    public readonly docAllowancesCharges: AllowanceCharge[] = []
+    public readonly docAllowancesCharges: AllowanceCharge[] = [],
+    public readonly currency: CurrencyCode | string = CurrencyCode.EUR,
+    public readonly compliance: ComplianceType = ComplianceType.FACTUR_X,
+    public readonly regionalConfig?: RegionalConfig
   ) {
     this.taxCalculator = new TaxCalculator('line'); // Always use line mode for Factur-X
   }
@@ -300,8 +306,8 @@ export class FacturXInvoice {
   private buildHeaderTradeSettlement(tx: XMLBuilder, summary: MonetarySummary): void {
     const settlement = tx.ele('ram:ApplicableHeaderTradeSettlement');
 
-    // Currency (default EUR)
-    settlement.ele('ram:InvoiceCurrencyCode').txt('EUR');
+    // Currency code (configurable - EUR, USD, GBP, etc.)
+    settlement.ele('ram:InvoiceCurrencyCode').txt(this.currency);
 
     // Tax breakdown - Optimized loop
     for (const taxSummary of summary.taxSummaries) {

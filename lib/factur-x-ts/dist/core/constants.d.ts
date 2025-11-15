@@ -1,4 +1,4 @@
-import { FacturxProfile, ProfilePolicy } from '../types';
+import { FacturxProfile, ProfilePolicy, RegionalConfig } from '../types';
 export declare const XML_NAMESPACES: Readonly<{
     readonly QDT: "urn:un:unece:uncefact:data:standard:QualifiedDataType:100";
     readonly RAM: "urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100";
@@ -39,4 +39,7 @@ export declare const getProfilePolicy: (profile: FacturxProfile) => ProfilePolic
 export declare const formatDateFacturX: (date: Date) => string;
 export declare const formatAmount: (amount: number) => string;
 export declare const isValidAmount: (amount: number) => boolean;
+export declare const REGIONAL_CONFIGS: Map<string, RegionalConfig>;
+export declare const getRegionalConfig: (countryCode: string) => RegionalConfig | undefined;
+export declare const getRegionalConfigOrDefault: (countryCode: string, fallbackCode?: string) => RegionalConfig;
 //# sourceMappingURL=constants.d.ts.map

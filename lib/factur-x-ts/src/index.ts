@@ -21,6 +21,8 @@ export {
   TaxCategoryCode,
   PaymentMeansCode,
   UnitCode,
+  CurrencyCode,
+  ComplianceType,
 
   // Core Interfaces
   PostalAddress,
@@ -39,6 +41,7 @@ export {
 
   // Advanced Types
   ProfilePolicy,
+  RegionalConfig,
 
 } from './types';
 
@@ -73,8 +76,11 @@ export {
   GUIDELINE_URNS,
   PROFILE_POLICIES,
   PATTERNS,
+  REGIONAL_CONFIGS,
   getGuidelineUrn,
   getProfilePolicy,
+  getRegionalConfig,
+  getRegionalConfigOrDefault,
   formatDateFacturX,
   formatAmount,
 } from './core/constants';
@@ -94,6 +100,17 @@ export {
   validateAmount,
   validateDate,
 } from './utils/InputSanitizer';
+
+export {
+  // Currency Utilities
+  CurrencyFormatter,
+  isValidCurrency,
+  getCurrencyInfo,
+  formatCurrency,
+  formatAmountForXml,
+  parseCurrency,
+  convertCurrency,
+} from './utils/CurrencyFormatter';
 
 // ============================================================================
 // VERSION INFO

@@ -1,4 +1,4 @@
-import { FacturxProfile, DocumentHeader, TradeParty, PaymentDetails, InvoiceLine, AllowanceCharge, MonetarySummary } from '../types';
+import { FacturxProfile, DocumentHeader, TradeParty, PaymentDetails, InvoiceLine, AllowanceCharge, MonetarySummary, CurrencyCode, ComplianceType, RegionalConfig } from '../types';
 export declare class FacturXInvoice {
     readonly profile: FacturxProfile;
     readonly header: DocumentHeader;
@@ -7,10 +7,13 @@ export declare class FacturXInvoice {
     readonly payment: PaymentDetails;
     readonly lines: InvoiceLine[];
     readonly docAllowancesCharges: AllowanceCharge[];
+    readonly currency: CurrencyCode | string;
+    readonly compliance: ComplianceType;
+    readonly regionalConfig?: RegionalConfig | undefined;
     private readonly taxCalculator;
     private cachedSummary?;
     private cachedXml?;
-    constructor(profile: FacturxProfile, header: DocumentHeader, seller: TradeParty, buyer: TradeParty, payment: PaymentDetails, lines?: InvoiceLine[], docAllowancesCharges?: AllowanceCharge[]);
+    constructor(profile: FacturxProfile, header: DocumentHeader, seller: TradeParty, buyer: TradeParty, payment: PaymentDetails, lines?: InvoiceLine[], docAllowancesCharges?: AllowanceCharge[], currency?: CurrencyCode | string, compliance?: ComplianceType, regionalConfig?: RegionalConfig | undefined);
     addLine(line: InvoiceLine): void;
     addDocAllowanceCharge(ac: AllowanceCharge): void;
     finalizeTotals(): MonetarySummary;

@@ -4,7 +4,7 @@
  * Optimized for fast lookups using Maps and frozen objects
  */
 
-import { FacturxProfile, ProfilePolicy } from '../types';
+import { FacturxProfile, ProfilePolicy, RegionalConfig, CurrencyCode, ComplianceType } from '../types';
 
 // ============================================================================
 // XML NAMESPACES - Frozen for immutability
@@ -266,4 +266,329 @@ export const isValidAmount = (amount: number): boolean => {
     amount >= VALIDATION_LIMITS.MIN_AMOUNT &&
     amount <= VALIDATION_LIMITS.MAX_AMOUNT
   );
+};
+
+// ============================================================================
+// REGIONAL CONFIGURATIONS - Pre-defined for common regions
+// ============================================================================
+
+/**
+ * Regional configurations Map - O(1) lookup by country code
+ */
+export const REGIONAL_CONFIGS = new Map<string, RegionalConfig>([
+  // France
+  ['FR', {
+    countryCode: 'FR',
+    compliance: ComplianceType.FACTUR_X,
+    defaultCurrency: CurrencyCode.EUR,
+    defaultLanguage: 'fr',
+    taxIdLabel: 'TVA',
+    dateFormat: 'DD/MM/YYYY',
+    numberFormat: {
+      decimalSeparator: ',',
+      thousandsSeparator: ' ',
+    },
+  }],
+
+  // Germany
+  ['DE', {
+    countryCode: 'DE',
+    compliance: ComplianceType.FACTUR_X,
+    defaultCurrency: CurrencyCode.EUR,
+    defaultLanguage: 'de',
+    taxIdLabel: 'USt-IdNr.',
+    dateFormat: 'DD.MM.YYYY',
+    numberFormat: {
+      decimalSeparator: ',',
+      thousandsSeparator: '.',
+    },
+  }],
+
+  // United Kingdom
+  ['GB', {
+    countryCode: 'GB',
+    compliance: ComplianceType.UBL,
+    defaultCurrency: CurrencyCode.GBP,
+    defaultLanguage: 'en',
+    taxIdLabel: 'VAT',
+    dateFormat: 'DD/MM/YYYY',
+    numberFormat: {
+      decimalSeparator: '.',
+      thousandsSeparator: ',',
+    },
+  }],
+
+  // United States
+  ['US', {
+    countryCode: 'US',
+    compliance: ComplianceType.UBL,
+    defaultCurrency: CurrencyCode.USD,
+    defaultLanguage: 'en',
+    taxIdLabel: 'Tax ID',
+    dateFormat: 'MM/DD/YYYY',
+    numberFormat: {
+      decimalSeparator: '.',
+      thousandsSeparator: ',',
+    },
+  }],
+
+  // Switzerland
+  ['CH', {
+    countryCode: 'CH',
+    compliance: ComplianceType.SWISS_EINVOICE,
+    defaultCurrency: CurrencyCode.CHF,
+    defaultLanguage: 'de',
+    taxIdLabel: 'MWST',
+    dateFormat: 'DD.MM.YYYY',
+    numberFormat: {
+      decimalSeparator: '.',
+      thousandsSeparator: '\'',
+    },
+  }],
+
+  // Italy
+  ['IT', {
+    countryCode: 'IT',
+    compliance: ComplianceType.FATTURA_PA,
+    defaultCurrency: CurrencyCode.EUR,
+    defaultLanguage: 'it',
+    taxIdLabel: 'P.IVA',
+    dateFormat: 'DD/MM/YYYY',
+    numberFormat: {
+      decimalSeparator: ',',
+      thousandsSeparator: '.',
+    },
+  }],
+
+  // Spain
+  ['ES', {
+    countryCode: 'ES',
+    compliance: ComplianceType.FACTURAE,
+    defaultCurrency: CurrencyCode.EUR,
+    defaultLanguage: 'es',
+    taxIdLabel: 'NIF/CIF',
+    dateFormat: 'DD/MM/YYYY',
+    numberFormat: {
+      decimalSeparator: ',',
+      thousandsSeparator: '.',
+    },
+  }],
+
+  // Netherlands
+  ['NL', {
+    countryCode: 'NL',
+    compliance: ComplianceType.UBL_OHNL,
+    defaultCurrency: CurrencyCode.EUR,
+    defaultLanguage: 'nl',
+    taxIdLabel: 'BTW',
+    dateFormat: 'DD-MM-YYYY',
+    numberFormat: {
+      decimalSeparator: ',',
+      thousandsSeparator: '.',
+    },
+  }],
+
+  // Belgium
+  ['BE', {
+    countryCode: 'BE',
+    compliance: ComplianceType.BELGIAN_EINVOICE,
+    defaultCurrency: CurrencyCode.EUR,
+    defaultLanguage: 'nl',
+    taxIdLabel: 'BTW',
+    dateFormat: 'DD/MM/YYYY',
+    numberFormat: {
+      decimalSeparator: ',',
+      thousandsSeparator: '.',
+    },
+  }],
+
+  // Poland
+  ['PL', {
+    countryCode: 'PL',
+    compliance: ComplianceType.PEPPOL,
+    defaultCurrency: CurrencyCode.PLN,
+    defaultLanguage: 'pl',
+    taxIdLabel: 'NIP',
+    dateFormat: 'DD.MM.YYYY',
+    numberFormat: {
+      decimalSeparator: ',',
+      thousandsSeparator: ' ',
+    },
+  }],
+
+  // Sweden
+  ['SE', {
+    countryCode: 'SE',
+    compliance: ComplianceType.PEPPOL,
+    defaultCurrency: CurrencyCode.SEK,
+    defaultLanguage: 'sv',
+    taxIdLabel: 'Momsnr',
+    dateFormat: 'YYYY-MM-DD',
+    numberFormat: {
+      decimalSeparator: ',',
+      thousandsSeparator: ' ',
+    },
+  }],
+
+  // Norway
+  ['NO', {
+    countryCode: 'NO',
+    compliance: ComplianceType.PEPPOL,
+    defaultCurrency: CurrencyCode.NOK,
+    defaultLanguage: 'no',
+    taxIdLabel: 'MVA',
+    dateFormat: 'DD.MM.YYYY',
+    numberFormat: {
+      decimalSeparator: ',',
+      thousandsSeparator: ' ',
+    },
+  }],
+
+  // Denmark
+  ['DK', {
+    countryCode: 'DK',
+    compliance: ComplianceType.PEPPOL,
+    defaultCurrency: CurrencyCode.DKK,
+    defaultLanguage: 'da',
+    taxIdLabel: 'CVR',
+    dateFormat: 'DD-MM-YYYY',
+    numberFormat: {
+      decimalSeparator: ',',
+      thousandsSeparator: '.',
+    },
+  }],
+
+  // Canada
+  ['CA', {
+    countryCode: 'CA',
+    compliance: ComplianceType.UBL,
+    defaultCurrency: CurrencyCode.CAD,
+    defaultLanguage: 'en',
+    taxIdLabel: 'GST/HST',
+    dateFormat: 'YYYY-MM-DD',
+    numberFormat: {
+      decimalSeparator: '.',
+      thousandsSeparator: ',',
+    },
+  }],
+
+  // Australia
+  ['AU', {
+    countryCode: 'AU',
+    compliance: ComplianceType.UBL,
+    defaultCurrency: CurrencyCode.AUD,
+    defaultLanguage: 'en',
+    taxIdLabel: 'ABN',
+    dateFormat: 'DD/MM/YYYY',
+    numberFormat: {
+      decimalSeparator: '.',
+      thousandsSeparator: ',',
+    },
+  }],
+
+  // Japan
+  ['JP', {
+    countryCode: 'JP',
+    compliance: ComplianceType.OTHER,
+    defaultCurrency: CurrencyCode.JPY,
+    defaultLanguage: 'ja',
+    taxIdLabel: '法人番号',
+    dateFormat: 'YYYY/MM/DD',
+    numberFormat: {
+      decimalSeparator: '.',
+      thousandsSeparator: ',',
+    },
+  }],
+
+  // China
+  ['CN', {
+    countryCode: 'CN',
+    compliance: ComplianceType.OTHER,
+    defaultCurrency: CurrencyCode.CNY,
+    defaultLanguage: 'zh',
+    taxIdLabel: '税号',
+    dateFormat: 'YYYY-MM-DD',
+    numberFormat: {
+      decimalSeparator: '.',
+      thousandsSeparator: ',',
+    },
+  }],
+
+  // Brazil
+  ['BR', {
+    countryCode: 'BR',
+    compliance: ComplianceType.OTHER,
+    defaultCurrency: CurrencyCode.BRL,
+    defaultLanguage: 'pt',
+    taxIdLabel: 'CNPJ',
+    dateFormat: 'DD/MM/YYYY',
+    numberFormat: {
+      decimalSeparator: ',',
+      thousandsSeparator: '.',
+    },
+  }],
+
+  // Mexico
+  ['MX', {
+    countryCode: 'MX',
+    compliance: ComplianceType.OTHER,
+    defaultCurrency: CurrencyCode.MXN,
+    defaultLanguage: 'es',
+    taxIdLabel: 'RFC',
+    dateFormat: 'DD/MM/YYYY',
+    numberFormat: {
+      decimalSeparator: '.',
+      thousandsSeparator: ',',
+    },
+  }],
+
+  // India
+  ['IN', {
+    countryCode: 'IN',
+    compliance: ComplianceType.OTHER,
+    defaultCurrency: CurrencyCode.INR,
+    defaultLanguage: 'en',
+    taxIdLabel: 'GSTIN',
+    dateFormat: 'DD-MM-YYYY',
+    numberFormat: {
+      decimalSeparator: '.',
+      thousandsSeparator: ',',
+    },
+  }],
+
+  // Singapore
+  ['SG', {
+    countryCode: 'SG',
+    compliance: ComplianceType.PEPPOL,
+    defaultCurrency: CurrencyCode.SGD,
+    defaultLanguage: 'en',
+    taxIdLabel: 'GST',
+    dateFormat: 'DD/MM/YYYY',
+    numberFormat: {
+      decimalSeparator: '.',
+      thousandsSeparator: ',',
+    },
+  }],
+]);
+
+/**
+ * Get regional configuration by country code - O(1)
+ * @param countryCode ISO 3166-1 alpha-2 country code
+ * @returns Regional configuration or undefined
+ */
+export const getRegionalConfig = (countryCode: string): RegionalConfig | undefined => {
+  return REGIONAL_CONFIGS.get(countryCode.toUpperCase());
+};
+
+/**
+ * Get regional configuration with fallback - O(1)
+ * @param countryCode ISO 3166-1 alpha-2 country code
+ * @param fallbackCode Fallback country code (default: 'FR')
+ * @returns Regional configuration (never undefined)
+ */
+export const getRegionalConfigOrDefault = (
+  countryCode: string,
+  fallbackCode: string = 'FR'
+): RegionalConfig => {
+  return getRegionalConfig(countryCode) || getRegionalConfig(fallbackCode)!;
 };

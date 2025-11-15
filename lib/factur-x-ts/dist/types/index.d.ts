@@ -51,6 +51,59 @@ export declare enum UnitCode {
     LITER = "LTR",
     KILOMETER = "KMT"
 }
+export declare enum CurrencyCode {
+    EUR = "EUR",
+    USD = "USD",
+    GBP = "GBP",
+    CHF = "CHF",
+    JPY = "JPY",
+    CAD = "CAD",
+    AUD = "AUD",
+    CNY = "CNY",
+    SEK = "SEK",
+    NOK = "NOK",
+    DKK = "DKK",
+    PLN = "PLN",
+    CZK = "CZK",
+    HUF = "HUF",
+    RON = "RON",
+    BRL = "BRL",
+    MXN = "MXN",
+    ZAR = "ZAR",
+    INR = "INR",
+    SGD = "SGD",
+    HKD = "HKD",
+    NZD = "NZD",
+    TRY = "TRY",
+    RUB = "RUB",
+    AED = "AED",
+    SAR = "SAR",
+    THB = "THB",
+    MYR = "MYR"
+}
+export declare enum ComplianceType {
+    FACTUR_X = "FACTUR_X",
+    UBL = "UBL",
+    PEPPOL = "PEPPOL",
+    FATTURA_PA = "FATTURA_PA",
+    FACTURAE = "FACTURAE",
+    UBL_OHNL = "UBL_OHNL",
+    BELGIAN_EINVOICE = "BELGIAN_EINVOICE",
+    SWISS_EINVOICE = "SWISS_EINVOICE",
+    OTHER = "OTHER"
+}
+export interface RegionalConfig {
+    readonly countryCode: string;
+    readonly compliance: ComplianceType;
+    readonly defaultCurrency: CurrencyCode;
+    readonly defaultLanguage: string;
+    readonly taxIdLabel?: string;
+    readonly dateFormat?: string;
+    readonly numberFormat?: {
+        decimalSeparator: string;
+        thousandsSeparator: string;
+    };
+}
 export interface PostalAddress {
     readonly street?: string;
     readonly additionalStreet?: string;
