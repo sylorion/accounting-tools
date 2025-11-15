@@ -16,14 +16,11 @@ export interface ProfileConstraints {
       "header.invoiceNumber",
       "header.invoiceDate",
       "seller",
-      "buyer",
-      "monetary.totalAmount"
+      "buyer"
     ],
     forbiddenFields: [
-      "lineItems",
-      "delivery",
-      "paymentMeans",
-      "taxes"
+      "deliveryParty",
+      "payeeParty"
     ]
   },
   BASIC: {
@@ -32,7 +29,7 @@ export interface ProfileConstraints {
       "header.invoiceDate",
       "seller",
       "buyer",
-      "lineItems"
+      "lines"
     ],
     forbiddenFields: [
       "deliveryParty",
@@ -46,9 +43,8 @@ export interface ProfileConstraints {
       "header.invoiceDate",
       "seller",
       "buyer",
-      "lineItems",
-      "paymentMeans",
-      "taxes"
+      "lines",
+      "payment"
     ],
     forbiddenFields: [
       "buyer.contact",
@@ -61,11 +57,8 @@ export interface ProfileConstraints {
       "header.invoiceDate",
       "seller",
       "buyer",
-      "lineItems",
-      "paymentMeans",
-      "taxes",
-      "delivery",
-      "legalMonetaryTotal"
+      "lines",
+      "payment"
     ],
     forbiddenFields: []
   },
