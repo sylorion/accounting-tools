@@ -38,7 +38,9 @@
   },
   "dependencies": {
     "xmlbuilder2": "^3.1.1",
-    "big.js": "^6.2.1"
+    "big.js": "^6.2.1",
+    "fast-xml-parser": "^4.3.2",
+    "@xmldom/xmldom": "^0.8.10"
   },
   "devDependencies": {
     "@types/big.js": "^6.2.2",

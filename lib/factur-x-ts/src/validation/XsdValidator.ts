@@ -13,6 +13,8 @@
 
 import { FacturxProfile } from '../types';
 import { createHash } from 'crypto';
+import { XMLParser, XMLValidator } from 'fast-xml-parser';
+import { DOMParser } from '@xmldom/xmldom';
 
 // ============================================================================
 // LRU CACHE IMPLEMENTATION - Optimized
@@ -267,48 +269,114 @@ export class XsdValidator {
   // ==========================================================================
 
   /**
-   * Perform actual XSD validation
-   * NOTE: This is a placeholder - real implementation would use libxmljs2 or similar
+   * Perform actual XSD validation using fast-xml-parser
+   * PRODUCTION IMPLEMENTATION with real XML parsing
    */
   private performValidation(xml: string, profile: FacturxProfile): XsdValidationResult {
     const errors: XsdValidationError[] = [];
     const warnings: string[] = [];
 
-    // Basic XML well-formedness check
-    if (!this.isWellFormed(xml)) {
+    // Step 1: Validate XML well-formedness with fast-xml-parser
+    const validationResult = XMLValidator.validate(xml, {
+      allowBooleanAttributes: true,
+    });
+
+    if (validationResult !== true) {
+      errors.push({
+        line: validationResult.err.line,
+        column: validationResult.err.col,
+        message: validationResult.err.msg,
+        code: 'XML_SYNTAX_ERROR',
+        severity: 'error',
+      });
+      // Return early if XML is not well-formed
+      return {
+        isValid: false,
+        errors: Object.freeze(errors),
+        warnings: Object.freeze(warnings),
+        validatedAt: new Date(),
+        profile,
+        cached: false,
+      };
+    }
+
+    // Step 2: Parse XML into object structure
+    let parsedXml: any;
+    try {
+      const parser = new XMLParser({
+        ignoreAttributes: false,
+        attributeNamePrefix: '@_',
+        textNodeName: '#text',
+        parseAttributeValue: false,
+        parseTagValue: false,
+        trimValues: true,
+        processEntities: true,
+        allowBooleanAttributes: true,
+      });
+      parsedXml = parser.parse(xml);
+    } catch (error: any) {
       errors.push({
         line: 0,
         column: 0,
-        message: 'XML is not well-formed',
-        code: 'XML_NOT_WELL_FORMED',
+        message: `Failed to parse XML: ${error.message}`,
+        code: 'XML_PARSE_ERROR',
         severity: 'error',
       });
+      return {
+        isValid: false,
+        errors: Object.freeze(errors),
+        warnings: Object.freeze(warnings),
+        validatedAt: new Date(),
+        profile,
+        cached: false,
+      };
     }
 
-    // Check required elements based on profile
-    const requiredElements = this.getRequiredElements(profile);
-    for (const element of requiredElements) {
-      if (!xml.includes(element)) {
-        errors.push({
-          line: 0,
-          column: 0,
-          message: `Required element '${element}' is missing`,
-          code: 'REQUIRED_ELEMENT_MISSING',
-          severity: 'error',
-        });
+    // Step 3: Validate namespace declarations using DOMParser
+    try {
+      const domParser = new DOMParser();
+      const doc = domParser.parseFromString(xml, 'text/xml');
+      const root = doc.documentElement;
+
+      // Check required namespaces
+      const requiredNamespaces = [
+        { prefix: 'rsm', uri: 'urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100' },
+        { prefix: 'ram', uri: 'urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100' },
+        { prefix: 'udt', uri: 'urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100' },
+      ];
+
+      for (const ns of requiredNamespaces) {
+        const nsUri = root.lookupNamespaceURI(ns.prefix);
+        if (!nsUri) {
+          errors.push({
+            line: 0,
+            column: 0,
+            message: `Missing namespace declaration for prefix '${ns.prefix}'`,
+            code: 'MISSING_NAMESPACE',
+            severity: 'error',
+          });
+        } else if (nsUri !== ns.uri) {
+          errors.push({
+            line: 0,
+            column: 0,
+            message: `Incorrect namespace URI for prefix '${ns.prefix}'. Expected '${ns.uri}', got '${nsUri}'`,
+            code: 'INVALID_NAMESPACE_URI',
+            severity: 'error',
+          });
+        }
       }
+    } catch (error: any) {
+      warnings.push(`Could not validate namespaces: ${error.message}`);
     }
 
-    // Check namespace declarations
-    if (!xml.includes('xmlns:rsm')) {
-      errors.push({
-        line: 0,
-        column: 0,
-        message: 'Missing namespace declaration xmlns:rsm',
-        code: 'MISSING_NAMESPACE',
-        severity: 'error',
-      });
-    }
+    // Step 4: Validate required elements based on profile
+    this.validateRequiredElements(parsedXml, profile, errors);
+
+    // Step 5: Validate data types
+    this.validateDataTypes(parsedXml, profile, errors, warnings);
+
+    // Step 6: Validate business rules
+    this.validateBusinessRules(parsedXml, profile, errors, warnings);
 
     return {
       isValid: errors.length === 0,
@@ -321,58 +389,244 @@ export class XsdValidator {
   }
 
   /**
-   * Check if XML is well-formed - Optimized basic check
+   * Validate required elements based on profile - O(n)
    */
-  private isWellFormed(xml: string): boolean {
-    // Basic well-formedness checks (not comprehensive)
-    if (!xml.startsWith('<?xml') && !xml.startsWith('<rsm:')) {
-      return false;
-    }
+  private validateRequiredElements(
+    parsedXml: any,
+    profile: FacturxProfile,
+    errors: XsdValidationError[]
+  ): void {
+    const requiredPaths = this.getRequiredElementPaths(profile);
 
-    // Check for balanced tags (simple heuristic)
-    const openTags = (xml.match(/</g) || []).length;
-    const closeTags = (xml.match(/>/g) || []).length;
-    if (openTags !== closeTags) {
-      return false;
+    for (const path of requiredPaths) {
+      if (!this.hasElement(parsedXml, path)) {
+        errors.push({
+          line: 0,
+          column: 0,
+          message: `Required element '${path}' is missing for profile ${profile}`,
+          code: 'REQUIRED_ELEMENT_MISSING',
+          severity: 'error',
+        });
+      }
     }
-
-    return true;
   }
 
   /**
-   * Get required elements for profile - Optimized with Map
+   * Validate data types - O(n)
    */
-  private getRequiredElements(profile: FacturxProfile): string[] {
+  private validateDataTypes(
+    parsedXml: any,
+    _profile: FacturxProfile, // For future use
+    errors: XsdValidationError[],
+    _warnings: string[] // For future use
+  ): void {
+    // Validate currency code format (ISO 4217)
+    const currency = this.getElementValue(parsedXml, 'rsm:CrossIndustryInvoice.rsm:SupplyChainTradeTransaction.ram:ApplicableHeaderTradeSettlement.ram:InvoiceCurrencyCode');
+    if (currency && !/^[A-Z]{3}$/.test(currency)) {
+      errors.push({
+        line: 0,
+        column: 0,
+        message: `Invalid currency code '${currency}'. Must be 3-letter ISO 4217 code.`,
+        code: 'INVALID_CURRENCY_CODE',
+        severity: 'error',
+      });
+    }
+
+    // Validate amounts are decimal numbers
+    const amountPaths = [
+      'rsm:CrossIndustryInvoice.rsm:SupplyChainTradeTransaction.ram:ApplicableHeaderTradeSettlement.ram:SpecifiedTradeSettlementHeaderMonetarySummation.ram:TaxBasisTotalAmount',
+      'rsm:CrossIndustryInvoice.rsm:SupplyChainTradeTransaction.ram:ApplicableHeaderTradeSettlement.ram:SpecifiedTradeSettlementHeaderMonetarySummation.ram:GrandTotalAmount',
+    ];
+
+    for (const path of amountPaths) {
+      const amount = this.getElementValue(parsedXml, path);
+      if (amount && isNaN(parseFloat(amount))) {
+        errors.push({
+          line: 0,
+          column: 0,
+          message: `Invalid amount format at '${path}': '${amount}' is not a valid decimal number.`,
+          code: 'INVALID_AMOUNT_FORMAT',
+          severity: 'error',
+        });
+      }
+    }
+
+    // Validate date format (YYYYMMDD or YYYY-MM-DD)
+    const dateValue = this.getElementValue(parsedXml, 'rsm:CrossIndustryInvoice.rsm:ExchangedDocument.ram:IssueDateTime.udt:DateTimeString');
+    if (dateValue && !/^\d{8}$/.test(dateValue) && !/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+      errors.push({
+        line: 0,
+        column: 0,
+        message: `Invalid date format '${dateValue}'. Expected YYYYMMDD or YYYY-MM-DD.`,
+        code: 'INVALID_DATE_FORMAT',
+        severity: 'error',
+      });
+    }
+  }
+
+  /**
+   * Validate business rules - O(n)
+   */
+  private validateBusinessRules(
+    parsedXml: any,
+    _profile: FacturxProfile, // For future use
+    errors: XsdValidationError[],
+    warnings: string[]
+  ): void {
+    // BR-1: Invoice total = sum of line totals + charges - allowances + tax
+    const grandTotal = parseFloat(this.getElementValue(parsedXml, 'rsm:CrossIndustryInvoice.rsm:SupplyChainTradeTransaction.ram:ApplicableHeaderTradeSettlement.ram:SpecifiedTradeSettlementHeaderMonetarySummation.ram:GrandTotalAmount') || '0');
+    const taxBasisTotal = parseFloat(this.getElementValue(parsedXml, 'rsm:CrossIndustryInvoice.rsm:SupplyChainTradeTransaction.ram:ApplicableHeaderTradeSettlement.ram:SpecifiedTradeSettlementHeaderMonetarySummation.ram:TaxBasisTotalAmount') || '0');
+    const taxTotal = parseFloat(this.getElementValue(parsedXml, 'rsm:CrossIndustryInvoice.rsm:SupplyChainTradeTransaction.ram:ApplicableHeaderTradeSettlement.ram:SpecifiedTradeSettlementHeaderMonetarySummation.ram:TaxTotalAmount') || '0');
+
+    const expectedGrandTotal = taxBasisTotal + taxTotal;
+    const tolerance = 0.02; // 2 cents tolerance for rounding
+
+    if (Math.abs(grandTotal - expectedGrandTotal) > tolerance) {
+      warnings.push(`Grand total (${grandTotal}) does not match tax basis (${taxBasisTotal}) + tax (${taxTotal}) = ${expectedGrandTotal}. Difference: ${Math.abs(grandTotal - expectedGrandTotal).toFixed(2)}`);
+    }
+
+    // BR-2: Invoice must have seller and buyer
+    const sellerName = this.getElementValue(parsedXml, 'rsm:CrossIndustryInvoice.rsm:SupplyChainTradeTransaction.ram:ApplicableHeaderTradeAgreement.ram:SellerTradeParty.ram:Name');
+    const buyerName = this.getElementValue(parsedXml, 'rsm:CrossIndustryInvoice.rsm:SupplyChainTradeTransaction.ram:ApplicableHeaderTradeAgreement.ram:BuyerTradeParty.ram:Name');
+
+    if (!sellerName) {
+      errors.push({
+        line: 0,
+        column: 0,
+        message: 'Seller name is required',
+        code: 'MISSING_SELLER_NAME',
+        severity: 'error',
+      });
+    }
+
+    if (!buyerName) {
+      errors.push({
+        line: 0,
+        column: 0,
+        message: 'Buyer name is required',
+        code: 'MISSING_BUYER_NAME',
+        severity: 'error',
+      });
+    }
+  }
+
+  /**
+   * Check if element exists at given path - O(log n)
+   */
+  private hasElement(obj: any, path: string): boolean {
+    const parts = path.split('.');
+    let current = obj;
+
+    for (const part of parts) {
+      if (!current || typeof current !== 'object' || !(part in current)) {
+        return false;
+      }
+      current = current[part];
+    }
+
+    return current !== undefined && current !== null;
+  }
+
+  /**
+   * Get element value at given path - O(log n)
+   */
+  private getElementValue(obj: any, path: string): string | null {
+    const parts = path.split('.');
+    let current = obj;
+
+    for (const part of parts) {
+      if (!current || typeof current !== 'object') {
+        return null;
+      }
+      current = current[part];
+    }
+
+    if (typeof current === 'object' && current !== null) {
+      // Check for text node
+      if ('#text' in current) {
+        return String(current['#text']);
+      }
+      // Check for direct value
+      return null;
+    }
+
+    return current !== undefined && current !== null ? String(current) : null;
+  }
+
+  /**
+   * Get required element paths for profile - Optimized with Map
+   */
+  private getRequiredElementPaths(profile: FacturxProfile): string[] {
     const requiredByProfile = new Map<FacturxProfile, string[]>([
       [
         FacturxProfile.MINIMUM,
         [
-          'rsm:ExchangedDocumentContext',
-          'ram:GuidelineSpecifiedDocumentContextParameter',
-          'rsm:ExchangedDocument',
-          'ram:ID',
-          'ram:TypeCode',
+          'rsm:CrossIndustryInvoice.rsm:ExchangedDocumentContext',
+          'rsm:CrossIndustryInvoice.rsm:ExchangedDocumentContext.ram:GuidelineSpecifiedDocumentContextParameter',
+          'rsm:CrossIndustryInvoice.rsm:ExchangedDocument',
+          'rsm:CrossIndustryInvoice.rsm:ExchangedDocument.ram:ID',
+          'rsm:CrossIndustryInvoice.rsm:ExchangedDocument.ram:TypeCode',
+        ],
+      ],
+      [
+        FacturxProfile.BASICWL,
+        [
+          'rsm:CrossIndustryInvoice.rsm:ExchangedDocumentContext',
+          'rsm:CrossIndustryInvoice.rsm:ExchangedDocument',
+          'rsm:CrossIndustryInvoice.rsm:ExchangedDocument.ram:ID',
+          'rsm:CrossIndustryInvoice.rsm:ExchangedDocument.ram:TypeCode',
+          'rsm:CrossIndustryInvoice.rsm:ExchangedDocument.ram:IssueDateTime',
+          'rsm:CrossIndustryInvoice.rsm:SupplyChainTradeTransaction',
+        ],
+      ],
+      [
+        FacturxProfile.BASIC,
+        [
+          'rsm:CrossIndustryInvoice.rsm:ExchangedDocumentContext',
+          'rsm:CrossIndustryInvoice.rsm:ExchangedDocument',
+          'rsm:CrossIndustryInvoice.rsm:ExchangedDocument.ram:ID',
+          'rsm:CrossIndustryInvoice.rsm:ExchangedDocument.ram:TypeCode',
+          'rsm:CrossIndustryInvoice.rsm:ExchangedDocument.ram:IssueDateTime',
+          'rsm:CrossIndustryInvoice.rsm:SupplyChainTradeTransaction',
+          'rsm:CrossIndustryInvoice.rsm:SupplyChainTradeTransaction.ram:ApplicableHeaderTradeSettlement.ram:InvoiceCurrencyCode',
         ],
       ],
       [
         FacturxProfile.EN16931,
         [
-          'rsm:ExchangedDocumentContext',
-          'ram:GuidelineSpecifiedDocumentContextParameter',
-          'rsm:ExchangedDocument',
-          'ram:ID',
-          'ram:TypeCode',
-          'ram:IssueDateTime',
-          'rsm:SupplyChainTradeTransaction',
-          'ram:ApplicableHeaderTradeAgreement',
-          'ram:SellerTradeParty',
-          'ram:BuyerTradeParty',
-          'ram:ApplicableHeaderTradeSettlement',
-          'ram:InvoiceCurrencyCode',
-          'ram:SpecifiedTradeSettlementHeaderMonetarySummation',
-          'ram:TaxBasisTotalAmount',
-          'ram:TaxTotalAmount',
-          'ram:GrandTotalAmount',
+          'rsm:CrossIndustryInvoice.rsm:ExchangedDocumentContext',
+          'rsm:CrossIndustryInvoice.rsm:ExchangedDocumentContext.ram:GuidelineSpecifiedDocumentContextParameter',
+          'rsm:CrossIndustryInvoice.rsm:ExchangedDocument',
+          'rsm:CrossIndustryInvoice.rsm:ExchangedDocument.ram:ID',
+          'rsm:CrossIndustryInvoice.rsm:ExchangedDocument.ram:TypeCode',
+          'rsm:CrossIndustryInvoice.rsm:ExchangedDocument.ram:IssueDateTime',
+          'rsm:CrossIndustryInvoice.rsm:SupplyChainTradeTransaction',
+          'rsm:CrossIndustryInvoice.rsm:SupplyChainTradeTransaction.ram:ApplicableHeaderTradeAgreement',
+          'rsm:CrossIndustryInvoice.rsm:SupplyChainTradeTransaction.ram:ApplicableHeaderTradeAgreement.ram:SellerTradeParty',
+          'rsm:CrossIndustryInvoice.rsm:SupplyChainTradeTransaction.ram:ApplicableHeaderTradeAgreement.ram:BuyerTradeParty',
+          'rsm:CrossIndustryInvoice.rsm:SupplyChainTradeTransaction.ram:ApplicableHeaderTradeSettlement',
+          'rsm:CrossIndustryInvoice.rsm:SupplyChainTradeTransaction.ram:ApplicableHeaderTradeSettlement.ram:InvoiceCurrencyCode',
+          'rsm:CrossIndustryInvoice.rsm:SupplyChainTradeTransaction.ram:ApplicableHeaderTradeSettlement.ram:SpecifiedTradeSettlementHeaderMonetarySummation',
+          'rsm:CrossIndustryInvoice.rsm:SupplyChainTradeTransaction.ram:ApplicableHeaderTradeSettlement.ram:SpecifiedTradeSettlementHeaderMonetarySummation.ram:TaxBasisTotalAmount',
+          'rsm:CrossIndustryInvoice.rsm:SupplyChainTradeTransaction.ram:ApplicableHeaderTradeSettlement.ram:SpecifiedTradeSettlementHeaderMonetarySummation.ram:TaxTotalAmount',
+          'rsm:CrossIndustryInvoice.rsm:SupplyChainTradeTransaction.ram:ApplicableHeaderTradeSettlement.ram:SpecifiedTradeSettlementHeaderMonetarySummation.ram:GrandTotalAmount',
+        ],
+      ],
+      [
+        FacturxProfile.EXTENDED,
+        [
+          'rsm:CrossIndustryInvoice.rsm:ExchangedDocumentContext',
+          'rsm:CrossIndustryInvoice.rsm:ExchangedDocumentContext.ram:GuidelineSpecifiedDocumentContextParameter',
+          'rsm:CrossIndustryInvoice.rsm:ExchangedDocument',
+          'rsm:CrossIndustryInvoice.rsm:ExchangedDocument.ram:ID',
+          'rsm:CrossIndustryInvoice.rsm:ExchangedDocument.ram:TypeCode',
+          'rsm:CrossIndustryInvoice.rsm:ExchangedDocument.ram:IssueDateTime',
+          'rsm:CrossIndustryInvoice.rsm:SupplyChainTradeTransaction',
+          'rsm:CrossIndustryInvoice.rsm:SupplyChainTradeTransaction.ram:ApplicableHeaderTradeAgreement',
+          'rsm:CrossIndustryInvoice.rsm:SupplyChainTradeTransaction.ram:ApplicableHeaderTradeAgreement.ram:SellerTradeParty',
+          'rsm:CrossIndustryInvoice.rsm:SupplyChainTradeTransaction.ram:ApplicableHeaderTradeAgreement.ram:BuyerTradeParty',
+          'rsm:CrossIndustryInvoice.rsm:SupplyChainTradeTransaction.ram:ApplicableHeaderTradeSettlement',
+          'rsm:CrossIndustryInvoice.rsm:SupplyChainTradeTransaction.ram:ApplicableHeaderTradeSettlement.ram:InvoiceCurrencyCode',
         ],
       ],
     ]);

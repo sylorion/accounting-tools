@@ -37,8 +37,12 @@ export declare class XsdValidator {
         hitRate: number;
     };
     private performValidation;
-    private isWellFormed;
-    private getRequiredElements;
+    private validateRequiredElements;
+    private validateDataTypes;
+    private validateBusinessRules;
+    private hasElement;
+    private getElementValue;
+    private getRequiredElementPaths;
     private generateCacheKey;
 }
 export declare function getDefaultValidator(): XsdValidator;
