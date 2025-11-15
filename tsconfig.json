@@ -9,5 +9,16 @@
     "esModuleInterop": true,
     "skipLibCheck": true
   },
-  "exclude": ["node_modules", "dist", "test"]
+  "include": ["src/**/*"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "test",
+    "**/*.test.ts",
+    "src/example-*.ts",
+    "src/test-*.ts",
+    "src/FacturxEngine.ts",
+    "src/OrderxEngine.ts",
+    "src/OrderxXmlBuilder.ts"
+  ]
 }

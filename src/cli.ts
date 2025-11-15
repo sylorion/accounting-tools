@@ -14,18 +14,13 @@
 import fs from 'fs';
 import path from 'path';
 import { PDFDocument, utf8Encode } from 'pdf-lib';
-import {
-  FacturXInvoice,
-  FacturxProfile,
-  DocumentHeader,
-  TradeParty,
-  PostalAddress,
-  PaymentDetails,
-  InvoiceLine,
-  AllowanceCharge,
-  DocTypeCode,
-  TaxCategoryCode
-} from './core/FacturXInvoice';
+import { FacturXInvoice } from './core/FacturXInvoice';
+import { FacturxProfile, TaxCategoryCode, DocTypeCode } from './core/EnumInvoiceType';
+import { DocumentHeader } from './core/DocumentHeader';
+import { TradeParty, PostalAddress } from './core/HeaderTradeAgreement';
+import { PaymentDetails } from './core/PaymentDetails';
+import { InvoiceLine } from './core/InvoiceLine';
+import { AllowanceCharge } from './core/AllowanceCharge';
 import { InvoiceTemplateFancy } from './templates/InvoiceTemplateFancy';
 import { InvoiceTemplateBrand } from './templates/InvoiceTemplateBrand';
 import { InputSanitizer } from './utils/InputSanitizer';
@@ -220,7 +215,7 @@ async function generateInvoice() {
   success(`PDF généré: ${pdfFilename}`);
 
   // 7. Afficher le récapitulatif
-  const summary = invoice.calculateTotals();
+  const summary = invoice.finalizeTotals();
   console.log('');
   info('RÉCAPITULATIF:');
   console.log(`  Numéro:         ${invoice.header.invoiceNumber}`);
@@ -367,7 +362,7 @@ async function generateQuote() {
   success(`PDF généré: ${pdfFilename}`);
 
   // Récapitulatif
-  const summary = quote.calculateTotals();
+  const summary = quote.finalizeTotals();
   console.log('');
   info('RÉCAPITULATIF DEVIS:');
   console.log(`  Numéro:         ${quote.header.invoiceNumber}`);
