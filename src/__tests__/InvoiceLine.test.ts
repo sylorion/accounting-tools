@@ -444,4 +444,172 @@ describe('InvoiceLine', () => {
       expect(line.lineTotal).toBe(150);
     });
   });
+
+  describe('addAllowanceCharge method', () => {
+    it('should add charge when isCharge is true', () => {
+      const line = new InvoiceLine('1', 'Product', 2, 50, 0.20);
+      line.addAllowanceCharge(10, true, 'Processing fee');
+
+      expect(line.charges).toHaveLength(1);
+      expect(line.allowances).toHaveLength(0);
+      expect(line.charges[0].actualAmount).toBe(10);
+      expect(line.charges[0].chargeIndicator).toBe(true);
+      expect(line.charges[0].reason).toBe('Processing fee');
+    });
+
+    it('should add allowance when isCharge is false', () => {
+      const line = new InvoiceLine('1', 'Product', 2, 50, 0.20);
+      line.addAllowanceCharge(15, false, 'Volume discount');
+
+      expect(line.allowances).toHaveLength(1);
+      expect(line.charges).toHaveLength(0);
+      expect(line.allowances[0].actualAmount).toBe(15);
+      expect(line.allowances[0].chargeIndicator).toBe(false);
+      expect(line.allowances[0].reason).toBe('Volume discount');
+    });
+
+    it('should add allowance without reason', () => {
+      const line = new InvoiceLine('1', 'Product', 2, 50, 0.20);
+      line.addAllowanceCharge(20, false);
+
+      expect(line.allowances).toHaveLength(1);
+      expect(line.allowances[0].actualAmount).toBe(20);
+    });
+
+    it('should add charge without reason', () => {
+      const line = new InvoiceLine('1', 'Product', 2, 50, 0.20);
+      line.addAllowanceCharge(5, true);
+
+      expect(line.charges).toHaveLength(1);
+      expect(line.charges[0].actualAmount).toBe(5);
+    });
+
+    it('should add multiple allowances and charges via addAllowanceCharge', () => {
+      const line = new InvoiceLine('1', 'Product', 2, 50, 0.20);
+      line.addAllowanceCharge(10, false, 'Discount 1');
+      line.addAllowanceCharge(5, true, 'Charge 1');
+      line.addAllowanceCharge(15, false, 'Discount 2');
+      line.addAllowanceCharge(3, true, 'Charge 2');
+
+      expect(line.allowances).toHaveLength(2);
+      expect(line.charges).toHaveLength(2);
+    });
+  });
+
+  describe('getAllAllowancesCharges method', () => {
+    it('should return empty array when no allowances or charges', () => {
+      const line = new InvoiceLine('1', 'Product', 2, 50, 0.20);
+      const all = line.getAllAllowancesCharges();
+
+      expect(all).toEqual([]);
+      expect(all).toHaveLength(0);
+    });
+
+    it('should return all allowances when only allowances exist', () => {
+      const line = new InvoiceLine('1', 'Product', 2, 50, 0.20);
+      line.addAllowance(10, 'Discount 1');
+      line.addAllowance(5, 'Discount 2');
+
+      const all = line.getAllAllowancesCharges();
+
+      expect(all).toHaveLength(2);
+      expect(all[0].actualAmount).toBe(10);
+      expect(all[1].actualAmount).toBe(5);
+      expect(all.every(a => a.chargeIndicator === false)).toBe(true);
+    });
+
+    it('should return all charges when only charges exist', () => {
+      const line = new InvoiceLine('1', 'Product', 2, 50, 0.20);
+      line.addCharge(7, 'Charge 1');
+      line.addCharge(3, 'Charge 2');
+
+      const all = line.getAllAllowancesCharges();
+
+      expect(all).toHaveLength(2);
+      expect(all[0].actualAmount).toBe(7);
+      expect(all[1].actualAmount).toBe(3);
+      expect(all.every(c => c.chargeIndicator === true)).toBe(true);
+    });
+
+    it('should return all allowances and charges combined', () => {
+      const line = new InvoiceLine('1', 'Product', 2, 50, 0.20);
+      line.addAllowance(10, 'Allowance 1');
+      line.addAllowance(5, 'Allowance 2');
+      line.addCharge(7, 'Charge 1');
+      line.addCharge(3, 'Charge 2');
+
+      const all = line.getAllAllowancesCharges();
+
+      expect(all).toHaveLength(4);
+
+      // First 2 should be allowances
+      expect(all[0].chargeIndicator).toBe(false);
+      expect(all[1].chargeIndicator).toBe(false);
+
+      // Last 2 should be charges
+      expect(all[2].chargeIndicator).toBe(true);
+      expect(all[3].chargeIndicator).toBe(true);
+    });
+
+    it('should not modify original arrays', () => {
+      const line = new InvoiceLine('1', 'Product', 2, 50, 0.20);
+      line.addAllowance(10);
+      line.addCharge(5);
+
+      const all = line.getAllAllowancesCharges();
+      all.push(new AllowanceCharge(true, 999)); // Modify returned array
+
+      // Original arrays should be unchanged
+      expect(line.allowances).toHaveLength(1);
+      expect(line.charges).toHaveLength(1);
+    });
+  });
+
+  describe('clearAllowancesCharges method', () => {
+    it('should clear all allowances and charges', () => {
+      const line = new InvoiceLine('1', 'Product', 2, 50, 0.20);
+      line.addAllowance(10, 'Discount');
+      line.addAllowance(5, 'Another discount');
+      line.addCharge(7, 'Fee');
+      line.addCharge(3, 'Surcharge');
+
+      expect(line.allowances).toHaveLength(2);
+      expect(line.charges).toHaveLength(2);
+
+      line.clearAllowancesCharges();
+
+      expect(line.allowances).toHaveLength(0);
+      expect(line.charges).toHaveLength(0);
+      expect(line.allowances).toEqual([]);
+      expect(line.charges).toEqual([]);
+    });
+
+    it('should work when already empty', () => {
+      const line = new InvoiceLine('1', 'Product', 2, 50, 0.20);
+
+      expect(line.allowances).toHaveLength(0);
+      expect(line.charges).toHaveLength(0);
+
+      line.clearAllowancesCharges();
+
+      expect(line.allowances).toHaveLength(0);
+      expect(line.charges).toHaveLength(0);
+    });
+
+    it('should allow adding new allowances/charges after clearing', () => {
+      const line = new InvoiceLine('1', 'Product', 2, 50, 0.20);
+      line.addAllowance(10);
+      line.addCharge(5);
+
+      line.clearAllowancesCharges();
+
+      line.addAllowance(20);
+      line.addCharge(15);
+
+      expect(line.allowances).toHaveLength(1);
+      expect(line.charges).toHaveLength(1);
+      expect(line.allowances[0].actualAmount).toBe(20);
+      expect(line.charges[0].actualAmount).toBe(15);
+    });
+  });
 });
