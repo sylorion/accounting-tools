@@ -635,6 +635,99 @@ describe('I18n', () => {
       // Should return key since object is not a string
       expect(message).toBe('object');
     });
+
+    it('should format date with fallback when locale not found', () => {
+      const i18n = new I18n();
+      // Don't register any locale
+
+      const date = new Date('2023-11-15T12:30:00Z');
+      const formatted = i18n.formatDate(date, 'medium', 'nonexistent' as any);
+
+      // Should fallback to toLocaleDateString
+      expect(formatted).toBeTruthy();
+    });
+
+    it('should format number with fallback when locale not found', () => {
+      const i18n = new I18n();
+      // Don't register any locale
+
+      const formatted = i18n.formatNumber(1234.56, 'nonexistent' as any);
+
+      // Should fallback to toLocaleString
+      expect(formatted).toBeTruthy();
+    });
+
+    it('should format currency with fallback when locale not found', () => {
+      const i18n = new I18n();
+      // Don't register any locale
+
+      const formatted = i18n.formatCurrencyLocalized(1234.56, 'USD', 'nonexistent' as any);
+
+      // Should fallback to string concatenation
+      expect(formatted).toContain('1234.56');
+      expect(formatted).toContain('USD');
+    });
+
+    it('should apply date pattern correctly for edge cases', () => {
+      const i18n = new I18n();
+      i18n.registerLocale(createTestLocale('en', {}));
+
+      const date = new Date('2023-01-05T03:04:05Z');
+
+      // Test different patterns
+      const formatted1 = i18n.formatDate(date, 'YYYY');
+      const formatted2 = i18n.formatDate(date, 'MM');
+      const formatted3 = i18n.formatDate(date, 'DD');
+
+      expect(formatted1).toBe('2023');
+      expect(formatted2).toBe('01');
+      expect(formatted3).toBe('05');
+    });
+
+    it('should use custom formatter for numbers if provided', () => {
+      const i18n = new I18n();
+      i18n.registerLocale(createTestLocale('en', {}));
+
+      // Register custom formatter
+      i18n.registerFormatter({
+        id: 'customNumber',
+        formatNumber: (value) => {
+          return `CUSTOM:${value}`;
+        },
+      });
+
+      const formatted = i18n.formatNumber(1234.56);
+
+      expect(formatted).toBe('CUSTOM:1234.56');
+    });
+
+    it('should use custom formatter for currency if provided', () => {
+      const i18n = new I18n();
+      i18n.registerLocale(createTestLocale('en', {}));
+
+      // Register custom formatter
+      i18n.registerFormatter({
+        id: 'customCurrency',
+        formatCurrency: (value: number, currency: string) => {
+          return `CUSTOM:${value}${currency}`;
+        },
+      });
+
+      const formatted = i18n.formatCurrencyLocalized(100.00, 'EUR');
+
+      expect(formatted).toBe('CUSTOM:100EUR');
+    });
+
+    it('should fallback to key when message not found in non-existent locale', () => {
+      const i18n = new I18n();
+      i18n.registerLocale(createTestLocale('en', { test: 'Test' }));
+
+      // Try to get message from non-registered locale with non-existent key
+      const message = i18n.getMessage('nonexistent.key', { locale: 'nonexistent' as any });
+
+      // Should fallback and return key
+      expect(message).toBe('nonexistent.key');
+    });
   });
 });
 
