@@ -5,6 +5,7 @@ export { PostalAddressImpl, TradePartyImpl, PaymentDetailsImpl, DocumentHeaderIm
 export { XML_NAMESPACES, GUIDELINE_URNS, PROFILE_POLICIES, PATTERNS, REGIONAL_CONFIGS, getGuidelineUrn, getProfilePolicy, getRegionalConfig, getRegionalConfigOrDefault, formatDateFacturX, formatAmount, } from './core/constants';
 export { escapeXml, unescapeXml, sanitizeString, validateEmail, validatePhone, validateCountryCode, validateAmount, validateDate, } from './utils/InputSanitizer';
 export { CurrencyFormatter, isValidCurrency, getCurrencyInfo, formatCurrency, formatAmountForXml, parseCurrency, convertCurrency, } from './utils/CurrencyFormatter';
+export { XsdValidator, getDefaultValidator, validateXml, validateXmlAsync, type XsdValidationResult, type XsdValidationError, type ValidatorOptions, } from './validation/XsdValidator';
 export declare const VERSION = "1.0.0";
 export declare const FACTURX_VERSION = "1.07.2";
 export declare const EN16931_VERSION = "2017";

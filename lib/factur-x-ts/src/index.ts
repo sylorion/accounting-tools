@@ -112,6 +112,17 @@ export {
   convertCurrency,
 } from './utils/CurrencyFormatter';
 
+export {
+  // XSD Validation
+  XsdValidator,
+  getDefaultValidator,
+  validateXml,
+  validateXmlAsync,
+  type XsdValidationResult,
+  type XsdValidationError,
+  type ValidatorOptions,
+} from './validation/XsdValidator';
+
 // ============================================================================
 // VERSION INFO
 // ============================================================================
