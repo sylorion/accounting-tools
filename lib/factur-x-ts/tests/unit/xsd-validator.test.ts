@@ -443,6 +443,112 @@ describe('XsdValidator', () => {
 
       expect(result).toBeDefined();
     });
+
+    it('should handle invalid date format in XML', () => {
+      const validator = new XsdValidator();
+      const invalidDateXml = `<?xml version="1.0" encoding="UTF-8"?>
+<rsm:CrossIndustryInvoice xmlns:rsm="urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100"
+                          xmlns:ram="urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100"
+                          xmlns:udt="urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100">
+  <rsm:ExchangedDocumentContext>
+    <ram:GuidelineSpecifiedDocumentContextParameter>
+      <ram:ID>urn:cen.eu:en16931:2017#compliant#urn:factur-x.eu:1p0:en16931</ram:ID>
+    </ram:GuidelineSpecifiedDocumentContextParameter>
+  </rsm:ExchangedDocumentContext>
+  <rsm:ExchangedDocument>
+    <ram:ID>INV-001</ram:ID>
+    <ram:TypeCode>380</ram:TypeCode>
+    <ram:IssueDateTime>
+      <udt:DateTimeString>INVALID-DATE-FORMAT</udt:DateTimeString>
+    </ram:IssueDateTime>
+  </rsm:ExchangedDocument>
+  <rsm:SupplyChainTradeTransaction>
+    <ram:ApplicableHeaderTradeAgreement>
+      <ram:SellerTradeParty>
+        <ram:Name>Test Seller</ram:Name>
+      </ram:SellerTradeParty>
+      <ram:BuyerTradeParty>
+        <ram:Name>Test Buyer</ram:Name>
+      </ram:BuyerTradeParty>
+    </ram:ApplicableHeaderTradeAgreement>
+    <ram:ApplicableHeaderTradeSettlement>
+      <ram:InvoiceCurrencyCode>EUR</ram:InvoiceCurrencyCode>
+      <ram:SpecifiedTradeSettlementHeaderMonetarySummation>
+        <ram:GrandTotalAmount>1200.00</ram:GrandTotalAmount>
+      </ram:SpecifiedTradeSettlementHeaderMonetarySummation>
+    </ram:ApplicableHeaderTradeSettlement>
+  </rsm:SupplyChainTradeTransaction>
+</rsm:CrossIndustryInvoice>`;
+
+      const result = validator.validate(invalidDateXml, FacturxProfile.EN16931);
+
+      expect(result.isValid).toBe(false);
+      expect(result.errors.some(e => e.message.includes('date'))).toBe(true);
+    });
+
+    it('should use cache correctly with multiple validations', () => {
+      const validator = new XsdValidator();
+      const xml = createValidXml();
+
+      // Validate once to add to cache
+      const result1 = validator.validate(xml, FacturxProfile.EN16931);
+      expect(result1.cached).toBe(false);
+
+      const stats = validator.getCacheStats();
+      expect(stats.size).toBe(1);
+
+      // Validate again - should use cache
+      const result2 = validator.validate(xml, FacturxProfile.EN16931);
+      expect(result2.cached).toBe(true);
+
+      // Validate multiple times - should keep using cache
+      const result3 = validator.validate(xml, FacturxProfile.EN16931);
+      expect(result3.cached).toBe(true);
+
+      const newStats = validator.getCacheStats();
+      expect(newStats.size).toBe(1);
+    });
+
+    it('should update existing cache entry', () => {
+      const validator = new XsdValidator({ cacheSize: 2 });
+      const xml1 = createValidXml('INV-001');
+      const xml2 = createValidXml('INV-002');
+
+      // Add two entries
+      validator.validate(xml1, FacturxProfile.EN16931);
+      validator.validate(xml2, FacturxProfile.EN16931);
+
+      expect(validator.getCacheStats().size).toBe(2);
+
+      // Access xml1 again - should update its position in LRU
+      validator.validate(xml1, FacturxProfile.EN16931);
+
+      // Now add xml3 - should evict xml2, not xml1
+      const xml3 = createValidXml('INV-003');
+      validator.validate(xml3, FacturxProfile.EN16931);
+
+      expect(validator.getCacheStats().size).toBe(2);
+
+      // xml1 should still be cached (was recently accessed)
+      const result1 = validator.validate(xml1, FacturxProfile.EN16931);
+      expect(result1.cached).toBe(true);
+    });
+
+    it('should handle XML parsing errors gracefully', () => {
+      const validator = new XsdValidator();
+      // Create a deeply malformed XML that triggers parse error
+      const malformedXml = '<?xml version="1.0"?><root attr="unclosed value';
+
+      const result = validator.validate(malformedXml, FacturxProfile.EN16931);
+
+      expect(result.isValid).toBe(false);
+      expect(result.errors.length).toBeGreaterThan(0);
+      // Should have specific error code or message for parse errors
+      const hasParseError = result.errors.some(
+        e => e.code === 'XML_PARSE_ERROR' || e.code === 'XML_SYNTAX_ERROR'
+      );
+      expect(hasParseError).toBe(true);
+    });
   });
 });
 
