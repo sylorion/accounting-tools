@@ -47,11 +47,6 @@ describe('ProfileValidator', () => {
 
       const result = validator.validate(invoice, FacturxProfile.MINIMUM);
 
-      // Debug: log errors if validation fails
-      if (!result.isValid) {
-        console.log('Validation errors:', JSON.stringify(result.errors, null, 2));
-      }
-
       expect(result.isValid).toBe(true);
       expect(result.errors).toHaveLength(0);
       expect(result.profile).toBe(FacturxProfile.MINIMUM);
@@ -613,15 +608,30 @@ function createBasicWLInvoice(): any {
       id: 'INV-001',
       invoiceNumber: 'INV-001',
       invoiceDate: new Date('2023-11-15'),
+      typeCode: DocTypeCode.INVOICE,
     },
     seller: {
       name: 'Test Seller Inc.',
+      address: {
+        city: 'Paris',
+        postalCode: '75001',
+        countryCode: 'FR',
+      },
     },
     buyer: {
       name: 'Test Buyer Ltd.',
+      address: {
+        city: 'Lyon',
+        postalCode: '69001',
+        countryCode: 'FR',
+      },
     },
     payment: {
       meansCode: PaymentMeansCode.SEPA_CREDIT_TRANSFER,
+    },
+    totals: {
+      taxTotal: 200,
+      grandTotal: 1200,
     },
     currency: 'EUR',
   };
@@ -633,12 +643,23 @@ function createBasicInvoice(): any {
       id: 'INV-001',
       invoiceNumber: 'INV-001',
       invoiceDate: new Date('2023-11-15'),
+      typeCode: DocTypeCode.INVOICE,
     },
     seller: {
       name: 'Test Seller Inc.',
+      address: {
+        city: 'Paris',
+        postalCode: '75001',
+        countryCode: 'FR',
+      },
     },
     buyer: {
       name: 'Test Buyer Ltd.',
+      address: {
+        city: 'Lyon',
+        postalCode: '69001',
+        countryCode: 'FR',
+      },
     },
     payment: {},
     lines: [
@@ -649,6 +670,10 @@ function createBasicInvoice(): any {
         vatRate: 0.20,
       },
     ],
+    totals: {
+      taxTotal: 200,
+      grandTotal: 1200,
+    },
     currency: 'EUR',
   };
 }
@@ -688,6 +713,12 @@ function createEN16931Invoice(): any {
         vatRate: 0.20,
       },
     ],
+    totals: {
+      lineTotal: 1000,
+      taxBasis: 1000,
+      taxTotal: 200,
+      grandTotal: 1200,
+    },
     currency: 'EUR',
   };
 }

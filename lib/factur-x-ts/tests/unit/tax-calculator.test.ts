@@ -159,7 +159,7 @@ describe('TaxCalculator', () => {
     it('should apply line-level allowance (discount)', () => {
       const calculator = new TaxCalculator();
       const line = createLine(1, 10, 100, 0.20);
-      line.allowances = [createAllowance(100, 0.20)]; // 100 discount
+      line.allowances.push(createAllowance(100, 0.20)); // 100 discount
 
       const summary = calculator.computeSummary([line], []);
 
@@ -171,7 +171,7 @@ describe('TaxCalculator', () => {
     it('should apply line-level charge', () => {
       const calculator = new TaxCalculator();
       const line = createLine(1, 10, 100, 0.20);
-      line.charges = [createCharge(50, 0.20)]; // 50 surcharge
+      line.charges.push(createCharge(50, 0.20)); // 50 surcharge
 
       const summary = calculator.computeSummary([line], []);
 
@@ -183,8 +183,8 @@ describe('TaxCalculator', () => {
     it('should apply multiple line-level adjustments', () => {
       const calculator = new TaxCalculator();
       const line = createLine(1, 10, 100, 0.20);
-      line.allowances = [createAllowance(50, 0.20), createAllowance(30, 0.20)];
-      line.charges = [createCharge(20, 0.20)];
+      line.allowances.push(createAllowance(50, 0.20), createAllowance(30, 0.20));
+      line.charges.push(createCharge(20, 0.20));
 
       const summary = calculator.computeSummary([line], []);
 
@@ -195,7 +195,7 @@ describe('TaxCalculator', () => {
     it('should handle line-level adjustment with different VAT rate', () => {
       const calculator = new TaxCalculator();
       const line = createLine(1, 10, 100, 0.20);
-      line.allowances = [createAllowance(100, 0.055)]; // Different rate
+      line.allowances.push(createAllowance(100, 0.055)); // Different rate
 
       const summary = calculator.computeSummary([line], []);
 
@@ -257,7 +257,7 @@ describe('TaxCalculator', () => {
     it('should combine line and document level adjustments', () => {
       const calculator = new TaxCalculator();
       const line = createLine(1, 10, 100, 0.20); // 1000 HT
-      line.allowances = [createAllowance(50, 0.20)]; // Line discount
+      line.allowances.push(createAllowance(50, 0.20)); // Line discount
       const docAdjustments = [
         createAllowance(100, 0.20), // Doc discount
         createCharge(30, 0.20), // Doc charge
@@ -452,7 +452,7 @@ describe('TaxCalculator', () => {
         createLine(3, 1, 500, 0), // 500 @ 0%
       ];
 
-      lines[0].allowances = [createAllowance(50, 0.20)]; // Line discount
+      lines[0].allowances.push(createAllowance(50, 0.20)); // Line discount
 
       const docAdjustments = [
         createAllowance(100, 0.20), // Volume discount
