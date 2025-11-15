@@ -139,3 +139,38 @@ export const LIBRARY_INFO = Object.freeze({
     'CII D16B',
   ],
 });
+
+// ============================================================================
+// INTERNATIONALIZATION (i18n)
+// ============================================================================
+
+export {
+  // i18n Core
+  I18n,
+  getDefaultI18n,
+  t,
+  createI18n,
+  translate,
+
+  // Default Locales
+  en,
+  fr,
+  de,
+  DEFAULT_LOCALES,
+  getLocaleByCode,
+  getAvailableLocaleCodes,
+
+  // i18n Types
+  type LocaleCode,
+  type LocaleData,
+  type Messages,
+  type I18nOptions,
+  type TranslationOptions,
+  type I18nPlugin,
+  type FormatterPlugin,
+  type InterpolationContext,
+  type DateFormats,
+  type NumberFormats,
+  type PluralizationRule,
+  type TextDirection,
+} from './i18n';

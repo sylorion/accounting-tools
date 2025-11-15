@@ -19,4 +19,5 @@ export declare const LIBRARY_INFO: Readonly<{
     homepage: "https://factur-x.eu/";
     standards: string[];
 }>;
+export { I18n, getDefaultI18n, t, createI18n, translate, en, fr, de, DEFAULT_LOCALES, getLocaleByCode, getAvailableLocaleCodes, type LocaleCode, type LocaleData, type Messages, type I18nOptions, type TranslationOptions, type I18nPlugin, type FormatterPlugin, type InterpolationContext, type DateFormats, type NumberFormats, type PluralizationRule, type TextDirection, } from './i18n';
 //# sourceMappingURL=index.d.ts.map
