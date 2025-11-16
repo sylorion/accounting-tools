@@ -9,7 +9,7 @@
  * 5. AFRelationship for embedded files
  */
 
-import { PDFDocument, PDFName, PDFDict } from 'pdf-lib';
+import { PDFDocument, PDFName, PDFDict, PDFHexString, PDFArray } from 'pdf-lib';
 import { createHash } from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -170,9 +170,31 @@ export function generatePDFA3XMP(options: PDFA3MetadataOptions): string {
 // FILE ID GENERATION
 // ============================================================================
 
+/**
+ * Generate MD5 hash for PDF File ID
+ * PDF/A-3 requires a permanent identifier in the trailer dictionary
+ */
 export function generatePDFFileID(pdfBytes: Uint8Array): string {
   const hash = createHash('md5').update(pdfBytes).digest('hex');
   return hash.toUpperCase();
+}
+
+/**
+ * Generate a unique File ID based on current timestamp and random data
+ * This creates a deterministic ID for the PDF document
+ */
+export function generateFileIDArray(): [string, string] {
+  // Create two IDs: permanent and changing
+  // For PDF/A-3, both should be the same (permanent identifier)
+  const timestamp = Date.now().toString();
+  const random = Math.random().toString();
+  const combinedData = timestamp + random;
+
+  const hash = createHash('md5').update(combinedData).digest('hex');
+  const id = hash.toUpperCase();
+
+  // Return both IDs the same for PDF/A-3 compliance
+  return [id, id];
 }
 
 // ============================================================================
@@ -185,10 +207,11 @@ export interface EmbeddedFonts {
 }
 
 /**
- * Load Chillax fonts from project directory
+ * Load Chillax fonts from local assets directory
+ * lib/ is autonomous and contains all necessary assets
  */
 export async function loadChillaxFonts(): Promise<EmbeddedFonts> {
-  const fontsDir = path.join(__dirname, '../../../../src/Fonts/OTF');
+  const fontsDir = path.join(__dirname, '../../assets/fonts');
 
   const regular = await fs.promises.readFile(path.join(fontsDir, 'Chillax-Regular.otf'));
   const bold = await fs.promises.readFile(path.join(fontsDir, 'Chillax-Bold.otf'));
@@ -204,12 +227,13 @@ export async function loadChillaxFonts(): Promise<EmbeddedFonts> {
 // ============================================================================
 
 /**
- * Load sRGB ICC profile (version 2.0 for PDF/A-3 compliance)
+ * Load sRGB ICC profile (version 2.0 for PDF/A-3 compliance) from local assets
+ * lib/ is autonomous and contains all necessary assets
  */
 export async function loadSRGBProfile(): Promise<Uint8Array> {
   // Use sRGB2014.icc (version 2.0, RGB/XYZ-mntr) which is PDF/A-3 compliant
   // sRGB_v4 profiles are version 4.2 which is NOT accepted by veraPDF (must be < 5.0)
-  const iccPath = path.join(__dirname, '../../../../src/compliance/sRGB2014.icc');
+  const iccPath = path.join(__dirname, '../../assets/icc/sRGB2014.icc');
   const iccData = await fs.promises.readFile(iccPath);
   return new Uint8Array(iccData);
 }
@@ -255,6 +279,16 @@ export async function applyPDFA3Compliance(
 
   // 3. Set PDF Version to 1.7
   pdfDoc.catalog.set(PDFName.of('Version'), PDFName.of('1.7'));
+
+  // 4. Add File ID to trailer
+  // PDF/A-3 requires a permanent identifier in the trailer
+  const [id1, id2] = generateFileIDArray();
+  const fileIdArray = PDFArray.withContext(pdfDoc.context);
+  fileIdArray.push(PDFHexString.of(id1));
+  fileIdArray.push(PDFHexString.of(id2));
+
+  // Set the ID in the PDF trailer
+  pdfDoc.context.trailerInfo.ID = fileIdArray;
 }
 
 /**

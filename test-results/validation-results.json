@@ -4,7 +4,7 @@
     "template": "Modern",
     "profile": "EN16931",
     "pdfGenerated": true,
-    "pdfSize": 65292,
+    "pdfSize": 65372,
     "errors": [],
     "validationResult": {
       "isValid": true,
@@ -27,7 +27,7 @@
     "template": "Fancy",
     "profile": "EN16931",
     "pdfGenerated": true,
-    "pdfSize": 65487,
+    "pdfSize": 65563,
     "errors": [],
     "validationResult": {
       "isValid": true,
@@ -50,7 +50,7 @@
     "template": "Brand",
     "profile": "EN16931",
     "pdfGenerated": true,
-    "pdfSize": 65542,
+    "pdfSize": 65614,
     "errors": [],
     "validationResult": {
       "isValid": true,
@@ -73,7 +73,7 @@
     "template": "Corporate",
     "profile": "EN16931",
     "pdfGenerated": true,
-    "pdfSize": 65835,
+    "pdfSize": 65912,
     "errors": [],
     "validationResult": {
       "isValid": true,
@@ -96,7 +96,7 @@
     "template": "Minimal",
     "profile": "EN16931",
     "pdfGenerated": true,
-    "pdfSize": 65298,
+    "pdfSize": 65368,
     "errors": [],
     "validationResult": {
       "isValid": true,

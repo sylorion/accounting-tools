@@ -13,6 +13,7 @@ export interface PDFA3MetadataOptions {
 }
 export declare function generatePDFA3XMP(options: PDFA3MetadataOptions): string;
 export declare function generatePDFFileID(pdfBytes: Uint8Array): string;
+export declare function generateFileIDArray(): [string, string];
 export interface EmbeddedFonts {
     regular: Uint8Array;
     bold: Uint8Array;
