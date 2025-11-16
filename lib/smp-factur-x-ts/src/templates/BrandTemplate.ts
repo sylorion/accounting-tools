@@ -10,21 +10,10 @@
  * - Perfect for corporate businesses
  */
 
-import { rgb } from 'pdf-lib';
 import { TemplateRenderer } from '../core/TemplateRenderer';
 import { TemplateType } from '../types';
 
 export class BrandTemplate extends TemplateRenderer {
-  // Color palette matching the original brand design
-  private readonly COLORS = {
-    navy: rgb(0.05, 0.18, 0.37),      // Dark blue
-    orange: rgb(1.0, 0.4, 0.0),       // Bright orange
-    lightGray: rgb(0.95, 0.95, 0.95), // Very light gray
-    mediumGray: rgb(0.8, 0.8, 0.8),   // Medium gray
-    darkGray: rgb(0.3, 0.3, 0.3),     // Dark gray
-    white: rgb(1, 1, 1),
-  };
-
   protected getTemplateType(): TemplateType {
     return TemplateType.BRAND;
   }

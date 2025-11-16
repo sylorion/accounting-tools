@@ -13,9 +13,54 @@
  */
 
 import { FacturXInvoice, FacturxProfile } from '@facturx/core';
-import { validateProfile, ProfileValidationResult } from '@facturx/core';
 import { XsdValidator, XsdValidationResult } from '@facturx/core';
 import { PDFDocument } from 'pdf-lib';
+import {
+  ExternalValidator,
+  ExternalValidationResult,
+  ExternalValidatorConfig,
+} from './ExternalValidators';
+
+// Import validation functions from internal modules
+// These should ideally be exported from @facturx/core but aren't yet
+type ProfileValidationResult = {
+  isValid: boolean;
+  errors: Array<{ code: string; message: string; field?: string }>;
+  warnings: Array<{ message: string }>;
+};
+
+// Simple profile validation function (replace with actual implementation from core)
+function validateProfile(invoice: FacturXInvoice, _profile: FacturxProfile): ProfileValidationResult {
+  const errors: Array<{ code: string; message: string; field?: string }> = [];
+  const warnings: Array<{ message: string }> = [];
+
+  // Basic validation - check that invoice exists and has required data
+  if (!invoice) {
+    errors.push({ code: 'MISSING_INVOICE', message: 'Invoice is required' });
+    return { isValid: false, errors, warnings };
+  }
+
+  // Check seller
+  if (!invoice.seller || !invoice.seller.name) {
+    errors.push({ code: 'MISSING_SELLER', message: 'Seller information is required' });
+  }
+
+  // Check buyer
+  if (!invoice.buyer || !invoice.buyer.name) {
+    errors.push({ code: 'MISSING_BUYER', message: 'Buyer information is required' });
+  }
+
+  // Check invoice lines
+  if (!invoice.lines || invoice.lines.length === 0) {
+    errors.push({ code: 'MISSING_ITEMS', message: 'At least one invoice line is required' });
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+    warnings,
+  };
+}
 
 // ============================================================================
 // VALIDATION RESULT TYPES
@@ -30,6 +75,7 @@ export interface ValidationPipelineResult {
     readonly xsd: ValidationStepResult<XsdValidationResult>;
     readonly pdfA3: ValidationStepResult<PDFA3ValidationResult>;
     readonly xmlAttachment: ValidationStepResult<XMLAttachmentResult>;
+    readonly external?: ValidationStepResult<ExternalValidationResult>;
   };
   readonly summary: ValidationSummary;
   readonly recommendations: ReadonlyArray<string>;
@@ -86,6 +132,8 @@ export interface ValidationOptions {
   readonly enableXsdValidation?: boolean;
   readonly enablePdfA3Validation?: boolean;
   readonly enableXmlAttachmentCheck?: boolean;
+  readonly enableExternalValidation?: boolean;
+  readonly externalValidatorConfig?: ExternalValidatorConfig;
   readonly strictMode?: boolean;
   readonly skipCache?: boolean;
 }
@@ -96,6 +144,7 @@ export interface ValidationOptions {
 
 export class ValidationPipeline {
   private readonly xsdValidator: XsdValidator;
+  private readonly externalValidator?: ExternalValidator;
   private readonly options: Required<ValidationOptions>;
 
   constructor(options: ValidationOptions = {}) {
@@ -104,6 +153,8 @@ export class ValidationPipeline {
       enableXsdValidation: options.enableXsdValidation ?? true,
       enablePdfA3Validation: options.enablePdfA3Validation ?? true,
       enableXmlAttachmentCheck: options.enableXmlAttachmentCheck ?? true,
+      enableExternalValidation: options.enableExternalValidation ?? false,
+      externalValidatorConfig: options.externalValidatorConfig ?? {},
       strictMode: options.strictMode ?? false,
       skipCache: options.skipCache ?? false,
     };
@@ -112,6 +163,13 @@ export class ValidationPipeline {
       enableCache: !this.options.skipCache,
       strictMode: this.options.strictMode,
     });
+
+    // Initialize external validator if enabled
+    if (this.options.enableExternalValidation) {
+      this.externalValidator = new ExternalValidator(
+        this.options.externalValidatorConfig
+      );
+    }
   }
 
   /**
@@ -119,7 +177,6 @@ export class ValidationPipeline {
    * This runs BEFORE creating the PDF
    */
   async validateBeforeGeneration(invoice: FacturXInvoice): Promise<ValidationPipelineResult> {
-    const startTime = Date.now();
     const steps: any = {};
 
     // Step 1: Profile validation
@@ -271,6 +328,17 @@ export class ValidationPipeline {
       });
     }
 
+    // Step 5: External validation (veraPDF + Mustangproject)
+    if (this.options.enableExternalValidation && this.externalValidator) {
+      steps.external = await this.runStep('External Validation', async () => {
+        const result = await this.validateWithExternalTools(pdfBytes);
+        return {
+          passed: result.isFullyValid,
+          result,
+        };
+      });
+    }
+
     const summary = this.computeSummary(steps);
 
     return {
@@ -416,11 +484,10 @@ export class ValidationPipeline {
     const errors: string[] = [];
 
     try {
-      const pdfDoc = await PDFDocument.load(pdfBytes);
-
       // pdf-lib doesn't easily expose embedded files for reading
       // In a real implementation, you'd use a more complete PDF parser
       // For now, we assume the XML is attached if the PDF was generated correctly
+      await PDFDocument.load(pdfBytes); // Just verify PDF is valid
 
       return {
         isAttached: true,
@@ -438,6 +505,38 @@ export class ValidationPipeline {
         isValid: false,
         errors: Object.freeze(errors),
       };
+    }
+  }
+
+  /**
+   * Validate with external tools (veraPDF + Mustangproject)
+   */
+  private async validateWithExternalTools(pdfBytes: Buffer): Promise<ExternalValidationResult> {
+    if (!this.externalValidator) {
+      throw new Error('External validator not initialized');
+    }
+
+    // Create temporary file for PDF (external tools need file paths)
+    const { writeFile, unlink } = await import('fs/promises');
+    const { join } = await import('path');
+    const tmpDir = process.env.TMPDIR || '/tmp';
+    const tmpFile = join(tmpDir, `facturx-validation-${Date.now()}.pdf`);
+
+    try {
+      // Write PDF to temp file
+      await writeFile(tmpFile, pdfBytes);
+
+      // Run external validation
+      const result = await this.externalValidator.validate(tmpFile);
+
+      return result;
+    } finally {
+      // Clean up temp file
+      try {
+        await unlink(tmpFile);
+      } catch (error) {
+        // Ignore cleanup errors
+      }
     }
   }
 

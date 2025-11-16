@@ -9,22 +9,10 @@
  * - Perfect for established businesses
  */
 
-import { rgb } from 'pdf-lib';
 import { TemplateRenderer } from '../core/TemplateRenderer';
 import { TemplateType } from '../types';
 
 export class CorporateTemplate extends TemplateRenderer {
-  // Professional color palette
-  private readonly COLORS = {
-    corporateBlue: rgb(0.16, 0.29, 0.45),     // #293A73
-    lightBlue: rgb(0.85, 0.90, 0.95),         // #D9E5F2
-    darkGray: rgb(0.25, 0.25, 0.25),          // #404040
-    mediumGray: rgb(0.6, 0.6, 0.6),           // #999999
-    lightGray: rgb(0.93, 0.93, 0.93),         // #EDEDED
-    white: rgb(1, 1, 1),
-    accentGold: rgb(0.72, 0.65, 0.26),        // #B8A643
-  };
-
   protected getTemplateType(): TemplateType {
     // Using BRAND type as CORPORATE doesn't exist in enum
     return TemplateType.BRAND;

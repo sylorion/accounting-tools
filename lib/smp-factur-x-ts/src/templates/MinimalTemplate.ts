@@ -9,22 +9,10 @@
  * - Perfect for modern, minimalist businesses
  */
 
-import { rgb } from 'pdf-lib';
 import { TemplateRenderer } from '../core/TemplateRenderer';
 import { TemplateType } from '../types';
 
 export class MinimalTemplate extends TemplateRenderer {
-  // Minimal color palette - mostly monochrome
-  private readonly COLORS = {
-    black: rgb(0, 0, 0),
-    darkGray: rgb(0.2, 0.2, 0.2),
-    mediumGray: rgb(0.5, 0.5, 0.5),
-    lightGray: rgb(0.9, 0.9, 0.9),
-    veryLightGray: rgb(0.97, 0.97, 0.97),
-    white: rgb(1, 1, 1),
-    accent: rgb(0.1, 0.1, 0.1), // Almost black accent
-  };
-
   protected getTemplateType(): TemplateType {
     return TemplateType.MINIMAL;
   }

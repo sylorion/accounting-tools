@@ -10,22 +10,10 @@
  * - Perfect for creative businesses
  */
 
-import { rgb } from 'pdf-lib';
 import { TemplateRenderer } from '../core/TemplateRenderer';
 import { TemplateType } from '../types';
 
 export class FancyTemplate extends TemplateRenderer {
-  // Color palette matching the original fancy design
-  private readonly COLORS = {
-    pink: rgb(219/255, 39/255, 119/255),
-    pinkLight: rgb(252/255, 231/255, 243/255),
-    blue: rgb(59/255, 130/255, 246/255),
-    blueLight: rgb(239/255, 246/255, 255/255),
-    gray: rgb(107/255, 114/255, 128/255),
-    grayLight: rgb(249/255, 250/255, 251/255),
-    dark: rgb(31/255, 41/255, 55/255)
-  };
-
   protected getTemplateType(): TemplateType {
     return TemplateType.FANCY;
   }

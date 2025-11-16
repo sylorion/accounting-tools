@@ -601,6 +601,9 @@ export abstract class TemplateRenderer {
       showTaxBreakdown: options.showTaxBreakdown ?? true,
       showPaymentTerms: options.showPaymentTerms ?? true,
       customFooter: options.customFooter || '',
+      validateBeforeGeneration: options.validateBeforeGeneration ?? true,
+      validateAfterGeneration: options.validateAfterGeneration ?? true,
+      strictValidation: options.strictValidation ?? false,
     };
   }
 

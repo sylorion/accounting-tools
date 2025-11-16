@@ -57,6 +57,29 @@ export {
   validateQuick,
 } from './validation/ValidationPipeline';
 
+// External validation tools
+export {
+  ExternalValidator,
+  VeraPDFValidator,
+  MustangprojectValidator,
+  ExternalValidationResult,
+  ExternalValidationSummary,
+  VeraPDFResult,
+  VeraPDFError,
+  VeraPDFWarning,
+  VeraPDFMetadata,
+  MustangprojectResult,
+  MustangError,
+  MustangWarning,
+  ExternalValidatorConfig,
+  checkExternalValidators,
+  findVeraPDF,
+  findMustangproject,
+  getDefaultExternalValidator,
+  validateWithExternalTools,
+  extractXMLWithExternalTools,
+} from './validation/ExternalValidators';
+
 // ============================================================================
 // CONVENIENCE FUNCTIONS
 // ============================================================================
