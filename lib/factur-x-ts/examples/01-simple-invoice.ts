@@ -1,8 +1,8 @@
 /**
- * Example 01: Simple Invoice - MINIMUM Profile
+ * Example 01: Simple Invoice - BASIC Profile
  *
- * This is the simplest possible Factur-X invoice.
- * Uses MINIMUM profile with minimal required fields:
+ * This is a simple Factur-X invoice with minimal fields.
+ * Uses BASIC profile with basic required fields:
  * - 1 product line
  * - No tax (VAT = 0%)
  * - Basic seller/buyer information
@@ -28,7 +28,7 @@ import { join } from 'path';
 
 async function generateSimpleInvoice() {
   console.log('='.repeat(60));
-  console.log('Example 01: Simple Invoice (MINIMUM Profile)');
+  console.log('Example 01: Simple Invoice (BASIC Profile)');
   console.log('='.repeat(60));
 
   // ========================================
@@ -110,7 +110,7 @@ async function generateSimpleInvoice() {
   // ========================================
 
   const invoice = new FacturXInvoice(
-    FacturxProfile.MINIMUM,    // Profil le plus simple
+    FacturxProfile.BASIC,    // BASIC profile - simple invoice with lines
     header,
     seller,
     buyer,
@@ -135,7 +135,7 @@ async function generateSimpleInvoice() {
   // 8. GENERATE XML (Générer le XML Factur-X)
   // ========================================
 
-  const xml = invoice.generateXml(false); // false = skip XSD validation for demo
+  const xml = invoice.generateXml(true); // false = skip XSD validation for demo
 
   // Save XML to file
   const xmlPath = join(__dirname, 'output', '01-simple-invoice.xml');

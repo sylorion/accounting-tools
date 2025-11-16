@@ -164,7 +164,7 @@ async function generateInvoiceWithVAT() {
   // 8. GENERATE XML (Générer le XML Factur-X)
   // ========================================
 
-  const xml = invoice.generateXml(false);
+  const xml = invoice.generateXml(true);
 
   // Save XML to file
   const xmlPath = join(__dirname, 'output', '02-invoice-with-vat.xml');

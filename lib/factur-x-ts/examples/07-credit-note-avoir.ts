@@ -193,7 +193,7 @@ async function generateCreditNote() {
   // 8. GENERATE XML (Générer le XML Factur-X)
   // ========================================
 
-  const xml = creditNote.generateXml(false);
+  const xml = creditNote.generateXml(true);
 
   // Save XML to file
   const xmlPath = join(__dirname, 'output', '07-credit-note-avoir.xml');

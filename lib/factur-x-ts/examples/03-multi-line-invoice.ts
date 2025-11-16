@@ -221,7 +221,7 @@ async function generateMultiLineInvoice() {
   // 8. GENERATE XML (Générer le XML Factur-X)
   // ========================================
 
-  const xml = invoice.generateXml(false);
+  const xml = invoice.generateXml(true);
 
   // Save XML to file
   const xmlPath = join(__dirname, 'output', '03-multi-line-invoice.xml');

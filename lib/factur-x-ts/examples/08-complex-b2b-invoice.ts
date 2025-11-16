@@ -345,7 +345,7 @@ async function generateComplexB2BInvoice() {
   // 9. GENERATE XML (Générer le XML Factur-X)
   // ========================================
 
-  const xml = invoice.generateXml(false);
+  const xml = invoice.generateXml(true);
 
   // Save XML to file
   const xmlPath = join(__dirname, 'output', '08-complex-b2b-invoice.xml');

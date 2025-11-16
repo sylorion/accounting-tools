@@ -94,6 +94,14 @@ export class FacturXInvoice {
   }
 
   /**
+   * Get totals (read-only) - for profile validation
+   * Returns cached summary if available, undefined otherwise
+   */
+  get totals(): MonetarySummary | undefined {
+    return this.cachedSummary;
+  }
+
+  /**
    * Validate profile compliance - Optimized with Map lookups
    */
   validateProfile(): void {
@@ -128,13 +136,13 @@ export class FacturXInvoice {
       return this.cachedXml;
     }
 
-    // Validate profile if requested
+    // Compute totals first (needed for profile validation)
+    const summary = this.finalizeTotals();
+
+    // Validate profile if requested (after totals are computed)
     if (checkProfile) {
       this.validateProfile();
     }
-
-    // Compute totals (will use cache if available)
-    const summary = this.finalizeTotals();
 
     // Build XML - optimized with xmlbuilder2
     const xml = this.buildXmlDocument(summary);

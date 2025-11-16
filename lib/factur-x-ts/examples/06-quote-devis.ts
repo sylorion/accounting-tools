@@ -297,7 +297,7 @@ async function generateQuote() {
   // 9. GENERATE XML (Générer le XML Factur-X)
   // ========================================
 
-  const xml = quote.generateXml(false);
+  const xml = quote.generateXml(true);
 
   // Save XML to file
   const xmlPath = join(__dirname, 'output', '06-quote-devis.xml');
