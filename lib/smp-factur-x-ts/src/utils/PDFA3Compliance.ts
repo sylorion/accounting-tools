@@ -9,7 +9,7 @@
  * 5. AFRelationship for embedded files
  */
 
-import { PDFDocument, PDFName, PDFDict, PDFHexString, PDFArray } from 'pdf-lib';
+import { PDFDocument, PDFName, PDFDict, PDFHexString, PDFArray, PDFString } from 'pdf-lib';
 import { createHash } from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -299,6 +299,105 @@ export function addAFRelationshipToFile(
   relationship: 'Source' | 'Data' | 'Alternative' | 'Supplement' | 'Unspecified' = 'Data'
 ): void {
   fileSpecDict.set(PDFName.of('AFRelationship'), PDFName.of(relationship));
+}
+
+/**
+ * Attach a file to the PDF with AFRelationship for PDF/A-3 compliance
+ * This manually creates the file specification with AFRelationship
+ */
+export async function addFacturXAttachmentWithAFRelationship(
+  pdfDoc: PDFDocument,
+  fileData: Buffer,
+  fileName: string,
+  options: {
+    mimeType?: string;
+    description?: string;
+    creationDate?: Date;
+    modificationDate?: Date;
+  }
+): Promise<void> {
+  const {
+    mimeType = 'application/octet-stream',
+    description = '',
+    creationDate = new Date(),
+    modificationDate = new Date(),
+  } = options;
+
+  // Create the embedded file stream
+  const embeddedFileStream = pdfDoc.context.stream(fileData, {
+    Type: 'EmbeddedFile',
+    Subtype: mimeType,
+  });
+
+  const embeddedFileStreamRef = pdfDoc.context.register(embeddedFileStream);
+
+  // Create the file specification dictionary WITH AFRelationship
+  const fileSpecDict = pdfDoc.context.obj({
+    Type: 'Filespec',
+    F: PDFString.of(fileName),
+    UF: PDFString.of(fileName), // Unicode filename
+    Desc: PDFString.of(description),
+    AFRelationship: PDFName.of('Data'), // PDF/A-3 requirement
+    EF: {
+      F: embeddedFileStreamRef,
+      UF: embeddedFileStreamRef,
+    },
+  });
+
+  // Add creation and modification dates if provided
+  const params = pdfDoc.context.obj({
+    Size: fileData.length,
+    CreationDate: PDFString.fromDate(creationDate),
+    ModDate: PDFString.fromDate(modificationDate),
+  });
+
+  // Link params to embedded file stream
+  embeddedFileStream.dict.set(PDFName.of('Params'), params);
+
+  const fileSpecDictRef = pdfDoc.context.register(fileSpecDict);
+
+  // Add to the PDF catalog's Names dictionary
+  const catalog = pdfDoc.catalog;
+
+  // Get or create Names dictionary
+  let namesDict = catalog.lookup(PDFName.of('Names'), PDFDict);
+  if (!namesDict) {
+    namesDict = pdfDoc.context.obj({});
+    catalog.set(PDFName.of('Names'), namesDict);
+  }
+
+  // Get or create EmbeddedFiles dictionary
+  let embeddedFilesDict = namesDict.lookup(PDFName.of('EmbeddedFiles'), PDFDict);
+  if (!embeddedFilesDict) {
+    embeddedFilesDict = pdfDoc.context.obj({});
+    namesDict.set(PDFName.of('EmbeddedFiles'), embeddedFilesDict);
+  }
+
+  // Get or create Names array
+  let namesArray = embeddedFilesDict.lookup(PDFName.of('Names'));
+  if (!namesArray) {
+    namesArray = pdfDoc.context.obj([]);
+    embeddedFilesDict.set(PDFName.of('Names'), namesArray);
+  }
+
+  // Add filename and file spec to Names array
+  // Format: [name1, filespec1, name2, filespec2, ...]
+  if (namesArray instanceof PDFArray || (namesArray as any).push) {
+    (namesArray as any).push(PDFString.of(fileName));
+    (namesArray as any).push(fileSpecDictRef);
+  }
+
+  // Add to /AF array in catalog (PDF/A-3 requirement)
+  // This is critical for PDF/A-3 compliance
+  let afArray = catalog.get(PDFName.of('AF'));
+  if (!afArray) {
+    afArray = pdfDoc.context.obj([]);
+    catalog.set(PDFName.of('AF'), afArray);
+  }
+  const arrayAF = afArray as PDFArray;
+  arrayAF.push(fileSpecDictRef);
+
+  console.log('✓ Factur-X XML attached with AFRelationship and added to /AF array');
 }
 
 /**

@@ -1,6 +1,6 @@
 # Factur-X Validation Test Results
 
-**Test Date:** 2025-11-16T16:05:33.590Z
+**Test Date:** 2025-11-16T18:47:07.852Z
 **External Tools:** veraPDF: ✓, Mustangproject: ✗
 
 ## Summary Table
@@ -19,7 +19,7 @@
 
 - **Template:** Modern
 - **Profile:** EN16931
-- **PDF Generated:** Yes (65372 bytes)
+- **PDF Generated:** Yes (70333 bytes)
 - **Internal Validation:**
   - Valid: Yes ✓
   - Score: 100%
@@ -37,7 +37,7 @@
 
 - **Template:** Fancy
 - **Profile:** EN16931
-- **PDF Generated:** Yes (65563 bytes)
+- **PDF Generated:** Yes (70527 bytes)
 - **Internal Validation:**
   - Valid: Yes ✓
   - Score: 100%
@@ -55,7 +55,7 @@
 
 - **Template:** Brand
 - **Profile:** EN16931
-- **PDF Generated:** Yes (65614 bytes)
+- **PDF Generated:** Yes (70589 bytes)
 - **Internal Validation:**
   - Valid: Yes ✓
   - Score: 100%
@@ -73,7 +73,7 @@
 
 - **Template:** Corporate
 - **Profile:** EN16931
-- **PDF Generated:** Yes (65912 bytes)
+- **PDF Generated:** Yes (70871 bytes)
 - **Internal Validation:**
   - Valid: Yes ✓
   - Score: 100%
@@ -91,7 +91,7 @@
 
 - **Template:** Minimal
 - **Profile:** EN16931
-- **PDF Generated:** Yes (65368 bytes)
+- **PDF Generated:** Yes (70334 bytes)
 - **Internal Validation:**
   - Valid: Yes ✓
   - Score: 100%

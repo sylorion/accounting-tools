@@ -22,6 +22,12 @@ export declare function loadChillaxFonts(): Promise<EmbeddedFonts>;
 export declare function loadSRGBProfile(): Promise<Uint8Array>;
 export declare function applyPDFA3Compliance(pdfDoc: PDFDocument, options: PDFA3MetadataOptions): Promise<void>;
 export declare function addAFRelationshipToFile(fileSpecDict: PDFDict, relationship?: 'Source' | 'Data' | 'Alternative' | 'Supplement' | 'Unspecified'): void;
+export declare function addFacturXAttachmentWithAFRelationship(pdfDoc: PDFDocument, fileData: Buffer, fileName: string, options: {
+    mimeType?: string;
+    description?: string;
+    creationDate?: Date;
+    modificationDate?: Date;
+}): Promise<void>;
 export declare function setPDFFileID(_pdfDoc: PDFDocument, _fileId: string): void;
 export interface PDFA3SetupOptions {
     title: string;

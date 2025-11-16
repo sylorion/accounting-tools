@@ -9,7 +9,7 @@
  * - Optimized PDF-lib usage
  */
 
-import { PDFDocument, PDFPage, PDFFont, PDFName, PDFDict, rgb } from 'pdf-lib';
+import { PDFDocument, PDFPage, PDFFont, rgb } from 'pdf-lib';
 import fontkit from '@pdf-lib/fontkit';
 import {
   FacturXInvoice,
@@ -33,9 +33,9 @@ import {
 } from '../validation/ValidationPipeline';
 import {
   setupPDFA3Compliance,
-  addAFRelationshipToFile,
   loadChillaxFonts,
 } from '../utils/PDFA3Compliance';
+import { attachFileWithAFRelationship } from '../utils/AFRelationshipFix';
 
 // ============================================================================
 // BASE TEMPLATE RENDERER
@@ -695,8 +695,9 @@ export abstract class TemplateRenderer {
     const { invoice } = this.context;
     const xml = invoice.generateXml(true);
 
-    // Attach as embedded file
-    await this.pdfDoc.attach(
+    // Manually attach the file with AFRelationship for PDF/A-3 compliance
+    await attachFileWithAFRelationship(
+      this.pdfDoc,
       Buffer.from(xml, 'utf-8'),
       'factur-x.xml',
       {
@@ -704,44 +705,9 @@ export abstract class TemplateRenderer {
         description: 'Factur-X XML Invoice',
         creationDate: this.context.generatedAt,
         modificationDate: this.context.generatedAt,
+        relationship: 'Data', // PDF/A-3 requirement for Factur-X
       }
     );
-
-    // PDF/A-3 compliance: Add AFRelationship to embedded file
-    // We need to access the file specification dictionary and add AFRelationship
-    try {
-      // Get the embedded files name tree from catalog
-      const catalog = this.pdfDoc.catalog;
-      const names = catalog.lookup(PDFName.of('Names'), PDFDict);
-
-      if (names) {
-        const embeddedFiles = names.lookup(PDFName.of('EmbeddedFiles'), PDFDict);
-
-        if (embeddedFiles) {
-          // Get the Names array - it's a PDFArray
-          const namesKey = PDFName.of('Names');
-          const nameArrayRef = embeddedFiles.get(namesKey);
-
-          if (nameArrayRef) {
-            const nameArray = this.pdfDoc.context.lookup(nameArrayRef) as any;
-
-            // Find the file spec for factur-x.xml (last one added)
-            if (nameArray && nameArray.length >= 2) {
-              const fileSpecRef = nameArray[nameArray.length - 1];
-              const fileSpec = this.pdfDoc.context.lookup(fileSpecRef, PDFDict);
-
-              if (fileSpec) {
-                // Add AFRelationship as required by PDF/A-3
-                addAFRelationshipToFile(fileSpec, 'Data');
-              }
-            }
-          }
-        }
-      }
-    } catch (error) {
-      console.warn('Could not add AFRelationship to embedded file:', error);
-      // Continue - the file is still embedded, just missing AFRelationship
-    }
 
     return xml;
   }
