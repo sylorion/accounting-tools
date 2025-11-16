@@ -9,7 +9,8 @@
  * - Optimized PDF-lib usage
  */
 
-import { PDFDocument, PDFPage, rgb, StandardFonts } from 'pdf-lib';
+import { PDFDocument, PDFPage, PDFFont, PDFName, PDFDict, rgb } from 'pdf-lib';
+import fontkit from '@pdf-lib/fontkit';
 import {
   FacturXInvoice,
   formatAmount,
@@ -30,6 +31,11 @@ import {
   ValidationPipeline,
   ValidationPipelineResult,
 } from '../validation/ValidationPipeline';
+import {
+  setupPDFA3Compliance,
+  addAFRelationshipToFile,
+  loadChillaxFonts,
+} from '../utils/PDFA3Compliance';
 
 // ============================================================================
 // BASE TEMPLATE RENDERER
@@ -42,8 +48,14 @@ export abstract class TemplateRenderer {
   protected renderContext!: RenderContext;
   protected strings!: LocalizedStrings;
 
-  // Font cache
-  private fontCache: Map<string, any> = new Map();
+  // Font cache (now contains embedded fonts)
+  private fontCache: Map<string, PDFFont> = new Map();
+
+  // Embedded Chillax fonts (loaded once)
+  private chillaxFonts?: {
+    regular: PDFFont;
+    bold: PDFFont;
+  };
 
   // Validation pipeline
   private validationPipeline: ValidationPipeline;
@@ -99,7 +111,22 @@ export abstract class TemplateRenderer {
     // STEP 3: Create PDF document
     this.pdfDoc = await PDFDocument.create();
 
-    // Add metadata
+    // STEP 3.0: Register fontkit to enable custom font embedding
+    this.pdfDoc.registerFontkit(fontkit);
+
+    // STEP 3.1: Load and embed Chillax fonts (PDF/A-3 compliance: all fonts must be embedded)
+    await this.loadEmbeddedFonts();
+
+    // STEP 3.2: Apply PDF/A-3 compliance (XMP metadata, OutputIntent, etc.)
+    await setupPDFA3Compliance(this.pdfDoc, {
+      title: invoice.header.name || 'Invoice',
+      author: invoice.seller.name,
+      subject: `Invoice ${invoice.header.invoiceNumber}`,
+      creator: 'factur-x-ts',
+      keywords: ['Invoice', 'Factur-X', 'EN16931', 'PDF/A-3'],
+    });
+
+    // Add metadata (basic PDF metadata, XMP is already added by setupPDFA3Compliance)
     this.addMetadata();
 
     // Create first page
@@ -222,9 +249,9 @@ export abstract class TemplateRenderer {
     const { theme } = this.context;
     const size = options.size || theme.fontSize;
     const color = options.color || theme.textColor;
-    const fontName = options.bold ? StandardFonts.HelveticaBold : StandardFonts.Helvetica;
+    const fontName = options.bold ? 'Helvetica-Bold' : 'Helvetica';
 
-    // Get font (cached)
+    // Get font (cached - now returns embedded Chillax fonts)
     const font = this.getFont(fontName);
 
     // Parse color
@@ -546,12 +573,40 @@ export abstract class TemplateRenderer {
   /**
    * Get font - Cached
    */
-  private getFont(fontName: string): any {
-    if (!this.fontCache.has(fontName)) {
-      const font = this.pdfDoc.embedStandardFont(fontName as any);
-      this.fontCache.set(fontName, font);
+  /**
+   * Load embedded Chillax fonts (PDF/A-3 compliance)
+   */
+  private async loadEmbeddedFonts(): Promise<void> {
+    if (this.chillaxFonts) {
+      return; // Already loaded
     }
-    return this.fontCache.get(fontName);
+
+    const fontFiles = await loadChillaxFonts();
+
+    const regular = await this.pdfDoc.embedFont(fontFiles.regular);
+    const bold = await this.pdfDoc.embedFont(fontFiles.bold);
+
+    this.chillaxFonts = { regular, bold };
+
+    // Pre-populate font cache with embedded fonts
+    this.fontCache.set('Helvetica', regular);
+    this.fontCache.set('Helvetica-Bold', bold);
+    this.fontCache.set('Times-Roman', regular);
+    this.fontCache.set('Times-Bold', bold);
+    this.fontCache.set('Courier', regular);
+    this.fontCache.set('Courier-Bold', bold);
+  }
+
+  /**
+   * Get font - now returns embedded Chillax fonts
+   */
+  private getFont(fontName: string): PDFFont {
+    // All standard font requests are mapped to embedded Chillax fonts
+    if (!this.fontCache.has(fontName)) {
+      // Default to regular if font not found
+      return this.chillaxFonts?.regular || this.fontCache.get('Helvetica')!;
+    }
+    return this.fontCache.get(fontName)!;
   }
 
   /**
@@ -651,6 +706,42 @@ export abstract class TemplateRenderer {
         modificationDate: this.context.generatedAt,
       }
     );
+
+    // PDF/A-3 compliance: Add AFRelationship to embedded file
+    // We need to access the file specification dictionary and add AFRelationship
+    try {
+      // Get the embedded files name tree from catalog
+      const catalog = this.pdfDoc.catalog;
+      const names = catalog.lookup(PDFName.of('Names'), PDFDict);
+
+      if (names) {
+        const embeddedFiles = names.lookup(PDFName.of('EmbeddedFiles'), PDFDict);
+
+        if (embeddedFiles) {
+          // Get the Names array - it's a PDFArray
+          const namesKey = PDFName.of('Names');
+          const nameArrayRef = embeddedFiles.get(namesKey);
+
+          if (nameArrayRef) {
+            const nameArray = this.pdfDoc.context.lookup(nameArrayRef) as any;
+
+            // Find the file spec for factur-x.xml (last one added)
+            if (nameArray && nameArray.length >= 2) {
+              const fileSpecRef = nameArray[nameArray.length - 1];
+              const fileSpec = this.pdfDoc.context.lookup(fileSpecRef, PDFDict);
+
+              if (fileSpec) {
+                // Add AFRelationship as required by PDF/A-3
+                addAFRelationshipToFile(fileSpec, 'Data');
+              }
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('Could not add AFRelationship to embedded file:', error);
+      // Continue - the file is still embedded, just missing AFRelationship
+    }
 
     return xml;
   }

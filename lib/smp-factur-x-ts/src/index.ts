@@ -81,6 +81,23 @@ export {
 } from './validation/ExternalValidators';
 
 // ============================================================================
+// PDF/A-3 COMPLIANCE UTILITIES
+// ============================================================================
+
+export {
+  setupPDFA3Compliance,
+  applyPDFA3Compliance,
+  addAFRelationshipToFile,
+  loadChillaxFonts,
+  loadSRGBProfile,
+  generatePDFA3XMP,
+  generatePDFFileID,
+  EmbeddedFonts,
+  PDFA3MetadataOptions,
+  PDFA3SetupOptions,
+} from './utils/PDFA3Compliance';
+
+// ============================================================================
 // CONVENIENCE FUNCTIONS
 // ============================================================================
 

@@ -7,6 +7,7 @@ export { CorporateTemplate } from './templates/CorporateTemplate';
 export { MinimalTemplate } from './templates/MinimalTemplate';
 export { ValidationPipeline, ValidationPipelineResult, PDFA3ValidationResult, XMLAttachmentResult, ValidationSummary, ValidationOptions as ValidationPipelineOptions, getDefaultPipeline, validateBeforeGeneration, validateAfterGeneration, validateQuick, } from './validation/ValidationPipeline';
 export { ExternalValidator, VeraPDFValidator, MustangprojectValidator, ExternalValidationResult, ExternalValidationSummary, VeraPDFResult, VeraPDFError, VeraPDFWarning, VeraPDFMetadata, MustangprojectResult, MustangError, MustangWarning, ExternalValidatorConfig, checkExternalValidators, findVeraPDF, findMustangproject, getDefaultExternalValidator, validateWithExternalTools, extractXMLWithExternalTools, } from './validation/ExternalValidators';
+export { setupPDFA3Compliance, applyPDFA3Compliance, addAFRelationshipToFile, loadChillaxFonts, loadSRGBProfile, generatePDFA3XMP, generatePDFFileID, EmbeddedFonts, PDFA3MetadataOptions, PDFA3SetupOptions, } from './utils/PDFA3Compliance';
 import { FacturXInvoice } from '@facturx/core';
 import { TemplateOptions, PDFGenerationResult, TemplateType } from './types';
 export declare function generateModernPDF(invoice: FacturXInvoice, options?: Partial<TemplateOptions>): Promise<PDFGenerationResult>;

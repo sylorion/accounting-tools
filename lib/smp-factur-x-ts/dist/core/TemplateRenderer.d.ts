@@ -9,6 +9,7 @@ export declare abstract class TemplateRenderer {
     protected renderContext: RenderContext;
     protected strings: LocalizedStrings;
     private fontCache;
+    private chillaxFonts?;
     private validationPipeline;
     constructor();
     generate(invoice: FacturXInvoice, options?: Partial<TemplateOptions>): Promise<PDFGenerationResult & {
@@ -38,6 +39,7 @@ export declare abstract class TemplateRenderer {
     protected renderParties(): RenderedElement;
     protected renderLineItems(): RenderedElement;
     protected renderTotals(): RenderedElement;
+    private loadEmbeddedFonts;
     private getFont;
     private parseColor;
     private getPageSize;
