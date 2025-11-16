@@ -18,10 +18,13 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
+    "test:validation": "node test-validation.js",
     "check": "./check-libs.sh",
     "check:quick": "./check-libs.sh --skip-build",
     "check:strict": "./check-libs.sh --coverage-threshold=99",
-    "check:libs": "cd lib/factur-x-ts && npm run build && npm run test:coverage"
+    "check:libs": "cd lib/factur-x-ts && npm run build && npm run test:coverage",
+    "setup:validation": "./scripts/setup-validation-tools.sh",
+    "validate:external": "./scripts/validate-facturx.sh"
   },
   "keywords": [
     "invoice",
