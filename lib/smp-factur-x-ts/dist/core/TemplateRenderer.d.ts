@@ -1,6 +1,7 @@
 import { PDFDocument, PDFPage } from 'pdf-lib';
 import { FacturXInvoice } from '@facturx/core';
 import { TemplateOptions, TemplateContext, PDFGenerationResult, RenderContext, RenderedElement, LocalizedStrings, TemplateType } from '../types';
+import { ValidationPipelineResult } from '../validation/ValidationPipeline';
 export declare abstract class TemplateRenderer {
     protected pdfDoc: PDFDocument;
     protected currentPage: PDFPage;
@@ -8,8 +9,11 @@ export declare abstract class TemplateRenderer {
     protected renderContext: RenderContext;
     protected strings: LocalizedStrings;
     private fontCache;
+    private validationPipeline;
     constructor();
-    generate(invoice: FacturXInvoice, options?: Partial<TemplateOptions>): Promise<PDFGenerationResult>;
+    generate(invoice: FacturXInvoice, options?: Partial<TemplateOptions>): Promise<PDFGenerationResult & {
+        validation?: ValidationPipelineResult;
+    }>;
     protected abstract renderContent(): Promise<void>;
     protected abstract getTemplateType(): TemplateType;
     protected addPage(): void;

@@ -94,6 +94,14 @@ export class FacturXInvoice {
   }
 
   /**
+   * Get totals - Lazy getter for profile validation
+   * This allows profile validation to check for totals.lineTotal, etc.
+   */
+  get totals(): MonetarySummary {
+    return this.finalizeTotals();
+  }
+
+  /**
    * Validate profile compliance - Optimized with Map lookups
    */
   validateProfile(): void {

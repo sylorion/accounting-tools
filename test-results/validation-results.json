@@ -3,50 +3,85 @@
     "name": "modern-en16931",
     "template": "Modern",
     "profile": "EN16931",
-    "pdfGenerated": false,
-    "pdfSize": 0,
-    "errors": [
-      "Test failed: [Factur-X] Profile EN16931 requires field 'header.typeCode', but it is missing."
-    ]
+    "pdfGenerated": true,
+    "pdfSize": 4499,
+    "errors": [],
+    "validationResult": {
+      "isValid": true,
+      "score": 100,
+      "compliance": "FULL",
+      "errors": 0,
+      "warnings": 0,
+      "steps": 4,
+      "stepsPassed": 4
+    }
   },
   {
     "name": "fancy-en16931",
     "template": "Fancy",
     "profile": "EN16931",
-    "pdfGenerated": false,
-    "pdfSize": 0,
-    "errors": [
-      "Test failed: [Factur-X] Profile EN16931 requires field 'header.typeCode', but it is missing."
-    ]
+    "pdfGenerated": true,
+    "pdfSize": 4692,
+    "errors": [],
+    "validationResult": {
+      "isValid": true,
+      "score": 100,
+      "compliance": "FULL",
+      "errors": 0,
+      "warnings": 0,
+      "steps": 4,
+      "stepsPassed": 4
+    }
   },
   {
     "name": "brand-en16931",
     "template": "Brand",
     "profile": "EN16931",
-    "pdfGenerated": false,
-    "pdfSize": 0,
-    "errors": [
-      "Test failed: [Factur-X] Profile EN16931 requires field 'header.typeCode', but it is missing."
-    ]
+    "pdfGenerated": true,
+    "pdfSize": 4759,
+    "errors": [],
+    "validationResult": {
+      "isValid": true,
+      "score": 100,
+      "compliance": "FULL",
+      "errors": 0,
+      "warnings": 0,
+      "steps": 4,
+      "stepsPassed": 4
+    }
   },
   {
     "name": "corporate-en16931",
     "template": "Corporate",
     "profile": "EN16931",
-    "pdfGenerated": false,
-    "pdfSize": 0,
-    "errors": [
-      "Test failed: [Factur-X] Profile EN16931 requires field 'header.typeCode', but it is missing."
-    ]
+    "pdfGenerated": true,
+    "pdfSize": 5018,
+    "errors": [],
+    "validationResult": {
+      "isValid": true,
+      "score": 100,
+      "compliance": "FULL",
+      "errors": 0,
+      "warnings": 0,
+      "steps": 4,
+      "stepsPassed": 4
+    }
   },
   {
     "name": "minimal-en16931",
     "template": "Minimal",
     "profile": "EN16931",
-    "pdfGenerated": false,
-    "pdfSize": 0,
-    "errors": [
-      "Test failed: [Factur-X] Profile EN16931 requires field 'header.typeCode', but it is missing."
-    ]
+    "pdfGenerated": true,
+    "pdfSize": 4499,
+    "errors": [],
+    "validationResult": {
+      "isValid": true,
+      "score": 100,
+      "compliance": "FULL",
+      "errors": 0,
+      "warnings": 0,
+      "steps": 4,
+      "stepsPassed": 4
+    }
   }
 ]

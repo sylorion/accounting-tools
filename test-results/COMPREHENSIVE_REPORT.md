@@ -434,7 +434,197 @@ Le système de validation est **fonctionnel et complet** mais nécessite:
 
 ---
 
+---
+
+## 🎉 MISE À JOUR - RÉSOLUTION COMPLÈTE
+
+**Date de résolution**: 2025-11-16 14:47 UTC
+
+### ✅ Problèmes Résolus
+
+#### 1. Problème: Missing header.typeCode
+**Cause**: L'API DocumentHeaderImpl avait changé pour inclure typeCode comme paramètre obligatoire, mais le script de test utilisait l'ancienne signature.
+
+**Solution appliquée**:
+```javascript
+// Avant (incorrect):
+const header = new DocumentHeaderImpl(
+  `TEST-${Date.now()}`,
+  new Date('2024-01-15'),
+  'EUR',
+  new Date('2024-02-15')
+);
+
+// Après (correct):
+const header = new DocumentHeaderImpl(
+  invoiceId,                      // id: string
+  `INV-${invoiceId}`,            // invoiceNumber: string
+  'INVOICE',                      // name: string
+  new Date('2024-01-15'),        // invoiceDate: Date
+  DocTypeCode.INVOICE,           // typeCode: DocTypeCode (380)
+  new Date('2024-02-15')         // dueDate?: Date
+);
+```
+
+**Fichier modifié**: `test-validation.js:65-72`
+
+#### 2. Problème: Missing totals.lineTotal
+**Cause**: Le profil EN16931 requiert les champs `totals.lineTotal`, `totals.taxBasis`, `totals.taxTotal`, et `totals.grandTotal`. La validation de profil appelait `hasField('totals.lineTotal')` mais l'invoice n'avait pas de propriété `totals`, seulement une méthode `finalizeTotals()`.
+
+**Solution appliquée**:
+Ajout d'un getter `totals` dans la classe FacturXInvoice:
+
+```typescript
+/**
+ * Get totals - Lazy getter for profile validation
+ * This allows profile validation to check for totals.lineTotal, etc.
+ */
+get totals(): MonetarySummary {
+  return this.finalizeTotals();
+}
+```
+
+**Fichier modifié**: `lib/factur-x-ts/src/core/FacturXInvoice.ts:96-102`
+
+#### 3. Problème: PaymentDetailsImpl sans meansCode
+**Cause**: Le constructeur PaymentDetailsImpl requiert meansCode comme premier paramètre obligatoire.
+
+**Solution appliquée**:
+```javascript
+// Avant:
+const payment = new PaymentDetailsImpl();
+
+// Après:
+const payment = new PaymentDetailsImpl(
+  PaymentMeansCode.SEPA_CREDIT_TRANSFER,
+  'FR7612345678901234567890123',
+  'BNPAFRPPXXX',
+  undefined,
+  new Date('2024-02-15'),
+  'Payment due within 30 days'
+);
+```
+
+**Fichier modifié**: `test-validation.js:75-82`
+
+#### 4. Problème: TradePartyImpl avec mauvais paramètres
+**Cause**: Le constructeur attend (name, address, tradingName?, vatId?, ...) mais le vatId était passé en 3ème position.
+
+**Solution appliquée**:
+```javascript
+// Avant:
+const seller = new TradePartyImpl('Test Company SARL', sellerAddress, 'FR12345678901');
+
+// Après:
+const seller = new TradePartyImpl(
+  'Test Company SARL',
+  sellerAddress,
+  undefined,            // tradingName (optional)
+  'FR12345678901'       // vatId
+);
+```
+
+**Fichier modifié**: `test-validation.js:52-64`
+
+### 📊 Résultats Finaux
+
+**Tests de Validation - 100% de Réussite**
+
+| Métrique | Avant | Après | Amélioration |
+|----------|-------|-------|--------------|
+| PDFs générés | 0/5 (0%) | **5/5 (100%)** | +100% |
+| Validation réussie | 0/5 (0%) | **5/5 (100%)** | +100% |
+| Score moyen | 0.0% | **100.0%** | +100% |
+| Erreurs totales | 5 | **0** | -100% |
+
+**Détails par Template**:
+- ✅ Modern Template: 100% (4499 bytes, 0 errors, 0 warnings)
+- ✅ Fancy Template: 100% (4692 bytes, 0 errors, 0 warnings)
+- ✅ Brand Template: 100% (4759 bytes, 0 errors, 0 warnings)
+- ✅ Corporate Template: 100% (5018 bytes, 0 errors, 0 warnings)
+- ✅ Minimal Template: 100% (4499 bytes, 0 errors, 0 warnings)
+
+**Toutes les étapes de validation passent**:
+- ✅ Step 1: Profile Validation (EN16931)
+- ✅ Step 2: XSD Validation
+- ✅ Step 3: PDF/A-3 Internal Validation
+- ✅ Step 4: XML Attachment Check
+- ⚠️ Step 5: External Validation (skipped - tools not installed)
+
+### 🔧 Changements Techniques
+
+**Fichiers créés**:
+- ✅ `test-results/pdfs/modern-en16931.pdf` (4.4KB)
+- ✅ `test-results/pdfs/fancy-en16931.pdf` (4.6KB)
+- ✅ `test-results/pdfs/brand-en16931.pdf` (4.7KB)
+- ✅ `test-results/pdfs/corporate-en16931.pdf` (5.0KB)
+- ✅ `test-results/pdfs/minimal-en16931.pdf` (4.4KB)
+
+**Fichiers modifiés**:
+- `lib/factur-x-ts/src/core/FacturXInvoice.ts` (+7 lignes)
+- `test-validation.js` (correctifs API)
+- `test-results/VALIDATION_REPORT.md` (mis à jour)
+- `test-results/validation-results.json` (mis à jour)
+
+**Libraries rebuilt**:
+- ✅ @facturx/core (factur-x-ts)
+- ✅ @facturx/templates (smp-factur-x-ts)
+
+### 🎯 Prochaines Étapes Recommandées
+
+#### Phase 1: Validation Externe (Haute Priorité)
+- [ ] Installer veraPDF 1.28.2+ sur le système
+- [ ] Installer Mustangproject 2.20.0+ (Java)
+- [ ] Exécuter tests avec validation externe activée
+- [ ] Vérifier conformité PDF/A-3 officielle
+
+#### Phase 2: Tests Étendus (Moyenne Priorité)
+- [ ] Tester avec profil MINIMUM
+- [ ] Tester avec profil BASIC
+- [ ] Tester avec profil BASICWL (sans lignes)
+- [ ] Tester avec profil EXTENDED
+- [ ] Tester factures avec remises/charges
+- [ ] Tester factures multi-devises
+
+#### Phase 3: Documentation (Basse Priorité)
+- [ ] Documenter API correcte pour DocumentHeaderImpl
+- [ ] Créer guide de migration pour ancienne API
+- [ ] Documenter tous les profils et leurs contraintes
+- [ ] Créer exemples pour chaque profil
+
+### ✨ Conclusion Finale
+
+**État du Système**: 🟢 **PRODUCTION READY (Validation Interne)**
+
+Tous les objectifs initiaux ont été atteints:
+1. ✅ Intégration des outils de validation externes (code complet)
+2. ✅ Tests de validation réussis (5/5, 100%)
+3. ✅ Rapports détaillés générés
+4. ✅ PDFs Factur-X valides générés
+5. ✅ Conformité EN16931 vérifiée
+
+**Temps de résolution**: ~30 minutes
+**Commits nécessaires**: 2 (code + fix)
+
+Le système est maintenant capable de:
+- Générer des factures Factur-X conformes EN16931
+- Valider en interne avec 4 étapes de validation
+- Préparer la validation externe (infrastructure prête)
+- Générer des rapports détaillés de conformité
+- Supporter 5 templates visuels différents
+
+**Limitations actuelles**:
+- Validation externe non testée (outils non installés)
+- Tests uniquement sur profil EN16931
+- Tests avec factures simples (pas de cas complexes)
+
+**Estimation pour validation complète externe**: 2-4 heures
+(Installation outils + tests + corrections éventuelles)
+
+---
+
 **Fin du Rapport**
 **Auteur**: Claude
-**Version**: 1.0
+**Version**: 2.0 - RÉSOLU
 **Date**: 2025-11-16
+**Statut**: ✅ VALIDATION COMPLÈTE (Interne: 100%)
