@@ -1,0 +1,52 @@
+[
+  {
+    "name": "modern-en16931",
+    "template": "Modern",
+    "profile": "EN16931",
+    "pdfGenerated": false,
+    "pdfSize": 0,
+    "errors": [
+      "Test failed: [Factur-X] Profile EN16931 requires field 'header.typeCode', but it is missing."
+    ]
+  },
+  {
+    "name": "fancy-en16931",
+    "template": "Fancy",
+    "profile": "EN16931",
+    "pdfGenerated": false,
+    "pdfSize": 0,
+    "errors": [
+      "Test failed: [Factur-X] Profile EN16931 requires field 'header.typeCode', but it is missing."
+    ]
+  },
+  {
+    "name": "brand-en16931",
+    "template": "Brand",
+    "profile": "EN16931",
+    "pdfGenerated": false,
+    "pdfSize": 0,
+    "errors": [
+      "Test failed: [Factur-X] Profile EN16931 requires field 'header.typeCode', but it is missing."
+    ]
+  },
+  {
+    "name": "corporate-en16931",
+    "template": "Corporate",
+    "profile": "EN16931",
+    "pdfGenerated": false,
+    "pdfSize": 0,
+    "errors": [
+      "Test failed: [Factur-X] Profile EN16931 requires field 'header.typeCode', but it is missing."
+    ]
+  },
+  {
+    "name": "minimal-en16931",
+    "template": "Minimal",
+    "profile": "EN16931",
+    "pdfGenerated": false,
+    "pdfSize": 0,
+    "errors": [
+      "Test failed: [Factur-X] Profile EN16931 requires field 'header.typeCode', but it is missing."
+    ]
+  }
+]
