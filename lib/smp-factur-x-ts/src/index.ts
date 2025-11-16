@@ -41,6 +41,23 @@ export { CorporateTemplate } from './templates/CorporateTemplate';
 export { MinimalTemplate } from './templates/MinimalTemplate';
 
 // ============================================================================
+// VALIDATION
+// ============================================================================
+
+export {
+  ValidationPipeline,
+  ValidationPipelineResult,
+  PDFA3ValidationResult,
+  XMLAttachmentResult,
+  ValidationSummary,
+  ValidationOptions as ValidationPipelineOptions,
+  getDefaultPipeline,
+  validateBeforeGeneration,
+  validateAfterGeneration,
+  validateQuick,
+} from './validation/ValidationPipeline';
+
+// ============================================================================
 // CONVENIENCE FUNCTIONS
 // ============================================================================
 

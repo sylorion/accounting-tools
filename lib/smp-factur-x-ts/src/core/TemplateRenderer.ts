@@ -26,6 +26,10 @@ import {
   DEFAULT_THEME,
   TemplateType,
 } from '../types';
+import {
+  ValidationPipeline,
+  ValidationPipelineResult,
+} from '../validation/ValidationPipeline';
 
 // ============================================================================
 // BASE TEMPLATE RENDERER
@@ -41,16 +45,43 @@ export abstract class TemplateRenderer {
   // Font cache
   private fontCache: Map<string, any> = new Map();
 
-  constructor() {}
+  // Validation pipeline
+  private validationPipeline: ValidationPipeline;
+
+  constructor() {
+    this.validationPipeline = new ValidationPipeline();
+  }
 
   /**
-   * Generate PDF from invoice - Main entry point
+   * Generate PDF from invoice - Main entry point with automatic validation
    */
   async generate(
     invoice: FacturXInvoice,
     options: Partial<TemplateOptions> = {}
-  ): Promise<PDFGenerationResult> {
-    // Initialize context
+  ): Promise<PDFGenerationResult & { validation?: ValidationPipelineResult }> {
+    // STEP 1: Validate BEFORE generation (optional, enabled by default)
+    let preValidation: ValidationPipelineResult | undefined;
+    if (options.validateBeforeGeneration !== false) {
+      try {
+        preValidation = await this.validationPipeline.validateBeforeGeneration(invoice);
+
+        // If strict mode and validation fails, throw error
+        if (options.strictValidation && !preValidation.isValid) {
+          throw new Error(
+            `Factur-X validation failed: ${preValidation.summary.totalErrors} error(s). ` +
+            `Recommendations: ${preValidation.recommendations.join(', ')}`
+          );
+        }
+      } catch (error) {
+        if (options.strictValidation) {
+          throw error;
+        }
+        // In non-strict mode, log but continue
+        console.warn('Pre-generation validation failed:', error);
+      }
+    }
+
+    // STEP 2: Initialize context
     const fullOptions = this.mergeOptions(options);
     const summary = invoice.finalizeTotals();
     const theme = this.mergeTheme(fullOptions.theme || {});
@@ -65,7 +96,7 @@ export abstract class TemplateRenderer {
 
     this.strings = LOCALIZED_STRINGS[fullOptions.language];
 
-    // Create PDF document
+    // STEP 3: Create PDF document
     this.pdfDoc = await PDFDocument.create();
 
     // Add metadata
@@ -78,17 +109,46 @@ export abstract class TemplateRenderer {
     await this.renderContent();
 
     // Attach Factur-X XML
-    await this.attachFacturXml();
+    const xmlContent = await this.attachFacturXml();
 
-    // Finalize PDF
+    // STEP 4: Finalize PDF
     const pdfBytes = await this.pdfDoc.save();
+    const pdfBuffer = Buffer.from(pdfBytes);
+
+    // STEP 5: Validate AFTER generation (optional, enabled by default)
+    let postValidation: ValidationPipelineResult | undefined;
+    if (options.validateAfterGeneration !== false) {
+      try {
+        postValidation = await this.validationPipeline.validateAfterGeneration(
+          invoice,
+          pdfBuffer,
+          xmlContent
+        );
+
+        // If strict mode and validation fails, throw error
+        if (options.strictValidation && !postValidation.isValid) {
+          throw new Error(
+            `Factur-X post-generation validation failed: ${postValidation.summary.totalErrors} error(s). ` +
+            `Compliance: ${postValidation.summary.complianceLevel}`
+          );
+        }
+      } catch (error) {
+        if (options.strictValidation) {
+          throw error;
+        }
+        // In non-strict mode, log but continue
+        console.warn('Post-generation validation failed:', error);
+      }
+    }
 
     return {
-      pdf: Buffer.from(pdfBytes),
+      pdf: pdfBuffer,
       pageCount: this.pdfDoc.getPageCount(),
       fileSize: pdfBytes.length,
       generatedAt: this.context.generatedAt,
       templateType: this.getTemplateType(),
+      // Include validation result if available
+      validation: postValidation || preValidation,
     };
   }
 
@@ -571,9 +631,9 @@ export abstract class TemplateRenderer {
   }
 
   /**
-   * Attach Factur-X XML to PDF
+   * Attach Factur-X XML to PDF - Returns XML content for validation
    */
-  private async attachFacturXml(): Promise<void> {
+  private async attachFacturXml(): Promise<string> {
     const { invoice } = this.context;
     const xml = invoice.generateXml(true);
 
@@ -588,5 +648,7 @@ export abstract class TemplateRenderer {
         modificationDate: this.context.generatedAt,
       }
     );
+
+    return xml;
   }
 }
