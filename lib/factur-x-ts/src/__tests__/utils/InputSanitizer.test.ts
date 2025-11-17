@@ -197,9 +197,14 @@ describe('InputSanitizer', () => {
     });
 
     it('should reject email exceeding max length', () => {
-      const longEmail = 'a'.repeat(VALIDATION_LIMITS.MAX_EMAIL_LENGTH + 1) + '@example.com';
+      // Create a valid-format email that's too long (254 char limit)
+      // Local part can be up to 64 chars, domain up to 255, but total email max is 254
+      const localPart = 'a'.repeat(64); // Max local part length
+      const domain = 'b'.repeat(200) + '.com'; // Long domain
+      const longEmail = `${localPart}@${domain}`; // Total > 254 chars
       const result = validateEmail(longEmail);
       expect(result.isValid).toBe(false);
+      expect(result.errors.some(e => e.includes('too long'))).toBe(true);
     });
 
     it('should freeze result arrays', () => {
@@ -402,10 +407,16 @@ describe('InputSanitizer', () => {
     });
 
     it('should reject VAT exceeding max length', () => {
-      const longVat = 'FR' + '1'.repeat(VALIDATION_LIMITS.MAX_VAT_ID_LENGTH);
+      // Pattern allows 2-13 alphanumeric after country code (max 15 total)
+      // Create VAT that matches pattern (2 letters + 13 digits = 15 chars)
+      // but sanitized exceeds MAX_VAT_ID_LENGTH when checked
+      // Actually, the pattern already limits to 15, so length check won't trigger
+      // unless we have whitespace that gets sanitized away
+      // For now, test the pattern limit
+      const longVat = 'FR' + '1'.repeat(14); // 16 chars, fails pattern check
       const result = validateVatNumber(longVat);
       expect(result.isValid).toBe(false);
-      // Pattern check happens first, so we get pattern error instead of length error
+      // This hits the pattern check, not the length check
       expect(result.errors[0]).toContain('Invalid VAT number format');
     });
   });
