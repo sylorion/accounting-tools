@@ -130,12 +130,7 @@ export const validateEmail = (email: string | null | undefined): ValidationResul
     return createValidationResult(false, ['Invalid email format']);
   }
 
-  if (sanitized.length > VALIDATION_LIMITS.MAX_EMAIL_LENGTH) {
-    return createValidationResult(false, [
-      `Email too long (max ${VALIDATION_LIMITS.MAX_EMAIL_LENGTH} characters)`,
-    ]);
-  }
-
+  // Note: Length check removed - sanitizeString already enforces maxLength
   return createValidationResult(true);
 };
 
@@ -233,12 +228,7 @@ export const validateVatNumber = (vat: string | null | undefined): ValidationRes
     ]);
   }
 
-  if (sanitized.length > VALIDATION_LIMITS.MAX_VAT_ID_LENGTH) {
-    return createValidationResult(false, [
-      `VAT number too long (max ${VALIDATION_LIMITS.MAX_VAT_ID_LENGTH} characters)`,
-    ]);
-  }
-
+  // Note: Length check removed - VAT_ID pattern already enforces max 15 chars (2+13)
   return createValidationResult(true);
 };
 
