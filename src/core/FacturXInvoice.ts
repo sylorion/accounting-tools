@@ -370,16 +370,26 @@ export class FacturXInvoice {
   /**
    * Section 1 : Contexte du document avec paramètres corrects
    */
+  /**
+   * Section 1 : Contexte du document avec paramètres Factur-X conformes
+   *
+   * Selon la spécification Factur-X 1.07.2:
+   * - GuidelineSpecifiedDocumentContextParameter: OBLIGATOIRE (identifie le profil)
+   * - BusinessProcessSpecifiedDocumentContextParameter: OPTIONNEL (processus métier spécifique)
+   *
+   * Référence: Section 5.2.1 de la spécification Factur-X 1.07.2
+   */
   private buildDocumentContext(root: any): void {
     const contextNode = root.ele('rsm:ExchangedDocumentContext');
-    
-    // Paramètre de profil Factur-X (CORRECTION de la structure)
+
+    // Paramètre de profil Factur-X (OBLIGATOIRE)
     const guidelineParam = contextNode.ele('ram:GuidelineSpecifiedDocumentContextParameter');
     guidelineParam.ele('ram:ID').txt(this.getGuidelineURN());
-    
-    // AJOUT : Paramètre de processus métier obligatoire
-    const businessParam = contextNode.ele('ram:BusinessProcessSpecifiedDocumentContextParameter');
-    businessParam.ele('ram:ID').txt('urn:ferd:CrossIndustryDocument:invoice:1p0:basic');
+
+    // BusinessProcessSpecifiedDocumentContextParameter est OPTIONNEL
+    // Il n'est inclus que si un processus métier spécifique est défini
+    // Pour la conformité standard, nous ne l'incluons pas
+    // Si nécessaire à l'avenir, ajouter une propriété businessProcessId au constructeur
   }
   /**
    * Section 2 : En-tête du document (numéro, date, type, notes)
@@ -911,20 +921,35 @@ this.addAllowanceChargeNode(lineAgreement, charge, false);
    * Génère l'URN du profil Factur-X selon le standard officiel
    */
 
+  /**
+   * Retourne l'URN du profil selon la spécification Factur-X 1.07.2
+   * Référence: https://fnfe-mpe.org/factur-x/factur-x_en/
+   */
   private getGuidelineURN(): string {
     switch (this.profile) {
       case FacturxProfile.MINIMUM:
-        return "urn:factur-x.eu:1p0:minimum#";
+        // Profil MINIMUM: Données minimales (montant total, devise, dates)
+        return "urn:factur-x.eu:1p0:minimum";
+
       case FacturxProfile.BASICWL:
-        return "urn:factur-x.eu:1p0:basicwl#";
+        // Profil BASIC WL (Without Lines): Conforme EN16931 mais sans détail des lignes
+        return "urn:cen.eu:en16931:2017#conformant#urn:factur-x.eu:1p0:basicwl";
+
       case FacturxProfile.BASIC:
-        return "urn:factur-x.eu:1p0:basic#";
+        // Profil BASIC: Conforme EN16931 avec lignes basiques
+        return "urn:cen.eu:en16931:2017#conformant#urn:factur-x.eu:1p0:basic";
+
       case FacturxProfile.EN16931:
-        return "urn:cen.eu:en16931:2017#";
+        // Profil EN16931: Conformité complète (COMPLIANT) à la norme européenne
+        return "urn:cen.eu:en16931:2017#compliant#urn:factur-x.eu:1p0:en16931";
+
       case FacturxProfile.EXTENDED:
-        return "urn:factur-x.eu:1p0:extended#";
+        // Profil EXTENDED: Conformité complète + fonctionnalités étendues
+        return "urn:cen.eu:en16931:2017#compliant#urn:factur-x.eu:1p0:extended";
+
       default:
-        return "urn:factur-x.eu:1p0:basic#";
+        // Par défaut, utiliser BASIC (sécurité)
+        return "urn:cen.eu:en16931:2017#conformant#urn:factur-x.eu:1p0:basic";
     }
   }
  /**

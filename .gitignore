@@ -2,6 +2,8 @@
 /dist
 /node_modules
 /build
+*.js
+!jest.config.js
 
 # Logs
 logs
@@ -17,6 +19,7 @@ lerna-debug.log*
 
 # Tests
 /coverage
+**/coverage
 /.nyc_output
 
 # IDEs and editors
@@ -54,3 +57,12 @@ pids
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# Generated invoices and quotes
+/*.pdf
+/*.xml
+!Factur-X/**/*.xml
+
+# Validation artifacts
+*.verapdf.xml
+*.mustang.xml

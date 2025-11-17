@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<report>
+  <buildInformation>
+    <releaseDetails id="core" version="1.28.2" buildDate="2025-07-15T16:07:00Z"></releaseDetails>
+    <releaseDetails id="validation-model" version="1.28.2" buildDate="2025-07-15T16:12:00Z"></releaseDetails>
+    <releaseDetails id="gui" version="1.28.2" buildDate="2025-07-15T16:59:00Z"></releaseDetails>
+  </buildInformation>
+  <jobs>
+    <job>
+      <item size="70873">
+        <name>/home/user/accounting-tools/test-results/pdfs/corporate-en16931.pdf</name>
+      </item>
+      <validationReport jobEndStatus="normal" profileName="PDF/A-3B validation profile" statement="PDF file is compliant with Validation Profile requirements." isCompliant="true">
+        <details passedRules="146" failedRules="0" passedChecks="3871" failedChecks="0"></details>
+      </validationReport>
+      <duration start="1763337546574" finish="1763337547146">00:00:00.572</duration>
+    </job>
+  </jobs>
+  <batchSummary totalJobs="1" failedToParse="0" encrypted="0" outOfMemory="0" veraExceptions="0">
+    <validationReports compliant="1" nonCompliant="0" failedJobs="0">1</validationReports>
+    <featureReports failedJobs="0">0</featureReports>
+    <repairReports failedJobs="0">0</repairReports>
+    <duration start="1763337546499" finish="1763337547176">00:00:00.677</duration>
+  </batchSummary>
+</report>

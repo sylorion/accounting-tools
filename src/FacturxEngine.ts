@@ -25,8 +25,8 @@ export class FacturxEngine<T extends BaseInvoiceItem> {
     const pdfBytes = await this.template.render(invoice);
 
     // 2. Construction du XML
-    const xmlBuilder = invoice.generateXml(true);
-    const xmlBuffer = xmlBuilder.buildXml();
+    const xmlString = invoice.generateXml(true);
+    const xmlBuffer = Buffer.from(xmlString, 'utf-8');
 
     // 3. Charger le PDF pour y insérer le XML
     const pdfDoc = await PDFDocument.load(pdfBytes);

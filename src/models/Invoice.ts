@@ -384,7 +384,7 @@ export class Invoice<TLine extends InvoiceLineCore = InvoiceLineCore> {
     compliance: ComplianceType,
     template: TemplateRenderer<TLine>,
     renderOptions?: Partial<RendererOption<TLine>>
-  ): Promise<InvoicePDF<TLine>> {
+  ): Promise<InvoicePDF> {
     // 1. Create new PDF
     const pdfDoc = await PDFDocument.create();
   

@@ -1,0 +1,31 @@
+{
+  "name": "@facturx/cli",
+  "version": "1.0.0",
+  "description": "Modern CLI for Factur-X invoice generation using production libraries",
+  "main": "dist/index.js",
+  "bin": {
+    "facturx": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts"
+  },
+  "keywords": [
+    "factur-x",
+    "cli",
+    "invoice",
+    "electronic-invoicing"
+  ],
+  "author": "SMP Solutions",
+  "license": "MIT",
+  "dependencies": {
+    "@facturx/core": "file:../lib/factur-x-ts",
+    "@facturx/templates": "file:../lib/smp-factur-x-ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.6",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}
