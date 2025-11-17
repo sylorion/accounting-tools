@@ -360,21 +360,21 @@ export async function addFacturXAttachmentWithAFRelationship(
   const catalog = pdfDoc.catalog;
 
   // Get or create Names dictionary
-  let namesDict = catalog.lookup(PDFName.of('Names'), PDFDict);
+  let namesDict = catalog.get(PDFName.of('Names')) as PDFDict | undefined;
   if (!namesDict) {
     namesDict = pdfDoc.context.obj({});
     catalog.set(PDFName.of('Names'), namesDict);
   }
 
   // Get or create EmbeddedFiles dictionary
-  let embeddedFilesDict = namesDict.lookup(PDFName.of('EmbeddedFiles'), PDFDict);
+  let embeddedFilesDict = namesDict.get(PDFName.of('EmbeddedFiles')) as PDFDict | undefined;
   if (!embeddedFilesDict) {
     embeddedFilesDict = pdfDoc.context.obj({});
     namesDict.set(PDFName.of('EmbeddedFiles'), embeddedFilesDict);
   }
 
   // Get or create Names array
-  let namesArray = embeddedFilesDict.lookup(PDFName.of('Names'));
+  let namesArray = embeddedFilesDict.get(PDFName.of('Names'));
   if (!namesArray) {
     namesArray = pdfDoc.context.obj([]);
     embeddedFilesDict.set(PDFName.of('Names'), namesArray);

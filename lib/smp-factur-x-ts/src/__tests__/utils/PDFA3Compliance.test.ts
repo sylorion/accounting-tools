@@ -3,7 +3,7 @@
  * Tests PDF/A-3 compliance utilities
  */
 
-import { PDFDocument, PDFName, PDFArray } from 'pdf-lib';
+import { PDFDocument, PDFName, PDFArray, PDFDict } from 'pdf-lib';
 import {
   generatePDFA3XMP,
   generateFileIDArray,
@@ -277,6 +277,167 @@ describe('PDFA3Compliance', () => {
       expect(catalog.get(PDFName.of('OutputIntents'))).toBeDefined();
       expect(catalog.get(PDFName.of('Version'))).toEqual(PDFName.of('1.7'));
       expect(pdfDoc.context.trailerInfo.ID).toBeDefined();
+    });
+  });
+
+  describe('generatePDFFileID', () => {
+    it('should generate MD5 hash from PDF bytes', () => {
+      const { generatePDFFileID } = require('../../utils/PDFA3Compliance');
+      const testBytes = new Uint8Array([1, 2, 3, 4, 5]);
+      const fileId = generatePDFFileID(testBytes);
+
+      expect(fileId).toBeDefined();
+      expect(typeof fileId).toBe('string');
+      expect(fileId.length).toBe(32); // MD5 hash length
+      expect(fileId).toMatch(/^[0-9A-F]+$/); // Uppercase hex
+    });
+
+    it('should generate consistent hash for same input', () => {
+      const { generatePDFFileID } = require('../../utils/PDFA3Compliance');
+      const testBytes = new Uint8Array([1, 2, 3, 4, 5]);
+      const fileId1 = generatePDFFileID(testBytes);
+      const fileId2 = generatePDFFileID(testBytes);
+
+      expect(fileId1).toBe(fileId2);
+    });
+
+    it('should generate different hashes for different inputs', () => {
+      const { generatePDFFileID } = require('../../utils/PDFA3Compliance');
+      const testBytes1 = new Uint8Array([1, 2, 3]);
+      const testBytes2 = new Uint8Array([4, 5, 6]);
+      const fileId1 = generatePDFFileID(testBytes1);
+      const fileId2 = generatePDFFileID(testBytes2);
+
+      expect(fileId1).not.toBe(fileId2);
+    });
+  });
+
+  describe('addAFRelationshipToFile', () => {
+    it('should add AFRelationship to file spec dict', async () => {
+      const { addAFRelationshipToFile } = require('../../utils/PDFA3Compliance');
+      const pdfDoc = await PDFDocument.create();
+      const fileSpecDict = PDFDict.withContext(pdfDoc.context);
+
+      addAFRelationshipToFile(fileSpecDict, 'Data');
+
+      const afRelationship = fileSpecDict.get(PDFName.of('AFRelationship'));
+      expect(afRelationship).toEqual(PDFName.of('Data'));
+    });
+
+    it('should default to "Data" relationship', async () => {
+      const { addAFRelationshipToFile } = require('../../utils/PDFA3Compliance');
+      const pdfDoc = await PDFDocument.create();
+      const fileSpecDict = PDFDict.withContext(pdfDoc.context);
+
+      addAFRelationshipToFile(fileSpecDict);
+
+      const afRelationship = fileSpecDict.get(PDFName.of('AFRelationship'));
+      expect(afRelationship).toEqual(PDFName.of('Data'));
+    });
+
+    it('should handle all relationship types', async () => {
+      const { addAFRelationshipToFile } = require('../../utils/PDFA3Compliance');
+      const relationships = ['Source', 'Data', 'Alternative', 'Supplement', 'Unspecified'];
+
+      for (const rel of relationships) {
+        const pdfDoc = await PDFDocument.create();
+        const fileSpecDict = PDFDict.withContext(pdfDoc.context);
+        addAFRelationshipToFile(fileSpecDict, rel as any);
+        const afRelationship = fileSpecDict.get(PDFName.of('AFRelationship'));
+        expect(afRelationship).toEqual(PDFName.of(rel));
+      }
+    });
+  });
+
+  describe('setPDFFileID', () => {
+    it('should be a no-op function', async () => {
+      const { setPDFFileID } = require('../../utils/PDFA3Compliance');
+      const pdfDoc = await PDFDocument.create();
+
+      // Should not throw
+      expect(() => setPDFFileID(pdfDoc, 'test-id')).not.toThrow();
+    });
+  });
+
+  describe('addFacturXAttachmentWithAFRelationship', () => {
+    let pdfDoc: PDFDocument;
+
+    beforeEach(async () => {
+      pdfDoc = await PDFDocument.create();
+      pdfDoc.addPage();
+    });
+
+    it('should attach file with AFRelationship', async () => {
+      const { addFacturXAttachmentWithAFRelationship } = require('../../utils/PDFA3Compliance');
+      const testData = Buffer.from('<?xml version="1.0"?><test>data</test>', 'utf-8');
+      const fileName = 'factur-x.xml';
+
+      await addFacturXAttachmentWithAFRelationship(pdfDoc, testData, fileName, {
+        mimeType: 'text/xml',
+        description: 'Test Factur-X XML',
+      });
+
+      const catalog = pdfDoc.catalog;
+      const names = catalog.get(PDFName.of('Names'));
+      expect(names).toBeDefined();
+    });
+
+    it('should create Names/EmbeddedFiles structure', async () => {
+      const { addFacturXAttachmentWithAFRelationship } = require('../../utils/PDFA3Compliance');
+      const testData = Buffer.from('test', 'utf-8');
+
+      await addFacturXAttachmentWithAFRelationship(pdfDoc, testData, 'test.xml', {
+        mimeType: 'text/xml',
+      });
+
+      const catalog = pdfDoc.catalog;
+      const names = catalog.get(PDFName.of('Names')) as PDFDict;
+      const embeddedFiles = names.get(PDFName.of('EmbeddedFiles'));
+
+      expect(names).toBeDefined();
+      expect(embeddedFiles).toBeDefined();
+    });
+
+    it('should add file to /AF array', async () => {
+      const { addFacturXAttachmentWithAFRelationship } = require('../../utils/PDFA3Compliance');
+      const testData = Buffer.from('test', 'utf-8');
+
+      await addFacturXAttachmentWithAFRelationship(pdfDoc, testData, 'test.xml', {});
+
+      const catalog = pdfDoc.catalog;
+      const afArray = catalog.get(PDFName.of('AF'));
+
+      expect(afArray).toBeDefined();
+      expect(afArray).toBeInstanceOf(PDFArray);
+    });
+
+    it('should use default options', async () => {
+      const { addFacturXAttachmentWithAFRelationship } = require('../../utils/PDFA3Compliance');
+      const testData = Buffer.from('test', 'utf-8');
+
+      await addFacturXAttachmentWithAFRelationship(pdfDoc, testData, 'test.xml', {});
+
+      const catalog = pdfDoc.catalog;
+      const afArray = catalog.get(PDFName.of('AF'));
+      expect(afArray).toBeDefined();
+    });
+
+    it('should set file metadata dates', async () => {
+      const { addFacturXAttachmentWithAFRelationship } = require('../../utils/PDFA3Compliance');
+      const testData = Buffer.from('test', 'utf-8');
+      const creationDate = new Date('2024-01-01');
+      const modificationDate = new Date('2024-01-02');
+
+      await addFacturXAttachmentWithAFRelationship(pdfDoc, testData, 'test.xml', {
+        mimeType: 'text/xml',
+        description: 'Test',
+        creationDate,
+        modificationDate,
+      });
+
+      const catalog = pdfDoc.catalog;
+      const names = catalog.get(PDFName.of('Names'));
+      expect(names).toBeDefined();
     });
   });
 
