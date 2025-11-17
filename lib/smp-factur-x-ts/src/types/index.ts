@@ -14,6 +14,7 @@ export enum TemplateType {
   BRAND = 'brand',
   FANCY = 'fancy',
   MINIMAL = 'minimal',
+  CORPORATE = 'corporate',
 }
 
 export interface TemplateTheme {

@@ -14,8 +14,7 @@ import { TemplateType } from '../types';
 
 export class CorporateTemplate extends TemplateRenderer {
   protected getTemplateType(): TemplateType {
-    // Using BRAND type as CORPORATE doesn't exist in enum
-    return TemplateType.BRAND;
+    return TemplateType.CORPORATE;
   }
 
   protected async renderContent(): Promise<void> {
