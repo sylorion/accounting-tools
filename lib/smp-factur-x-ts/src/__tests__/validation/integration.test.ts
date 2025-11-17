@@ -2,12 +2,19 @@
  * Integration tests for complete validation pipeline with external tools
  */
 
-import { FacturXInvoice, FacturxProfile } from '@facturx/core';
-import { ModernTemplate } from '../../templates/ModernTemplate';
 import {
-  ValidationPipeline,
-  ValidationPipelineResult,
-} from '../../validation/ValidationPipeline';
+  FacturXInvoice,
+  FacturxProfile,
+  DocumentHeaderImpl,
+  TradePartyImpl,
+  PostalAddressImpl,
+  PaymentDetailsImpl,
+  InvoiceLineImpl,
+  DocTypeCode,
+  PaymentMeansCode,
+} from '@facturx/core';
+import { ModernTemplate } from '../../templates/ModernTemplate';
+import { ValidationPipeline } from '../../validation/ValidationPipeline';
 import {
   ExternalValidator,
   checkExternalValidators,
@@ -22,54 +29,66 @@ describe('Validation Integration Tests', () => {
   let testPdfBytes: Buffer;
 
   beforeAll(async () => {
-    // Create a complete test invoice
+    // Create a complete test invoice using new API
+    const header = new DocumentHeaderImpl(
+      'TEST-2024-001',
+      'TEST-2024-001',
+      'Invoice',
+      new Date('2024-01-15'),
+      DocTypeCode.INVOICE,
+      new Date('2024-02-15')
+    );
+
+    const seller = new TradePartyImpl(
+      'Test Company SARL',
+      new PostalAddressImpl('Paris', '75001', 'FR', '123 Test Street'),
+      'FR12345678901',
+      'contact@testcompany.fr'
+    );
+
+    const buyer = new TradePartyImpl(
+      'Client Test SAS',
+      new PostalAddressImpl('Lyon', '69001', 'FR', '456 Client Avenue'),
+      'FR98765432109',
+      'client@test.fr'
+    );
+
+    const payment = new PaymentDetailsImpl(
+      PaymentMeansCode.CREDIT_TRANSFER,
+      'Payment within 30 days'
+    );
+
     testInvoice = new FacturXInvoice(
-      {
-        invoiceNumber: 'TEST-2024-001',
-        invoiceDate: new Date('2024-01-15'),
-        dueDate: new Date('2024-02-15'),
-        seller: {
-          name: 'Test Company SARL',
-          address: {
-            line1: '123 Test Street',
-            postalCode: '75001',
-            city: 'Paris',
-            country: 'FR',
-          },
-          vatId: 'FR12345678901',
-          email: 'contact@testcompany.fr',
-        },
-        buyer: {
-          name: 'Client Test SAS',
-          address: {
-            line1: '456 Client Avenue',
-            postalCode: '69001',
-            city: 'Lyon',
-            country: 'FR',
-          },
-          vatId: 'FR98765432109',
-          email: 'client@test.fr',
-        },
-        items: [
-          {
-            name: 'Consulting Service',
-            quantity: 10,
-            unitPrice: 100,
-            vatRate: 20,
-            description: 'Professional consulting services',
-          },
-          {
-            name: 'Software License',
-            quantity: 5,
-            unitPrice: 200,
-            vatRate: 20,
-            description: 'Annual software license',
-          },
-        ],
-        paymentTerms: 'Payment within 30 days',
-        currency: 'EUR',
-      },
-      FacturxProfile.EN16931
+      FacturxProfile.EN16931,
+      header,
+      seller,
+      buyer,
+      payment,
+      [],
+      [],
+      'EUR'
+    );
+
+    // Add invoice lines
+    testInvoice.addLine(
+      new InvoiceLineImpl(
+        'L1',
+        'Consulting Service',
+        10,
+        100,
+        0.20,
+        'Professional consulting services'
+      )
+    );
+    testInvoice.addLine(
+      new InvoiceLineImpl(
+        'L2',
+        'Software License',
+        5,
+        200,
+        0.20,
+        'Annual software license'
+      )
     );
 
     // Generate PDF
@@ -345,12 +364,16 @@ describe('Validation Integration Tests', () => {
       ];
 
       for (const profile of profiles) {
+        // Reuse same header, seller, buyer, payment but different profile
         const invoice = new FacturXInvoice(
-          {
-            ...testInvoice.toJSON(),
-            profile,
-          },
-          profile
+          profile,
+          testInvoice.header,
+          testInvoice.seller,
+          testInvoice.buyer,
+          testInvoice.payment,
+          [],
+          [],
+          'EUR'
         );
 
         const pipeline = new ValidationPipeline();
@@ -362,39 +385,49 @@ describe('Validation Integration Tests', () => {
     });
 
     test('should detect invalid invoices', async () => {
-      // Create an invoice with missing required fields
+      // Create an invoice with minimal/incomplete data that will fail validation
+      const invalidHeader = new DocumentHeaderImpl(
+        'X', // Minimal but valid
+        'X',
+        'Test',
+        new Date(),
+        DocTypeCode.INVOICE
+      );
+
+      const invalidSeller = new TradePartyImpl(
+        'X', // Very short name (minimal)
+        new PostalAddressImpl('X', 'X', 'FR', 'X'), // Minimal addresses
+        undefined,
+        undefined
+      );
+
+      const invalidBuyer = new TradePartyImpl(
+        'X',
+        new PostalAddressImpl('X', 'X', 'FR', 'X'),
+        undefined,
+        undefined
+      );
+
+      const invalidPayment = new PaymentDetailsImpl(
+        PaymentMeansCode.CASH,
+        undefined
+      );
+
       const invalidInvoice = new FacturXInvoice(
-        {
-          invoiceNumber: '', // Invalid: empty
-          invoiceDate: new Date(),
-          seller: {
-            name: 'Test',
-            address: {
-              line1: '',
-              postalCode: '',
-              city: '',
-              country: 'FR',
-            },
-          },
-          buyer: {
-            name: 'Test',
-            address: {
-              line1: '',
-              postalCode: '',
-              city: '',
-              country: 'FR',
-            },
-          },
-          items: [], // Invalid: no items
-          currency: 'EUR',
-        },
-        FacturxProfile.MINIMUM
+        FacturxProfile.EN16931, // Strict profile will catch more issues
+        invalidHeader,
+        invalidSeller,
+        invalidBuyer,
+        invalidPayment,
+        [], // Invalid: no items for EN16931
+        [],
+        'EUR'
       );
 
       const pipeline = new ValidationPipeline();
       const result = await pipeline.validateBeforeGeneration(invalidInvoice);
 
-      // Should detect validation issues
+      // Should detect validation issues (missing lines for EN16931)
       expect(result.summary.totalErrors).toBeGreaterThan(0);
       expect(result.summary.complianceLevel).not.toBe('FULL');
     });
