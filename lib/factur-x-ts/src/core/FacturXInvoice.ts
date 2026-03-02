@@ -136,13 +136,13 @@ export class FacturXInvoice {
       return this.cachedXml;
     }
 
-    // Validate profile if requested
+    // Compute totals first (needed for profile validation)
+    const summary = this.finalizeTotals();
+
+    // Validate profile if requested (after totals are computed)
     if (checkProfile) {
       this.validateProfile();
     }
-
-    // Compute totals (will use cache if available)
-    const summary = this.finalizeTotals();
 
     // Build XML - optimized with xmlbuilder2
     const xml = this.buildXmlDocument(summary);

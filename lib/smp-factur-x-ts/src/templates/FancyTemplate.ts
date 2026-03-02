@@ -507,4 +507,24 @@ export class FancyTemplate extends TemplateRenderer {
   private formatCurrency(amount: number): string {
     return amount.toFixed(2) + ' €';
   }
+
+  /**
+   * Get payment means label
+   */
+  private getPaymentMeansLabel(code: number): string {
+    const labels: Record<number, string> = {
+      1: 'Not defined',
+      10: 'Cash',
+      20: 'Check',
+      30: 'Credit transfer',
+      31: 'Debit transfer',
+      42: 'Payment to bank account',
+      48: 'Bank card',
+      49: 'Direct debit',
+      57: 'Standing agreement',
+      58: 'SEPA credit transfer',
+      59: 'SEPA direct debit',
+    };
+    return labels[code] || `Code ${code}`;
+  }
 }
