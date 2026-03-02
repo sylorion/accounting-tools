@@ -8,10 +8,18 @@ import { ComplianceType, Invoice } from './models/Invoice';
 // ***** Order-X *****
 export { BaseOrderItem } from './models/BaseOrderItem';
 export { OrderData } from './models/OrderData';
-// export { OrderxProfiles } from './core/OrderxProfiles';
+export {
+  OrderxProfiles,
+  getOrderxProfileConfig,
+  supportsFeature,
+  OrderTypeCode,
+  OrderPriority,
+  OrderStatus
+} from './core/OrderxProfiles';
 export { BaseOrderTemplate } from './templates/BaseOrderTemplate';
 export { OrderTemplateSimple } from './templates/OrderTemplateSimple';
 export { OrderxEngine } from './OrderxEngine';
+export { OrderxXmlBuilder } from './OrderxXmlBuilder';
 
 // src/index.ts
 
@@ -25,6 +33,9 @@ export { BaseInvoiceTemplate } from './templates/BaseInvoiceTemplate';
 export { InvoiceTemplateSimple } from './templates/InvoiceTemplateSimple';
 
 export { FacturxEngine } from './FacturxEngine';
+
+// ***** Utilities *****
+export { InputSanitizer, ValidationResult, SanitizeOptions } from './utils/InputSanitizer';
 
 // // ==================================================
 // // File: services/accounting/src/index.ts
