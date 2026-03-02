@@ -41,6 +41,9 @@ export interface TemplateOptions {
     readonly showTaxBreakdown?: boolean;
     readonly showPaymentTerms?: boolean;
     readonly customFooter?: string;
+    readonly validateBeforeGeneration?: boolean;
+    readonly validateAfterGeneration?: boolean;
+    readonly strictValidation?: boolean;
 }
 export interface TemplateContext {
     readonly invoice: FacturXInvoice;

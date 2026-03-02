@@ -53,6 +53,10 @@ export interface TemplateOptions {
   readonly showTaxBreakdown?: boolean;
   readonly showPaymentTerms?: boolean;
   readonly customFooter?: string;
+  // Validation options
+  readonly validateBeforeGeneration?: boolean; // Default: true
+  readonly validateAfterGeneration?: boolean; // Default: true
+  readonly strictValidation?: boolean; // Default: false - if true, throws on validation errors
 }
 
 export interface TemplateContext {

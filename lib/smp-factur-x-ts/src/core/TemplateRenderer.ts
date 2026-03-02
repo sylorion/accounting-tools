@@ -9,7 +9,8 @@
  * - Optimized PDF-lib usage
  */
 
-import { PDFDocument, PDFPage, rgb, StandardFonts } from 'pdf-lib';
+import { PDFDocument, PDFPage, PDFFont, rgb } from 'pdf-lib';
+import fontkit from '@pdf-lib/fontkit';
 import {
   FacturXInvoice,
   formatAmount,
@@ -26,6 +27,15 @@ import {
   DEFAULT_THEME,
   TemplateType,
 } from '../types';
+import {
+  ValidationPipeline,
+  ValidationPipelineResult,
+} from '../validation/ValidationPipeline';
+import {
+  setupPDFA3Compliance,
+  loadChillaxFonts,
+} from '../utils/PDFA3Compliance';
+import { attachFileWithAFRelationship } from '../utils/AFRelationshipFix';
 
 // ============================================================================
 // BASE TEMPLATE RENDERER
@@ -38,19 +48,52 @@ export abstract class TemplateRenderer {
   protected renderContext!: RenderContext;
   protected strings!: LocalizedStrings;
 
-  // Font cache
-  private fontCache: Map<string, any> = new Map();
+  // Font cache (now contains embedded fonts)
+  private fontCache: Map<string, PDFFont> = new Map();
 
-  constructor() {}
+  // Embedded Chillax fonts (loaded once)
+  private chillaxFonts?: {
+    regular: PDFFont;
+    bold: PDFFont;
+  };
+
+  // Validation pipeline
+  private validationPipeline: ValidationPipeline;
+
+  constructor() {
+    this.validationPipeline = new ValidationPipeline();
+  }
 
   /**
-   * Generate PDF from invoice - Main entry point
+   * Generate PDF from invoice - Main entry point with automatic validation
    */
   async generate(
     invoice: FacturXInvoice,
     options: Partial<TemplateOptions> = {}
-  ): Promise<PDFGenerationResult> {
-    // Initialize context
+  ): Promise<PDFGenerationResult & { validation?: ValidationPipelineResult }> {
+    // STEP 1: Validate BEFORE generation (optional, enabled by default)
+    let preValidation: ValidationPipelineResult | undefined;
+    if (options.validateBeforeGeneration !== false) {
+      try {
+        preValidation = await this.validationPipeline.validateBeforeGeneration(invoice);
+
+        // If strict mode and validation fails, throw error
+        if (options.strictValidation && !preValidation.isValid) {
+          throw new Error(
+            `Factur-X validation failed: ${preValidation.summary.totalErrors} error(s). ` +
+            `Recommendations: ${preValidation.recommendations.join(', ')}`
+          );
+        }
+      } catch (error) {
+        if (options.strictValidation) {
+          throw error;
+        }
+        // In non-strict mode, log but continue
+        console.warn('Pre-generation validation failed:', error);
+      }
+    }
+
+    // STEP 2: Initialize context
     const fullOptions = this.mergeOptions(options);
     const summary = invoice.finalizeTotals();
     const theme = this.mergeTheme(fullOptions.theme || {});
@@ -65,10 +108,25 @@ export abstract class TemplateRenderer {
 
     this.strings = LOCALIZED_STRINGS[fullOptions.language];
 
-    // Create PDF document
+    // STEP 3: Create PDF document
     this.pdfDoc = await PDFDocument.create();
 
-    // Add metadata
+    // STEP 3.0: Register fontkit to enable custom font embedding
+    this.pdfDoc.registerFontkit(fontkit);
+
+    // STEP 3.1: Load and embed Chillax fonts (PDF/A-3 compliance: all fonts must be embedded)
+    await this.loadEmbeddedFonts();
+
+    // STEP 3.2: Apply PDF/A-3 compliance (XMP metadata, OutputIntent, etc.)
+    await setupPDFA3Compliance(this.pdfDoc, {
+      title: invoice.header.name || 'Invoice',
+      author: invoice.seller.name,
+      subject: `Invoice ${invoice.header.invoiceNumber}`,
+      creator: 'factur-x-ts',
+      keywords: ['Invoice', 'Factur-X', 'EN16931', 'PDF/A-3'],
+    });
+
+    // Add metadata (basic PDF metadata, XMP is already added by setupPDFA3Compliance)
     this.addMetadata();
 
     // Create first page
@@ -78,17 +136,46 @@ export abstract class TemplateRenderer {
     await this.renderContent();
 
     // Attach Factur-X XML
-    await this.attachFacturXml();
+    const xmlContent = await this.attachFacturXml();
 
-    // Finalize PDF
+    // STEP 4: Finalize PDF
     const pdfBytes = await this.pdfDoc.save();
+    const pdfBuffer = Buffer.from(pdfBytes);
+
+    // STEP 5: Validate AFTER generation (optional, enabled by default)
+    let postValidation: ValidationPipelineResult | undefined;
+    if (options.validateAfterGeneration !== false) {
+      try {
+        postValidation = await this.validationPipeline.validateAfterGeneration(
+          invoice,
+          pdfBuffer,
+          xmlContent
+        );
+
+        // If strict mode and validation fails, throw error
+        if (options.strictValidation && !postValidation.isValid) {
+          throw new Error(
+            `Factur-X post-generation validation failed: ${postValidation.summary.totalErrors} error(s). ` +
+            `Compliance: ${postValidation.summary.complianceLevel}`
+          );
+        }
+      } catch (error) {
+        if (options.strictValidation) {
+          throw error;
+        }
+        // In non-strict mode, log but continue
+        console.warn('Post-generation validation failed:', error);
+      }
+    }
 
     return {
-      pdf: Buffer.from(pdfBytes),
+      pdf: pdfBuffer,
       pageCount: this.pdfDoc.getPageCount(),
       fileSize: pdfBytes.length,
       generatedAt: this.context.generatedAt,
       templateType: this.getTemplateType(),
+      // Include validation result if available
+      validation: postValidation || preValidation,
     };
   }
 
@@ -162,9 +249,9 @@ export abstract class TemplateRenderer {
     const { theme } = this.context;
     const size = options.size || theme.fontSize;
     const color = options.color || theme.textColor;
-    const fontName = options.bold ? StandardFonts.HelveticaBold : StandardFonts.Helvetica;
+    const fontName = options.bold ? 'Helvetica-Bold' : 'Helvetica';
 
-    // Get font (cached)
+    // Get font (cached - now returns embedded Chillax fonts)
     const font = this.getFont(fontName);
 
     // Parse color
@@ -486,12 +573,40 @@ export abstract class TemplateRenderer {
   /**
    * Get font - Cached
    */
-  private getFont(fontName: string): any {
-    if (!this.fontCache.has(fontName)) {
-      const font = this.pdfDoc.embedStandardFont(fontName as any);
-      this.fontCache.set(fontName, font);
+  /**
+   * Load embedded Chillax fonts (PDF/A-3 compliance)
+   */
+  private async loadEmbeddedFonts(): Promise<void> {
+    if (this.chillaxFonts) {
+      return; // Already loaded
     }
-    return this.fontCache.get(fontName);
+
+    const fontFiles = await loadChillaxFonts();
+
+    const regular = await this.pdfDoc.embedFont(fontFiles.regular);
+    const bold = await this.pdfDoc.embedFont(fontFiles.bold);
+
+    this.chillaxFonts = { regular, bold };
+
+    // Pre-populate font cache with embedded fonts
+    this.fontCache.set('Helvetica', regular);
+    this.fontCache.set('Helvetica-Bold', bold);
+    this.fontCache.set('Times-Roman', regular);
+    this.fontCache.set('Times-Bold', bold);
+    this.fontCache.set('Courier', regular);
+    this.fontCache.set('Courier-Bold', bold);
+  }
+
+  /**
+   * Get font - now returns embedded Chillax fonts
+   */
+  private getFont(fontName: string): PDFFont {
+    // All standard font requests are mapped to embedded Chillax fonts
+    if (!this.fontCache.has(fontName)) {
+      // Default to regular if font not found
+      return this.chillaxFonts?.regular || this.fontCache.get('Helvetica')!;
+    }
+    return this.fontCache.get(fontName)!;
   }
 
   /**
@@ -541,6 +656,9 @@ export abstract class TemplateRenderer {
       showTaxBreakdown: options.showTaxBreakdown ?? true,
       showPaymentTerms: options.showPaymentTerms ?? true,
       customFooter: options.customFooter || '',
+      validateBeforeGeneration: options.validateBeforeGeneration ?? true,
+      validateAfterGeneration: options.validateAfterGeneration ?? true,
+      strictValidation: options.strictValidation ?? false,
     };
   }
 
@@ -571,14 +689,15 @@ export abstract class TemplateRenderer {
   }
 
   /**
-   * Attach Factur-X XML to PDF
+   * Attach Factur-X XML to PDF - Returns XML content for validation
    */
-  private async attachFacturXml(): Promise<void> {
+  private async attachFacturXml(): Promise<string> {
     const { invoice } = this.context;
     const xml = invoice.generateXml(true);
 
-    // Attach as embedded file
-    await this.pdfDoc.attach(
+    // Manually attach the file with AFRelationship for PDF/A-3 compliance
+    await attachFileWithAFRelationship(
+      this.pdfDoc,
       Buffer.from(xml, 'utf-8'),
       'factur-x.xml',
       {
@@ -586,7 +705,10 @@ export abstract class TemplateRenderer {
         description: 'Factur-X XML Invoice',
         creationDate: this.context.generatedAt,
         modificationDate: this.context.generatedAt,
+        relationship: 'Data', // PDF/A-3 requirement for Factur-X
       }
     );
+
+    return xml;
   }
 }

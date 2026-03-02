@@ -35,6 +35,67 @@ export {
 
 export { TemplateRenderer } from './core/TemplateRenderer';
 export { ModernTemplate } from './templates/ModernTemplate';
+export { FancyTemplate } from './templates/FancyTemplate';
+export { BrandTemplate } from './templates/BrandTemplate';
+export { CorporateTemplate } from './templates/CorporateTemplate';
+export { MinimalTemplate } from './templates/MinimalTemplate';
+
+// ============================================================================
+// VALIDATION
+// ============================================================================
+
+export {
+  ValidationPipeline,
+  ValidationPipelineResult,
+  PDFA3ValidationResult,
+  XMLAttachmentResult,
+  ValidationSummary,
+  ValidationOptions as ValidationPipelineOptions,
+  getDefaultPipeline,
+  validateBeforeGeneration,
+  validateAfterGeneration,
+  validateQuick,
+} from './validation/ValidationPipeline';
+
+// External validation tools
+export {
+  ExternalValidator,
+  VeraPDFValidator,
+  MustangprojectValidator,
+  ExternalValidationResult,
+  ExternalValidationSummary,
+  VeraPDFResult,
+  VeraPDFError,
+  VeraPDFWarning,
+  VeraPDFMetadata,
+  MustangprojectResult,
+  MustangError,
+  MustangWarning,
+  ExternalValidatorConfig,
+  checkExternalValidators,
+  findVeraPDF,
+  findMustangproject,
+  getDefaultExternalValidator,
+  validateWithExternalTools,
+  extractXMLWithExternalTools,
+} from './validation/ExternalValidators';
+
+// ============================================================================
+// PDF/A-3 COMPLIANCE UTILITIES
+// ============================================================================
+
+export {
+  setupPDFA3Compliance,
+  applyPDFA3Compliance,
+  addAFRelationshipToFile,
+  loadChillaxFonts,
+  loadSRGBProfile,
+  generatePDFA3XMP,
+  generatePDFFileID,
+  EmbeddedFonts,
+  PDFA3MetadataOptions,
+  PDFA3SetupOptions,
+} from './utils/PDFA3Compliance';
 
 // ============================================================================
 // CONVENIENCE FUNCTIONS
@@ -42,6 +103,10 @@ export { ModernTemplate } from './templates/ModernTemplate';
 
 import { FacturXInvoice } from '@facturx/core';
 import { ModernTemplate } from './templates/ModernTemplate';
+import { FancyTemplate } from './templates/FancyTemplate';
+import { BrandTemplate } from './templates/BrandTemplate';
+import { CorporateTemplate } from './templates/CorporateTemplate';
+import { MinimalTemplate } from './templates/MinimalTemplate';
 import { TemplateOptions, PDFGenerationResult, TemplateType } from './types';
 
 /**
@@ -52,6 +117,50 @@ export async function generateModernPDF(
   options: Partial<TemplateOptions> = {}
 ): Promise<PDFGenerationResult> {
   const template = new ModernTemplate();
+  return template.generate(invoice, options);
+}
+
+/**
+ * Generate PDF with fancy template - Convenience function
+ */
+export async function generateFancyPDF(
+  invoice: FacturXInvoice,
+  options: Partial<TemplateOptions> = {}
+): Promise<PDFGenerationResult> {
+  const template = new FancyTemplate();
+  return template.generate(invoice, options);
+}
+
+/**
+ * Generate PDF with brand template - Convenience function
+ */
+export async function generateBrandPDF(
+  invoice: FacturXInvoice,
+  options: Partial<TemplateOptions> = {}
+): Promise<PDFGenerationResult> {
+  const template = new BrandTemplate();
+  return template.generate(invoice, options);
+}
+
+/**
+ * Generate PDF with corporate template - Convenience function
+ */
+export async function generateCorporatePDF(
+  invoice: FacturXInvoice,
+  options: Partial<TemplateOptions> = {}
+): Promise<PDFGenerationResult> {
+  const template = new CorporateTemplate();
+  return template.generate(invoice, options);
+}
+
+/**
+ * Generate PDF with minimal template - Convenience function
+ */
+export async function generateMinimalPDF(
+  invoice: FacturXInvoice,
+  options: Partial<TemplateOptions> = {}
+): Promise<PDFGenerationResult> {
+  const template = new MinimalTemplate();
   return template.generate(invoice, options);
 }
 
@@ -69,13 +178,15 @@ export async function generatePDF(
     case TemplateType.MODERN:
       template = new ModernTemplate();
       break;
-    // Future templates:
-    // case TemplateType.BRAND:
-    //   template = new BrandTemplate();
-    //   break;
-    // case TemplateType.FANCY:
-    //   template = new FancyTemplate();
-    //   break;
+    case TemplateType.BRAND:
+      template = new BrandTemplate();
+      break;
+    case TemplateType.FANCY:
+      template = new FancyTemplate();
+      break;
+    case TemplateType.MINIMAL:
+      template = new MinimalTemplate();
+      break;
     default:
       template = new ModernTemplate();
   }
@@ -95,5 +206,16 @@ export const LIBRARY_INFO = Object.freeze({
   description: 'Professional PDF templates for Factur-X',
   license: 'MIT',
   repository: 'https://github.com/facturx/facturx-ts',
-  templates: [TemplateType.MODERN],
+  templates: [
+    TemplateType.MODERN,
+    TemplateType.FANCY,
+    TemplateType.BRAND,
+    TemplateType.MINIMAL,
+  ],
+  templateDescriptions: {
+    [TemplateType.MODERN]: 'Clean, professional design with blue color scheme',
+    [TemplateType.FANCY]: 'Colorful template with pink and blue gradient design',
+    [TemplateType.BRAND]: 'Professional corporate template with navy and orange colors',
+    [TemplateType.MINIMAL]: 'Ultra-clean minimalist design with monochrome palette',
+  },
 });

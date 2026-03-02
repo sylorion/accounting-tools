@@ -94,11 +94,11 @@ export class FacturXInvoice {
   }
 
   /**
-   * Get totals (read-only) - for profile validation
-   * Returns cached summary if available, undefined otherwise
+   * Get totals - Lazy getter for profile validation
+   * This allows profile validation to check for totals.lineTotal, etc.
    */
-  get totals(): MonetarySummary | undefined {
-    return this.cachedSummary;
+  get totals(): MonetarySummary {
+    return this.finalizeTotals();
   }
 
   /**

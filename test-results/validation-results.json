@@ -1,0 +1,117 @@
+[
+  {
+    "name": "modern-en16931",
+    "template": "Modern",
+    "profile": "EN16931",
+    "pdfGenerated": true,
+    "pdfSize": 70334,
+    "errors": [],
+    "validationResult": {
+      "isValid": true,
+      "score": 100,
+      "compliance": "FULL",
+      "errors": 0,
+      "warnings": 0,
+      "steps": 4,
+      "stepsPassed": 4
+    },
+    "externalResult": {
+      "pdfA3": false,
+      "facturX": false,
+      "errors": 0,
+      "warnings": 0
+    }
+  },
+  {
+    "name": "fancy-en16931",
+    "template": "Fancy",
+    "profile": "EN16931",
+    "pdfGenerated": true,
+    "pdfSize": 70522,
+    "errors": [],
+    "validationResult": {
+      "isValid": true,
+      "score": 100,
+      "compliance": "FULL",
+      "errors": 0,
+      "warnings": 0,
+      "steps": 4,
+      "stepsPassed": 4
+    },
+    "externalResult": {
+      "pdfA3": false,
+      "facturX": false,
+      "errors": 0,
+      "warnings": 0
+    }
+  },
+  {
+    "name": "brand-en16931",
+    "template": "Brand",
+    "profile": "EN16931",
+    "pdfGenerated": true,
+    "pdfSize": 70589,
+    "errors": [],
+    "validationResult": {
+      "isValid": true,
+      "score": 100,
+      "compliance": "FULL",
+      "errors": 0,
+      "warnings": 0,
+      "steps": 4,
+      "stepsPassed": 4
+    },
+    "externalResult": {
+      "pdfA3": false,
+      "facturX": false,
+      "errors": 0,
+      "warnings": 0
+    }
+  },
+  {
+    "name": "corporate-en16931",
+    "template": "Corporate",
+    "profile": "EN16931",
+    "pdfGenerated": true,
+    "pdfSize": 70873,
+    "errors": [],
+    "validationResult": {
+      "isValid": true,
+      "score": 100,
+      "compliance": "FULL",
+      "errors": 0,
+      "warnings": 0,
+      "steps": 4,
+      "stepsPassed": 4
+    },
+    "externalResult": {
+      "pdfA3": false,
+      "facturX": false,
+      "errors": 0,
+      "warnings": 0
+    }
+  },
+  {
+    "name": "minimal-en16931",
+    "template": "Minimal",
+    "profile": "EN16931",
+    "pdfGenerated": true,
+    "pdfSize": 70330,
+    "errors": [],
+    "validationResult": {
+      "isValid": true,
+      "score": 100,
+      "compliance": "FULL",
+      "errors": 0,
+      "warnings": 0,
+      "steps": 4,
+      "stepsPassed": 4
+    },
+    "externalResult": {
+      "pdfA3": false,
+      "facturX": false,
+      "errors": 0,
+      "warnings": 0
+    }
+  }
+]
