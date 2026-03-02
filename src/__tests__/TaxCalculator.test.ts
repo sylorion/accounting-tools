@@ -382,4 +382,147 @@ describe('TaxCalculator', () => {
       expect(summary.taxSummaries[0].rate).toBe(20); // Not 0.20
     });
   });
+
+  describe('computeSummary - Line level allowances/charges', () => {
+    it('should handle line-level allowances in line mode', () => {
+      const calculator = new TaxCalculator('line');
+      const line = new InvoiceLine('1', 'Product A', 1, 100, 0.20);
+      line.addAllowance(10, 'Line discount'); // -10 EUR
+
+      const summary = calculator.computeSummary([line]);
+
+      // lineTotal should include the allowance impact
+      expect(summary.lineTotal).toBe(90); // 100 - 10
+      expect(summary.taxBasis).toBe(90);
+      expect(summary.taxTotal).toBe(18); // 90 * 0.20
+      expect(summary.grandTotal).toBe(108);
+    });
+
+    it('should handle line-level charges in line mode', () => {
+      const calculator = new TaxCalculator('line');
+      const line = new InvoiceLine('1', 'Product A', 1, 100, 0.20);
+      line.addCharge(15, 'Line surcharge'); // +15 EUR
+
+      const summary = calculator.computeSummary([line]);
+
+      expect(summary.lineTotal).toBe(115); // 100 + 15
+      expect(summary.taxBasis).toBe(115);
+      expect(summary.taxTotal).toBe(23); // 115 * 0.20
+      expect(summary.grandTotal).toBe(138);
+    });
+
+    it('should handle multiple line-level allowances and charges', () => {
+      const calculator = new TaxCalculator('line');
+      const line = new InvoiceLine('1', 'Product A', 1, 100, 0.20);
+      line.addAllowance(10, 'Discount 1'); // -10
+      line.addCharge(5, 'Charge 1'); // +5
+      line.addAllowance(2, 'Discount 2'); // -2
+
+      const summary = calculator.computeSummary([line]);
+
+      expect(summary.lineTotal).toBe(93); // 100 - 10 + 5 - 2
+      expect(summary.taxBasis).toBe(93);
+      expect(summary.taxTotal).toBe(18.6); // 93 * 0.20
+      expect(summary.grandTotal).toBe(111.6);
+    });
+
+    it('should handle line-level allowances with custom VAT rate', () => {
+      const calculator = new TaxCalculator('line');
+      const line = new InvoiceLine('1', 'Product A', 1, 100, 0.20);
+      // Add allowance with different tax rate
+      const allowance = new AllowanceCharge(false, 10, 'Special discount', 'DISC', 0.10);
+      line.allowances.push(allowance);
+
+      const summary = calculator.computeSummary([line]);
+
+      expect(summary.lineTotal).toBe(90); // 100 - 10
+      expect(summary.taxBasis).toBe(90);
+      // Tax: 100*0.20 + (-10)*0.10 = 20 - 1 = 19
+      expect(summary.taxTotal).toBe(19);
+    });
+
+    it('should handle line-level allowances in global mode', () => {
+      const calculator = new TaxCalculator('global');
+      const line = new InvoiceLine('1', 'Product A', 1, 100, 0.20);
+      line.addAllowance(10, 'Line discount');
+
+      const summary = calculator.computeSummary([line]);
+
+      expect(summary.lineTotal).toBe(90);
+      expect(summary.taxBasis).toBe(90);
+      expect(summary.taxTotal).toBe(18);
+      expect(summary.grandTotal).toBe(108);
+    });
+
+    it('should handle line-level charges in global mode', () => {
+      const calculator = new TaxCalculator('global');
+      const line = new InvoiceLine('1', 'Product A', 1, 100, 0.20);
+      line.addCharge(20, 'Extra charge');
+
+      const summary = calculator.computeSummary([line]);
+
+      expect(summary.lineTotal).toBe(120);
+      expect(summary.taxBasis).toBe(120);
+      expect(summary.taxTotal).toBe(24);
+      expect(summary.grandTotal).toBe(144);
+    });
+  });
+
+  describe('computeSummary - Global mode with doc allowances', () => {
+    it('should handle doc-level allowances in global mode', () => {
+      const calculator = new TaxCalculator('global');
+      const lines = [
+        new InvoiceLine('1', 'Product A', 1, 100, 0.20),
+        new InvoiceLine('2', 'Product B', 1, 50, 0.10)
+      ];
+      const docAllowances = [
+        new AllowanceCharge(false, 15, 'Global discount', 'DISC', 0.20)
+      ];
+
+      const summary = calculator.computeSummary(lines, docAllowances);
+
+      expect(summary.lineTotal).toBe(150); // 100 + 50
+      expect(summary.taxBasis).toBe(135); // 150 - 15
+      // Tax calculated globally: 100*0.20 + 50*0.10 + (-15)*0.20 = 20 + 5 - 3 = 22
+      expect(summary.taxTotal).toBe(22);
+      expect(summary.grandTotal).toBe(157);
+    });
+
+    it('should handle doc-level charges in global mode', () => {
+      const calculator = new TaxCalculator('global');
+      const lines = [
+        new InvoiceLine('1', 'Product A', 2, 50, 0.20)
+      ];
+      const docCharges = [
+        new AllowanceCharge(true, 10, 'Handling', 'HAND', 0.20)
+      ];
+
+      const summary = calculator.computeSummary(lines, docCharges);
+
+      expect(summary.lineTotal).toBe(100);
+      expect(summary.taxBasis).toBe(110); // 100 + 10
+      // Tax: 100*0.20 + 10*0.20 = 20 + 2 = 22
+      expect(summary.taxTotal).toBe(22);
+      expect(summary.grandTotal).toBe(132);
+    });
+
+    it('should handle mixed line and doc allowances in global mode', () => {
+      const calculator = new TaxCalculator('global');
+      const line1 = new InvoiceLine('1', 'Product A', 1, 100, 0.20);
+      line1.addAllowance(5, 'Line discount');
+      const line2 = new InvoiceLine('2', 'Product B', 1, 50, 0.20);
+
+      const docAllowances = [
+        new AllowanceCharge(false, 10, 'Doc discount', 'DISC', 0.20)
+      ];
+
+      const summary = calculator.computeSummary([line1, line2], docAllowances);
+
+      expect(summary.lineTotal).toBe(145); // (100-5) + 50
+      expect(summary.taxBasis).toBe(135); // 145 - 10
+      // Tax: (100-5)*0.20 + 50*0.20 + (-10)*0.20 = 19 + 10 - 2 = 27
+      expect(summary.taxTotal).toBe(27);
+      expect(summary.grandTotal).toBe(162);
+    });
+  });
 });

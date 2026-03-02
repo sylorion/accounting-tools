@@ -18,8 +18,8 @@ export {
 } from './core/OrderxProfiles';
 export { BaseOrderTemplate } from './templates/BaseOrderTemplate';
 export { OrderTemplateSimple } from './templates/OrderTemplateSimple';
-export { OrderxEngine } from './OrderxEngine';
-export { OrderxXmlBuilder } from './OrderxXmlBuilder';
+// export { OrderxEngine } from './OrderxEngine';
+// export { OrderxXmlBuilder } from './OrderxXmlBuilder';
 
 // src/index.ts
 
@@ -32,7 +32,7 @@ export { FacturxProfile } from './core/EnumInvoiceType';
 export { BaseInvoiceTemplate } from './templates/BaseInvoiceTemplate';
 export { InvoiceTemplateSimple } from './templates/InvoiceTemplateSimple';
 
-export { FacturxEngine } from './FacturxEngine';
+// export { FacturxEngine } from './FacturxEngine';
 
 // ***** Utilities *****
 export { InputSanitizer, ValidationResult, SanitizeOptions } from './utils/InputSanitizer';
@@ -61,6 +61,8 @@ import { Modern2024InvoiceTemplate } from "./generators/templates/Modern2024Invo
 import { FacturxProfile, InvoiceData } from "./models/Invoice";
 import { InvoiceLineCore } from "./models/InvoiceLineCore";
 import { ModernHTMLInvoiceTemplate } from "./generators/templates/ModerneHTMLInvoiceTemplate";
+import { RendererOption } from "./generators/templates/RendererOption";
+import { PDFOption } from "./generators/InvoicePDF";
 
 
 // 1) Suppose we define a line item type that includes discountRate, rebate, etc.
