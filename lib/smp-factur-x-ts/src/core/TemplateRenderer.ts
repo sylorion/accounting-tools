@@ -572,17 +572,17 @@ export abstract class TemplateRenderer {
       const topY = pageHeight - margins.top;
       const bandBottom = topY - headerH;
 
-      // QR flush to right content boundary
-      const qrX = pageWidth - margins.right - qrSize;
+      // QR: leave room for invoice# (scaledFontSize wide) + 2px gap on the right
+      const qrX = pageWidth - margins.right - scaledFontSize - 2 - qrSize;
       const qrY = bandBottom + 5;
 
-      // Invoice# to the LEFT of QR: x is the left visual edge, text extends rightward by ~scaledFontSize
-      const vertX = qrX - 2 - scaledFontSize;
+      // Invoice# to the RIGHT of QR, 2px gap
+      const vertX = qrX + qrSize + 2;
 
       // Zone widths derived from available space
       const sellerZoneW = contentWidth * 0.34;
       const cx = margins.left + sellerZoneW + 10;
-      const clientZoneMaxX = vertX - 4;  // 4px gap between client zone and invoice#
+      const clientZoneMaxX = qrX - 4;  // 4px gap between client zone and QR
       const clientZoneW = Math.max(20, clientZoneMaxX - cx);
 
       // ── Background band ──
@@ -665,7 +665,7 @@ export abstract class TemplateRenderer {
         { x: cx, y: topY - 55, size: 7.5, font, color: this.parseColor('#64748b'), maxWidth: clientZoneW }
       );
 
-      // ── Invoice# vertical: LEFT of QR, 2px gap, auto-sized to fill qrSize ──
+      // ── Invoice# vertical: RIGHT of QR, 2px gap, auto-sized to fill qrSize ──
       page.drawText(invoiceRef, {
         x: vertX,
         y: qrY,
@@ -675,7 +675,7 @@ export abstract class TemplateRenderer {
         rotate: degrees(90),
       });
 
-      // ── QR flush right ──
+      // ── QR (left of invoice#) ──
       if (qrImage) {
         page.drawImage(qrImage, { x: qrX, y: qrY, width: qrSize, height: qrSize });
       } else {
