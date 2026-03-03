@@ -1,4 +1,4 @@
-import { PostalAddress, TradeParty, PaymentDetails, DocumentHeader, AllowanceCharge as IAllowanceCharge, InvoiceLine as IInvoiceLine, DocTypeCode, PaymentMeansCode } from '../types';
+import { PostalAddress, TradeParty, PaymentDetails, DocumentHeader, AllowanceCharge as IAllowanceCharge, InvoiceLine as IInvoiceLine, NoteWithCode, DocTypeCode, PaymentMeansCode } from '../types';
 export declare class PostalAddressImpl implements PostalAddress {
     readonly city: string;
     readonly postalCode: string;
@@ -34,10 +34,13 @@ export declare class TradePartyImpl implements TradeParty {
     readonly vatId?: string | undefined;
     readonly taxId?: string | undefined;
     readonly legalId?: string | undefined;
+    readonly legalIdScheme?: string | undefined;
     readonly email?: string | undefined;
     readonly phone?: string | undefined;
     readonly globalId?: string | undefined;
-    constructor(name: string, address: PostalAddress, tradingName?: string | undefined, vatId?: string | undefined, taxId?: string | undefined, legalId?: string | undefined, email?: string | undefined, phone?: string | undefined, globalId?: string | undefined);
+    readonly electronicAddress?: string | undefined;
+    readonly electronicAddressScheme?: string | undefined;
+    constructor(name: string, address: PostalAddress, tradingName?: string | undefined, vatId?: string | undefined, taxId?: string | undefined, legalId?: string | undefined, legalIdScheme?: string | undefined, email?: string | undefined, phone?: string | undefined, globalId?: string | undefined, electronicAddress?: string | undefined, electronicAddressScheme?: string | undefined);
     static builder(): TradePartyBuilder;
 }
 declare class TradePartyBuilder {
@@ -47,18 +50,24 @@ declare class TradePartyBuilder {
     private _vatId?;
     private _taxId?;
     private _legalId?;
+    private _legalIdScheme?;
     private _email?;
     private _phone?;
     private _globalId?;
+    private _electronicAddress?;
+    private _electronicAddressScheme?;
     name(value: string): this;
     address(value: PostalAddress): this;
     tradingName(value: string): this;
     vatId(value: string): this;
     taxId(value: string): this;
     legalId(value: string): this;
+    legalIdScheme(value: string): this;
     email(value: string): this;
     phone(value: string): this;
     globalId(value: string): this;
+    electronicAddress(value: string): this;
+    electronicAddressScheme(value: string): this;
     build(): TradePartyImpl;
 }
 export declare class PaymentDetailsImpl implements PaymentDetails {
@@ -98,8 +107,8 @@ export declare class DocumentHeaderImpl implements DocumentHeader {
     readonly purchaseOrderReference?: string | undefined;
     readonly salesOrderReference?: string | undefined;
     readonly contractReference?: string | undefined;
-    readonly notes?: string[] | undefined;
-    constructor(id: string, invoiceNumber: string, name: string, invoiceDate: Date, typeCode: DocTypeCode, dueDate?: Date | undefined, billingPeriodStart?: Date | undefined, billingPeriodEnd?: Date | undefined, purchaseOrderReference?: string | undefined, salesOrderReference?: string | undefined, contractReference?: string | undefined, notes?: string[] | undefined);
+    readonly notes?: (string | NoteWithCode)[] | undefined;
+    constructor(id: string, invoiceNumber: string, name: string, invoiceDate: Date, typeCode: DocTypeCode, dueDate?: Date | undefined, billingPeriodStart?: Date | undefined, billingPeriodEnd?: Date | undefined, purchaseOrderReference?: string | undefined, salesOrderReference?: string | undefined, contractReference?: string | undefined, notes?: (string | NoteWithCode)[] | undefined);
     static builder(): DocumentHeaderBuilder;
 }
 declare class DocumentHeaderBuilder {
@@ -126,6 +135,7 @@ declare class DocumentHeaderBuilder {
     salesOrderReference(value: string): this;
     contractReference(value: string): this;
     addNote(note: string): this;
+    addNoteWithCode(content: string, subjectCode: string): this;
     build(): DocumentHeaderImpl;
 }
 export declare class AllowanceCharge implements IAllowanceCharge {

@@ -113,6 +113,10 @@ export interface PostalAddress {
     readonly subdivision?: string;
     readonly countryCode: string;
 }
+export interface NoteWithCode {
+    readonly content: string;
+    readonly subjectCode?: string;
+}
 export interface TradeParty {
     readonly name: string;
     readonly tradingName?: string;
@@ -120,9 +124,12 @@ export interface TradeParty {
     readonly vatId?: string;
     readonly taxId?: string;
     readonly legalId?: string;
+    readonly legalIdScheme?: string;
     readonly email?: string;
     readonly phone?: string;
     readonly globalId?: string;
+    readonly electronicAddress?: string;
+    readonly electronicAddressScheme?: string;
 }
 export interface PaymentDetails {
     readonly meansCode: PaymentMeansCode;
@@ -144,7 +151,7 @@ export interface DocumentHeader {
     readonly purchaseOrderReference?: string;
     readonly salesOrderReference?: string;
     readonly contractReference?: string;
-    readonly notes?: string[];
+    readonly notes?: (string | NoteWithCode)[];
 }
 export interface AllowanceCharge {
     readonly chargeIndicator: boolean;

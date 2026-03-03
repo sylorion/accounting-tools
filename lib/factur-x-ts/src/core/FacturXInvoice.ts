@@ -207,10 +207,18 @@ export class FacturXInvoice {
       .txt(formatDateFacturX(this.header.invoiceDate));
 
     // Notes (if any) - must come after IssueDateTime
+    // Supports both string and NoteWithCode for FR compliance (BR-FR-05)
     if (this.header.notes && this.header.notes.length > 0) {
       for (const note of this.header.notes) {
         const noteNode = doc.ele('ram:IncludedNote');
-        noteNode.ele('ram:Content').txt(note);
+        if (typeof note === 'string') {
+          noteNode.ele('ram:Content').txt(note);
+        } else {
+          noteNode.ele('ram:Content').txt(note.content);
+          if (note.subjectCode) {
+            noteNode.ele('ram:SubjectCode').txt(note.subjectCode);
+          }
+        }
       }
     }
   }
@@ -250,6 +258,13 @@ export class FacturXInvoice {
     const seller = agreement.ele('ram:SellerTradeParty');
     seller.ele('ram:Name').txt(this.seller.name);
 
+    // Seller legal organization (BT-30: SIREN for FR, required by BR-FR-10)
+    if (this.seller.legalId) {
+      const legalOrg = seller.ele('ram:SpecifiedLegalOrganization');
+      legalOrg.ele('ram:ID', { schemeID: this.seller.legalIdScheme || '0002' })
+        .txt(this.seller.legalId);
+    }
+
     if (this.seller.address) {
       const sellerAddr = seller.ele('ram:PostalTradeAddress');
       if (this.seller.address.postalCode) {
@@ -269,6 +284,13 @@ export class FacturXInvoice {
       }
     }
 
+    // Seller electronic address (BT-34, required by BR-FR-13)
+    if (this.seller.electronicAddress) {
+      const uriComm = seller.ele('ram:URIUniversalCommunication');
+      uriComm.ele('ram:URIID', { schemeID: this.seller.electronicAddressScheme || 'EM' })
+        .txt(this.seller.electronicAddress);
+    }
+
     if (this.seller.vatId) {
       const sellerTax = seller.ele('ram:SpecifiedTaxRegistration');
       sellerTax.ele('ram:ID', { schemeID: 'VA' }).txt(this.seller.vatId);
@@ -277,6 +299,13 @@ export class FacturXInvoice {
     // Buyer
     const buyer = agreement.ele('ram:BuyerTradeParty');
     buyer.ele('ram:Name').txt(this.buyer.name);
+
+    // Buyer legal organization (BT-47)
+    if (this.buyer.legalId) {
+      const legalOrg = buyer.ele('ram:SpecifiedLegalOrganization');
+      legalOrg.ele('ram:ID', { schemeID: this.buyer.legalIdScheme || '0002' })
+        .txt(this.buyer.legalId);
+    }
 
     if (this.buyer.address) {
       const buyerAddr = buyer.ele('ram:PostalTradeAddress');
@@ -294,6 +323,13 @@ export class FacturXInvoice {
       }
     }
 
+    // Buyer electronic address (BT-49, required by BR-FR-12)
+    if (this.buyer.electronicAddress) {
+      const uriComm = buyer.ele('ram:URIUniversalCommunication');
+      uriComm.ele('ram:URIID', { schemeID: this.buyer.electronicAddressScheme || 'EM' })
+        .txt(this.buyer.electronicAddress);
+    }
+
     if (this.buyer.vatId) {
       const buyerTax = buyer.ele('ram:SpecifiedTaxRegistration');
       buyerTax.ele('ram:ID', { schemeID: 'VA' }).txt(this.buyer.vatId);
@@ -301,10 +337,17 @@ export class FacturXInvoice {
   }
 
   /**
-   * Build header trade delivery (empty for now)
+   * Build header trade delivery
+   * PEPPOL-EN16931-R008: Document MUST not contain empty elements
    */
   private buildHeaderTradeDelivery(tx: XMLBuilder): void {
-    tx.ele('ram:ApplicableHeaderTradeDelivery');
+    const delivery = tx.ele('ram:ApplicableHeaderTradeDelivery');
+    // Add an empty ActualDeliverySupplyChainEvent to avoid empty element error
+    // Per EN16931, delivery date is optional but the element must not be empty
+    const event = delivery.ele('ram:ActualDeliverySupplyChainEvent');
+    const dateTime = event.ele('ram:OccurrenceDateTime');
+    dateTime.ele('udt:DateTimeString', { format: '102' })
+      .txt(formatDateFacturX(this.header.invoiceDate));
   }
 
   /**
@@ -314,7 +357,8 @@ export class FacturXInvoice {
     const settlement = tx.ele('ram:ApplicableHeaderTradeSettlement');
 
     // EN16931 schema order:
-    // InvoiceCurrencyCode > SpecifiedTradePaymentMeans > ApplicableTradeTax >
+    // InvoiceCurrencyCode > SpecifiedTradeSettlementPaymentMeans >
+    // ApplicableTradeTax > SpecifiedTradeAllowanceCharge >
     // SpecifiedTradePaymentTerms > SpecifiedTradeSettlementHeaderMonetarySummation
 
     // 1. Currency code
@@ -346,7 +390,26 @@ export class FacturXInvoice {
       tax.ele('ram:RateApplicablePercent').txt(formatAmount(taxSummary.rate));
     }
 
-    // 4. Payment terms
+    // 4. Document-level allowances/charges (BR-S-08, BR-CO-13 compliance)
+    for (const ac of this.docAllowancesCharges) {
+      const acNode = settlement.ele('ram:SpecifiedTradeAllowanceCharge');
+      acNode.ele('ram:ChargeIndicator')
+        .ele('udt:Indicator').txt(ac.chargeIndicator ? 'true' : 'false');
+      acNode.ele('ram:ActualAmount').txt(formatAmount(ac.actualAmount));
+      if (ac.reasonCode) {
+        acNode.ele('ram:ReasonCode').txt(ac.reasonCode);
+      }
+      if (ac.reason) {
+        acNode.ele('ram:Reason').txt(ac.reason);
+      }
+      const acTax = acNode.ele('ram:CategoryTradeTax');
+      acTax.ele('ram:TypeCode').txt('VAT');
+      acTax.ele('ram:CategoryCode').txt(ac.taxCategoryCode ?? 'S');
+      acTax.ele('ram:RateApplicablePercent')
+        .txt(formatAmount((ac.taxRate ?? 0.20) * 100));
+    }
+
+    // 5. Payment terms
     if (this.payment?.dueDate || this.payment?.termsDescription) {
       const terms = settlement.ele('ram:SpecifiedTradePaymentTerms');
 
@@ -362,13 +425,30 @@ export class FacturXInvoice {
       }
     }
 
-    // 5. Monetary summation (includes tax totals - no separate TaxTotal element in EN16931)
+    // 6. Monetary summation (BR-CO-13: TaxBasis = Line - Allowance + Charge)
+    // Schematron BR-CO-13 checks 4 variants based on presence of Charge/Allowance elements:
+    //   - Both present: TaxBasis = Line - Allowance + Charge
+    //   - Only Allowance: TaxBasis = Line - Allowance
+    //   - Only Charge: TaxBasis = Line + Charge
+    //   - Neither present: TaxBasis = Line
+    // We ONLY emit these elements when there are actual doc-level allowances/charges.
     const monetary = settlement.ele('ram:SpecifiedTradeSettlementHeaderMonetarySummation');
     monetary.ele('ram:LineTotalAmount').txt(formatAmount(summary.lineTotal));
+    const hasCharges = (summary.chargeTotal ?? 0) > 0;
+    const hasAllowances = (summary.allowanceTotal ?? 0) > 0;
+    if (hasCharges) {
+      monetary.ele('ram:ChargeTotalAmount').txt(formatAmount(summary.chargeTotal!));
+    }
+    if (hasAllowances) {
+      monetary.ele('ram:AllowanceTotalAmount').txt(formatAmount(summary.allowanceTotal!));
+    }
     monetary.ele('ram:TaxBasisTotalAmount').txt(formatAmount(summary.taxBasis));
-    monetary.ele('ram:TaxTotalAmount').txt(formatAmount(summary.taxTotal));
+    // currencyID attribute required on TaxTotalAmount (BR-53/54)
+    monetary.ele('ram:TaxTotalAmount', { currencyID: this.currency })
+      .txt(formatAmount(summary.taxTotal));
     monetary.ele('ram:GrandTotalAmount').txt(formatAmount(summary.grandTotal));
-    monetary.ele('ram:DuePayableAmount').txt(formatAmount(summary.grandTotal));
+    monetary.ele('ram:DuePayableAmount')
+      .txt(formatAmount(summary.dueAmount ?? summary.grandTotal));
   }
 
   /**

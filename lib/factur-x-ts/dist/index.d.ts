@@ -6,6 +6,10 @@ export { XML_NAMESPACES, GUIDELINE_URNS, PROFILE_POLICIES, PATTERNS, REGIONAL_CO
 export { escapeXml, unescapeXml, sanitizeString, validateEmail, validatePhone, validateCountryCode, validateAmount, validateDate, } from './utils/InputSanitizer';
 export { CurrencyFormatter, isValidCurrency, getCurrencyInfo, formatCurrency, formatAmountForXml, parseCurrency, convertCurrency, } from './utils/CurrencyFormatter';
 export { XsdValidator, getDefaultValidator, validateXml, validateXmlAsync, type XsdValidationResult, type XsdValidationError, type ValidatorOptions, } from './validation/XsdValidator';
+export { RealXsdValidator, type RealXsdValidationResult, } from './validation/RealXsdValidator';
+export { BusinessRuleValidator, getDefaultBusinessRuleValidator, validateBusinessRules, type BusinessRule, type BusinessRuleResult, type BusinessRuleValidationResult, } from './validation/BusinessRuleValidator';
+export { CodeListValidator, getDefaultCodeListValidator, isValidCode, validateInvoiceCodes, type CodeListName, type CodeListValidationResult, } from './validation/CodeListValidator';
+export { type NoteWithCode, } from './types';
 export declare const VERSION = "1.0.0";
 export declare const FACTURX_VERSION = "1.07.2";
 export declare const EN16931_VERSION = "2017";

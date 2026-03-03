@@ -301,8 +301,8 @@
           <udt:Indicator>false</udt:Indicator>
         </ram:ChargeIndicator>
         <ram:ActualAmount>2000.00</ram:ActualAmount>
-        <ram:Reason>Remise projet global</ram:Reason>
         <ram:ReasonCode>95</ram:ReasonCode>
+        <ram:Reason>Remise projet global</ram:Reason>
         <ram:CategoryTradeTax>
           <ram:TypeCode>VAT</ram:TypeCode>
           <ram:CategoryCode>S</ram:CategoryCode>
@@ -312,7 +312,7 @@
       <ram:SpecifiedTradePaymentTerms>
         <ram:Description>Devis valable 60 jours - Acompte de 30% a la commande</ram:Description>
         <ram:DueDateDateTime>
-          <udt:DateTimeString format="102">20260502</udt:DateTimeString>
+          <udt:DateTimeString format="102">20260503</udt:DateTimeString>
         </ram:DueDateDateTime>
       </ram:SpecifiedTradePaymentTerms>
       <ram:SpecifiedTradeSettlementHeaderMonetarySummation>

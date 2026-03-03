@@ -17,7 +17,7 @@ export declare class FacturXInvoice {
     addLine(line: InvoiceLine): void;
     addDocAllowanceCharge(ac: AllowanceCharge): void;
     finalizeTotals(): MonetarySummary;
-    get totals(): MonetarySummary | undefined;
+    get totals(): MonetarySummary;
     validateProfile(): void;
     generateXml(checkProfile?: boolean): string;
     private buildXmlDocument;

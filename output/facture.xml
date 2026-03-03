@@ -282,8 +282,8 @@
           <udt:Indicator>false</udt:Indicator>
         </ram:ChargeIndicator>
         <ram:ActualAmount>350.00</ram:ActualAmount>
-        <ram:Reason>Remise fidelite client</ram:Reason>
         <ram:ReasonCode>95</ram:ReasonCode>
+        <ram:Reason>Remise fidelite client</ram:Reason>
         <ram:CategoryTradeTax>
           <ram:TypeCode>VAT</ram:TypeCode>
           <ram:CategoryCode>S</ram:CategoryCode>
@@ -293,7 +293,7 @@
       <ram:SpecifiedTradePaymentTerms>
         <ram:Description>Paiement a 30 jours nets</ram:Description>
         <ram:DueDateDateTime>
-          <udt:DateTimeString format="102">20260402</udt:DateTimeString>
+          <udt:DateTimeString format="102">20260403</udt:DateTimeString>
         </ram:DueDateDateTime>
       </ram:SpecifiedTradePaymentTerms>
       <ram:SpecifiedTradeSettlementHeaderMonetarySummation>
