@@ -24,12 +24,12 @@ describe('Constants Helper Functions', () => {
 
     it('should return URN for BASICWL profile', () => {
       const urn = getGuidelineUrn(FacturxProfile.BASICWL);
-      expect(urn).toBe('urn:cen.eu:en16931:2017#conformant#urn:factur-x.eu:1p0:basicwl');
+      expect(urn).toBe('urn:factur-x.eu:1p0:basicwl');
     });
 
     it('should return URN for BASIC profile', () => {
       const urn = getGuidelineUrn(FacturxProfile.BASIC);
-      expect(urn).toBe('urn:cen.eu:en16931:2017#conformant#urn:factur-x.eu:1p0:basic');
+      expect(urn).toBe('urn:cen.eu:en16931:2017#compliant#urn:factur-x.eu:1p0:basic');
     });
 
     it('should return URN for EN16931 profile', () => {
@@ -39,7 +39,7 @@ describe('Constants Helper Functions', () => {
 
     it('should return URN for EXTENDED profile', () => {
       const urn = getGuidelineUrn(FacturxProfile.EXTENDED);
-      expect(urn).toBe('urn:cen.eu:en16931:2017#compliant#urn:factur-x.eu:1p0:extended');
+      expect(urn).toBe('urn:cen.eu:en16931:2017#conformant#urn:factur-x.eu:1p0:extended');
     });
 
     it('should throw error for unknown profile', () => {

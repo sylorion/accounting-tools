@@ -1,133 +1,115 @@
-import fs from 'fs';
-import { PostalAddress } from './core/HeaderTradeAgreement';
-import { DocumentHeader } from './core/DocumentHeader';
-import { FacturXInvoice } from './core/FacturXInvoice';
-import { FacturxProfile } from './core/EnumInvoiceType';
-import { PaymentDetails } from './core/PaymentDetails';
-import { InvoiceLine } from './core/InvoiceLine';
-import { InvoiceTemplateFancy } from './templates/InvoiceTemplateFancy';
-import { PDFDocument, utf8Encode } from 'pdf-lib';
-import { PDFOption } from './generators/InvoicePDF';
+// src/test-multi-page.ts
+// Test multi-page invoice with QR code and full PDF/A-3 pipeline
+// Output: output/test-multi-page-invoice.pdf
 
-export class ExtendedTradeParty {
-  constructor(
-    public name: string,
-    public postalAddress: PostalAddress,
-    public vatNumber?: string,
-    public legalName?: string,
-    public contactName?: string,
-    public contactEmail?: string,
-    public contactPhone?: string
-  ) {}
-}
+import fs from 'fs';
+import path from 'path';
+import {
+  FacturXInvoice,
+  FacturxProfile,
+  DocTypeCode,
+  PaymentMeansCode,
+  CurrencyCode,
+  PostalAddressImpl,
+  TradePartyImpl,
+  PaymentDetailsImpl,
+  DocumentHeaderImpl,
+  InvoiceLineImpl,
+} from '@facturx/core';
+import { generateFancyPDF, TemplateOptions } from '@facturx/templates';
+
+const OUTPUT_DIR = path.join(__dirname, '..', 'output');
 
 (async () => {
-  // Créer vendeur et acheteur avec informations complètes
-  const sellerAddress = new PostalAddress("1 Boulevard de la République", "Paris", "75010", "FR", "Bâtiment A");
-  const seller = new ExtendedTradeParty(
-    "Mon Entreprise SAS",
-    sellerAddress,
-    "FR12345678901",
-    "Mon Entreprise Officielle",
-    "Jean Dupont (Service Facturation)",
-    "facturation@m-entreprise.com",
-    "+33 1 23 45 67 89"
-  );
+  fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 
-  const buyerAddress = new PostalAddress("45 Avenue Client", "Lyon", "69002", "FR", "Étage 3");
-  const buyer = new ExtendedTradeParty(
-    "Client XYZ SARL",
-    buyerAddress,
-    "FR98765432100",
-    "Client XYZ Légal",
-    "Marie Client (Achat)",
-    "achats@clientxyz.fr",
-    "+33 4 56 78 90 12"
-  );
+  const sellerAddress = PostalAddressImpl.builder()
+    .street('1 Boulevard de la Republique')
+    .city('Paris')
+    .postalCode('75010')
+    .countryCode('FR')
+    .build();
 
-  // En-tête et paiement
-  const header = new DocumentHeader(
-    "DOC-2025-FA-2001",
-    "2025-FA-002",
-    "FACTURE MULTI-PAGES",
-    new Date(2025, 6, 28), // 28 juillet 2025
-    new Date(),
-  );
+  const seller = TradePartyImpl.builder()
+    .name('Mon Entreprise SAS')
+    .address(sellerAddress)
+    .vatId('FR12345678901')
+    .build();
 
-  const payment = new PaymentDetails(
-    "58",
-    "FR7630004000031234567890143",
-    "BNPAFRPPXXX",
-    new Date(2025, 7, 28), // 28 août 2025
-    "Paiement sous 30 jours fin de mois."
-  );
+  const buyerAddress = PostalAddressImpl.builder()
+    .street('45 Avenue Client')
+    .city('Lyon')
+    .postalCode('69002')
+    .countryCode('FR')
+    .build();
+
+  const buyer = TradePartyImpl.builder()
+    .name('Client XYZ SARL')
+    .address(buyerAddress)
+    .vatId('FR98765432100')
+    .build();
+
+  const header = DocumentHeaderImpl.builder()
+    .id('2025-FA-002')
+    .invoiceNumber('2025-FA-002')
+    .name('FACTURE MULTI-PAGES')
+    .invoiceDate(new Date(2025, 6, 28))
+    .typeCode(DocTypeCode.INVOICE)
+    .build();
+
+  const payment = PaymentDetailsImpl.builder()
+    .meansCode(PaymentMeansCode.SEPA_CREDIT_TRANSFER)
+    .iban('FR7630004000031234567890143')
+    .bic('BNPAFRPPXXX')
+    .dueDate(new Date(2025, 7, 28))
+    .termsDescription('Paiement sous 30 jours fin de mois.')
+    .build();
 
   const invoice = new FacturXInvoice(
     FacturxProfile.EXTENDED,
     header,
-    seller as any,
-    buyer as any,
-    payment
+    seller,
+    buyer,
+    payment,
+    [],
+    [],
+    CurrencyCode.EUR,
   );
 
-  // Générer 50 lignes pour forcer plusieurs pages
+  // Generate 50 lines to force multiple pages
   for (let i = 1; i <= 50; i++) {
-    const longDesc = `Article #${i} : Description très détaillée de l'article SKU-ABC-${i.toString().padStart(3, '0')}. Ce produit comprend plusieurs caractéristiques techniques importantes et des spécifications détaillées pour une utilisation professionnelle dans le cadre de projets d'entreprise.`;
-    
+    const longDesc = `Article #${i} : Description tres detaillee de l'article SKU-ABC-${i.toString().padStart(3, '0')}. Ce produit comprend plusieurs caracteristiques techniques importantes et des specifications detaillees pour une utilisation professionnelle.`;
+
     const price = 25 + (i * 3.5);
     const qty = Math.ceil(Math.random() * 5);
-    const vat = 0.20;
-    
-    invoice.lines.push(new InvoiceLine(
+
+    invoice.addLine(new InvoiceLineImpl(
       i.toString(),
       longDesc,
       qty,
       price,
-      vat
+      0.20
     ));
   }
 
-  // Options PDF
-  const options: PDFOption = {
-    title: 'Facture Multi-Pages 2025-FA-002',
-    author: 'Mon Entreprise SAS',
-    subject: 'Facture électronique multi-pages',
-    keywords: ['facture', 'multi-page', 'test'],
-    creator: 'Accounting Tools',
-    producer: 'InvoiceTemplateFancy'
+  const options: Partial<TemplateOptions> = {
+    language: 'fr',
+    showTaxBreakdown: true,
+    showPaymentTerms: true,
+    sellerSiren: '123456789',
+    sellerSiret: '12345678900012',
+    paymentLink: 'https://pay.mon-entreprise.fr/inv/2025-FA-002',
+    validateBeforeGeneration: false,
+    validateAfterGeneration: false,
   };
 
-  // Générer le PDF
-  const template = new InvoiceTemplateFancy();
   try {
-    const pdfBytes = await template.render(invoice);
-    const xmlBuilder = invoice.generateXml(true);
-    const pdfDoc = await PDFDocument.load(pdfBytes);
-
-    // Attacher le XML
-    await pdfDoc.attach(
-      utf8Encode(xmlBuilder),
-      'factur-x.xml',
-      {
-        mimeType: 'application/xml',
-        description: 'Factur-X XML file',
-        creationDate: new Date(),
-        modificationDate: new Date()
-      }
-    );
-
-    // Métadonnées
-    if (options?.title) pdfDoc.setTitle(options.title);
-    if (options?.subject) pdfDoc.setSubject(options.subject);
-    if (options?.author) pdfDoc.setAuthor(options.author);
-    if (options?.keywords) pdfDoc.setKeywords(options.keywords);
-    if (options?.creator) pdfDoc.setCreator(options.creator);
-    if (options?.producer) pdfDoc.setProducer(options.producer);
-
-    fs.writeFileSync("test-multi-page-invoice.pdf", await pdfDoc.save());
-    console.log("✅ PDF multi-pages généré avec succès : test-multi-page-invoice.pdf");
-    console.log(`📄 Nombre de pages: ${pdfDoc.getPageCount()}`);
+    const result = await generateFancyPDF(invoice, options);
+    const outPath = path.join(OUTPUT_DIR, 'test-multi-page-invoice.pdf');
+    fs.writeFileSync(outPath, result.pdf);
+    console.log(`PDF multi-pages genere: ${outPath}`);
+    console.log(`Pages: ${result.pageCount}, Taille: ${Math.round(result.fileSize / 1024)} KB`);
   } catch (err) {
-    console.error("❌ Erreur lors de la génération du PDF:", err);
+    console.error('Erreur lors de la generation du PDF:', err);
   }
 })();

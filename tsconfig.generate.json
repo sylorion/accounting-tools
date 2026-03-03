@@ -15,6 +15,14 @@
       "@facturx/templates": ["lib/smp-factur-x-ts/src"]
     }
   },
-  "include": ["generate-all.ts"],
+  "include": [
+    "generate-all.ts",
+    "test-long-descriptions.ts",
+    "test-multipage.ts",
+    "test-facture-horodatee.ts",
+    "test-validation.ts",
+    "test-invoice-generation.ts",
+    "src/test-multi-page.ts"
+  ],
   "exclude": ["node_modules", "dist"]
 }

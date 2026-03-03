@@ -261,6 +261,17 @@ export interface PostalAddress {
 }
 
 /**
+ * Note with optional subject code (BT-21/BT-22)
+ * Required for FR compliance (BR-FR-05: PMT, PMD, AAB)
+ */
+export interface NoteWithCode {
+  /** Note content (BT-22) */
+  readonly content: string;
+  /** Subject code (BT-21): PMT, PMD, AAB, etc. */
+  readonly subjectCode?: string;
+}
+
+/**
  * Trade party (Seller/Buyer) information
  */
 export interface TradeParty {
@@ -274,14 +285,20 @@ export interface TradeParty {
   readonly vatId?: string;
   /** Tax registration ID (other than VAT) */
   readonly taxId?: string;
-  /** Legal registration ID */
+  /** Legal registration ID (BT-30 seller SIREN / BT-47 buyer) */
   readonly legalId?: string;
+  /** Legal registration ID scheme (e.g. '0002' for SIREN FR) */
+  readonly legalIdScheme?: string;
   /** Email address */
   readonly email?: string;
   /** Phone number */
   readonly phone?: string;
   /** Global Location Number (GLN) */
   readonly globalId?: string;
+  /** Electronic address for routing (BT-34 seller / BT-49 buyer) */
+  readonly electronicAddress?: string;
+  /** Electronic address scheme identifier (e.g. 'EM' for email) */
+  readonly electronicAddressScheme?: string;
 }
 
 /**
@@ -328,8 +345,8 @@ export interface DocumentHeader {
   readonly salesOrderReference?: string;
   /** Contract reference */
   readonly contractReference?: string;
-  /** Notes */
-  readonly notes?: string[];
+  /** Notes (string for simple notes, NoteWithCode for FR compliance with SubjectCode) */
+  readonly notes?: (string | NoteWithCode)[];
 }
 
 /**

@@ -5,7 +5,7 @@ import fs from 'fs';
 import { PDFDocument, StandardFonts, rgb, PDFPage } from 'pdf-lib';
 import { FacturXInvoice } from '../core/FacturXInvoice';
 import { BaseInvoiceItem } from '../models/BaseInvoiceItem';
-import { BUYER_LOGO_BASE64, SELLER_LOGO_BASE64 } from './img';
+import { SELLER_LOGO_BASE64 } from './img';
 
 // Interface pour les détails de TVA
 interface VATDetail {
@@ -15,19 +15,67 @@ interface VATDetail {
 }
 
 /**
+ * Configuration du template de facture.
+ * Permet de personnaliser la disposition, les couleurs et les options d'affichage.
+ */
+export interface InvoiceTemplateConfig {
+  /** Layout du logo : 'left' (logo gauche, infos droite) ou 'above' (logo dessus, infos dessous) */
+  logoLayout?: 'left' | 'above';
+  /** Couleur primaire du titre et accents (rgb 0-255) */
+  titleColor?: { r: number; g: number; b: number };
+  /** Taille du titre "FACTURE" en points */
+  titleFontSize?: number;
+  /** Lien de paiement pour le QR code (URL complète) */
+  paymentLink?: string;
+  /** Afficher la section "LIVRÉ À" */
+  showDeliveryAddress?: boolean;
+  /** SIREN de l'entreprise émettrice (9 chiffres) */
+  sellerSiren?: string;
+  /** SIRET de l'entreprise émettrice (14 chiffres) */
+  sellerSiret?: string;
+  /** SIREN/SIRET du client (si connu) */
+  buyerSiren?: string;
+}
+
+/**
  * A modern, "fancy" invoice PDF renderer with multi-page support for FacturXInvoice.
+ * Configurable via InvoiceTemplateConfig.
  */
 export class InvoiceTemplateFancy<T extends BaseInvoiceItem> {
-  // Color palette matching pdfExport.js exactly
-  private readonly COLORS = {
-    pink: rgb(219/255, 39/255, 119/255),
-    pinkLight: rgb(252/255, 231/255, 243/255),
-    blue: rgb(59/255, 130/255, 246/255),
-    blueLight: rgb(239/255, 246/255, 255/255),
-    gray: rgb(107/255, 114/255, 128/255),
-    grayLight: rgb(249/255, 250/255, 251/255),
-    dark: rgb(31/255, 41/255, 55/255)
-  };
+  private readonly config: Required<InvoiceTemplateConfig>;
+
+  // Color palette - primary color derived from config
+  private get COLORS() {
+    const { titleColor } = this.config;
+    return {
+      primary: rgb(titleColor.r / 255, titleColor.g / 255, titleColor.b / 255),
+      primaryLight: rgb(
+        Math.min(1, titleColor.r / 255 + 0.7),
+        Math.min(1, titleColor.g / 255 + 0.7),
+        Math.min(1, titleColor.b / 255 + 0.7)
+      ),
+      pink: rgb(219/255, 39/255, 119/255),
+      pinkLight: rgb(252/255, 231/255, 243/255),
+      blue: rgb(59/255, 130/255, 246/255),
+      blueLight: rgb(239/255, 246/255, 255/255),
+      gray: rgb(107/255, 114/255, 128/255),
+      grayLight: rgb(249/255, 250/255, 251/255),
+      dark: rgb(31/255, 41/255, 55/255)
+    };
+  }
+
+  constructor(config?: InvoiceTemplateConfig) {
+    this.config = {
+      logoLayout: config?.logoLayout ?? 'left',
+      titleColor: config?.titleColor ?? { r: 219, g: 39, b: 119 },
+      titleFontSize: config?.titleFontSize ?? 28,
+      paymentLink: config?.paymentLink ?? '',
+      showDeliveryAddress: config?.showDeliveryAddress ?? true,
+      sellerSiren: config?.sellerSiren ?? '',
+      sellerSiret: config?.sellerSiret ?? '',
+      buyerSiren: config?.buyerSiren ?? '',
+    };
+  }
 
   // A4 dimensions in points (210mm x 297mm)
   private readonly A4_WIDTH = 595.28;
@@ -182,89 +230,99 @@ export class InvoiceTemplateFancy<T extends BaseInvoiceItem> {
   }
 
   /**
-   * Dessine l'en-tête de page avec QR code et identifiants (toutes les pages)
+   * Dessine l'en-tête de page : titre du document en haut + identifiants à droite
    */
   private async drawPageHeaderTop(
-    invoice: FacturXInvoice, 
+    invoice: FacturXInvoice,
     yPosition: number
   ): Promise<number> {
     const {page} = this.pages[this.currentPageIndex];
-    
-    // QR Code et code modèle alignés sur le bord droit
-    const qrSize = 40;
-    const modelCodeWidth = 60; // Largeur approximative pour INV.2025.01 en vertical
-    const qrX = this.A4_WIDTH - this.MARGIN - qrSize; // Aligné sur le bord droit
-    const qrY = yPosition - qrSize; // Aligné avec la borne haute de l'émetteur
-    
-    // Fond blanc pour le QR code
-    page.drawRectangle({
-      x: qrX,
-      y: qrY,
-      width: qrSize,
-      height: qrSize,
-      color: rgb(1, 1, 1),
-      borderColor: rgb(0, 0, 0),
-      borderWidth: 1
-    });
-    
-    // Pattern QR code
-    const qrPattern = this.generateSimpleQRPattern();
-    const cellSize = 2;
-    qrPattern.forEach((row: number[], i: number) => {
-      row.forEach((cell: number, j: number) => {
-        if (cell === 1) {
-          page.drawRectangle({
-            x: qrX + 3 + (j * cellSize),
-            y: qrY + qrSize - 3 - ((i + 1) * cellSize),
-            width: cellSize,
-            height: cellSize,
-            color: rgb(0, 0, 0)
-          });
-        }
-      });
+
+    // Déterminer le titre selon le type de document
+    const typeCode = invoice.header?.typeCode;
+    let docTitle = 'FACTURE';
+    const tc = String(typeCode);
+    if (tc === '381') docTitle = 'AVOIR';
+    else if (tc === '384') docTitle = 'DEVIS';
+    else if (tc === '383') docTitle = 'NOTE DE DEBIT';
+    else if (tc === '386') docTitle = 'ACOMPTE';
+
+    // TITRE DU DOCUMENT - tout en haut, couleur et taille configurables
+    const titleSize = this.config.titleFontSize;
+    page.drawText(docTitle, {
+      x: this.MARGIN,
+      y: yPosition - 5,
+      size: titleSize,
+      font: this.fontBold,
+      color: this.COLORS.primary
     });
 
-    // Code du modèle "INV.2025.01" à DROITE du QR code
-    const modelCode = "INV.2025.01";
-    const modelX = qrX + qrSize + 5; // À droite du QR code
-    const modelY = qrY + qrSize; // Aligné avec le haut du QR code
-    
-    page.drawText(modelCode, {
-      x: modelX,
-      y: modelY,
-      size: 8,
+    // Numéro de facture et date alignés à droite sur la même ligne
+    const invoiceNum = `N\u00b0 ${invoice.header?.invoiceNumber || ''}`;
+    const invoiceDate = invoice.header?.invoiceDate?.toLocaleDateString('fr-FR') || '';
+    const dateText = `${invoiceDate}`;
+
+    const numWidth = this.fontBold.widthOfTextAtSize(invoiceNum, 11);
+    page.drawText(invoiceNum, {
+      x: this.A4_WIDTH - this.MARGIN - numWidth,
+      y: yPosition - 5,
+      size: 11,
+      font: this.fontBold,
+      color: this.COLORS.dark
+    });
+
+    const dateWidth = this.fontRegular.widthOfTextAtSize(dateText, 9);
+    page.drawText(dateText, {
+      x: this.A4_WIDTH - this.MARGIN - dateWidth,
+      y: yPosition - 20,
+      size: 9,
       font: this.fontRegular,
-      color: this.COLORS.gray,
-      rotate: { type: 'degrees', angle: -90 } as any
+      color: this.COLORS.gray
     });
 
-    return yPosition - 70; // Espace pour le header principal
+    // Ligne de séparation sous le titre
+    const lineY = yPosition - titleSize - 8;
+    page.drawLine({
+      start: { x: this.MARGIN, y: lineY },
+      end: { x: this.A4_WIDTH - this.MARGIN, y: lineY },
+      thickness: 2,
+      color: this.COLORS.primary
+    });
+
+    return lineY - 15; // Espace après la ligne
   }
 
   /**
-   * Header complet pour la première page
+   * Header complet pour la première page.
+   * Layout configurable : 'left' (logo gauche, infos droite) ou 'above' (logo dessus, infos dessous).
    */
   private async drawCompleteHeader(
-    invoice: FacturXInvoice, 
+    invoice: FacturXInvoice,
     yPosition: number
   ): Promise<number> {
     const {page} = this.pages[this.currentPageIndex];
-    
-    // PARTIE GAUCHE - Logo et infos émetteur complètes
+
+    if (this.config.logoLayout === 'above') {
+      return this.drawCompleteHeaderAbove(invoice, yPosition);
+    }
+
+    // === LAYOUT 'left' (défaut) : Logo à gauche, infos à droite ===
+
+    // Logo vendeur à gauche
     await this.drawBase64Image(
-      page, 
-      SELLER_LOGO_BASE64, 
-      this.MARGIN, 
-      yPosition, 
-      this.LOGO_WIDTH, 
+      page,
+      SELLER_LOGO_BASE64,
+      this.MARGIN,
+      yPosition,
+      this.LOGO_WIDTH,
       this.LOGO_HEIGHT
     );
 
     let leftTextY = yPosition - 10;
     const sellerStartX = this.MARGIN + this.LOGO_WIDTH + this.TEXT_OFFSET_X;
-    
-    // Nom de l'entreprise
-    page.drawText(invoice.seller?.name || 'Ma Société SARL', {
+
+    // Nom de l'entreprise (bold, 14pt)
+    page.drawText(invoice.seller?.name || '', {
       x: sellerStartX,
       y: leftTextY,
       size: 14,
@@ -272,138 +330,152 @@ export class InvoiceTemplateFancy<T extends BaseInvoiceItem> {
       color: this.COLORS.dark
     });
 
-    // Toutes les informations complètes de l'émetteur
-    const sellerInfo = [
-      `${invoice.seller?.postalAddress?.line1 || '123 Rue de la Test'}`,
-      `${invoice.seller?.postalAddress?.postalCode || '75001'} ${invoice.seller?.postalAddress?.city || 'Paris'}`,
-      invoice.seller?.postalAddress?.countryCode || 'FR',
-      `TVA: ${(invoice.seller as any)?.vatNumber || 'FR12345678901'}`,
-      `Contact: ${(invoice.seller as any)?.contactName || 'Service Facturation'}`,
-      `Email: ${(invoice.seller as any)?.contactEmail || 'facturation@societe.com'}`,
-      `Tél: ${(invoice.seller as any)?.contactPhone || '+33 1 23 45 67 89'}`
-    ];
+    // Infos vendeur complètes (adresse, TVA, SIREN, contact)
+    const sellerInfo: string[] = [];
+    if (invoice.seller?.postalAddress?.line1) sellerInfo.push(invoice.seller.postalAddress.line1);
+    const cityLine = [
+      invoice.seller?.postalAddress?.postalCode,
+      invoice.seller?.postalAddress?.city,
+      invoice.seller?.postalAddress?.countryCode
+    ].filter(Boolean).join(' ');
+    if (cityLine) sellerInfo.push(cityLine);
+    if ((invoice.seller as any)?.vatNumber) sellerInfo.push(`TVA : ${(invoice.seller as any).vatNumber}`);
+    if (this.config.sellerSiren) sellerInfo.push(`SIREN : ${this.config.sellerSiren}`);
+    if (this.config.sellerSiret) sellerInfo.push(`SIRET : ${this.config.sellerSiret}`);
+    if ((invoice.seller as any)?.contactEmail) sellerInfo.push(`${(invoice.seller as any).contactEmail}`);
+    if ((invoice.seller as any)?.contactPhone) sellerInfo.push(`${(invoice.seller as any).contactPhone}`);
 
-    sellerInfo.forEach((line, i) => {
-      if (line.trim() && !line.includes('undefined')) {
-        leftTextY -= 12;
-        page.drawText(line, {
-          x: sellerStartX,
-          y: leftTextY,
-          size: 9,
-          font: this.fontRegular,
-          color: this.COLORS.gray
-        });
-      }
+    sellerInfo.forEach(line => {
+      leftTextY -= 12;
+      page.drawText(line, {
+        x: sellerStartX,
+        y: leftTextY,
+        size: 9,
+        font: this.fontRegular,
+        color: this.COLORS.gray
+      });
     });
 
-    // PARTIE DROITE - Titre "FACTURE" aligné sur la bordure droite
-    const factureText = 'FACTURE';
-    const factureSize = 36;
-    const factureWidth = this.fontBold.widthOfTextAtSize(factureText, factureSize);
-    // Aligné sur la bordure droite (angle droit du texte sur la bordure)
-    const factureX = this.A4_WIDTH - this.MARGIN - factureWidth;
-    // Aligné verticalement avec le logo de l'émetteur (même Y que le logo)
-    const factureY = yPosition - 10; // MÊME HAUTEUR que le logo de l'émetteur
-    
-    page.drawText(factureText, {
-      x: factureX,
-      y: factureY,
-      size: factureSize,
-      font: this.fontBold,
-      color: this.COLORS.pink
+    // PARTIE DROITE - Détails de la facture (pas de watermark)
+    const rightDetails = [
+      `Client : ${invoice.buyer?.name || ''}`,
+      `Total : ${this.formatCurrency(this.calculateTotal(invoice))}`,
+      `Ech. : ${invoice.payment?.dueDate?.toLocaleDateString('fr-FR') || ''}`
+    ].filter(d => !d.includes('undefined') && d.trim());
+
+    let detailY = yPosition - 10;
+    rightDetails.forEach(detail => {
+      const detailWidth = this.fontRegular.widthOfTextAtSize(detail, 9);
+      page.drawText(detail, {
+        x: this.A4_WIDTH - this.MARGIN - detailWidth,
+        y: detailY,
+        size: 9,
+        font: this.fontRegular,
+        color: this.COLORS.gray
+      });
+      detailY -= 12;
     });
 
-    // Détails du destinataire APRÈS le titre "FACTURE" (plus bas)
-    const buyerDetails = [
-      `Client: ${invoice.buyer?.name || 'Test SAS'}`,
-      `Contact: ${(invoice.buyer as any)?.contactName || 'Service Achat'}`,
-      `Email: ${(invoice.buyer as any)?.contactEmail || 'achat@client.com'}`,
-      `Tél: ${(invoice.buyer as any)?.contactPhone || '+33 4 56 78 90 12'}`,
-      `N° Facture: ${invoice.header?.invoiceNumber || 'FACT-2025-001'}`,
-      `Émis le: ${invoice.header?.invoiceDate?.toLocaleDateString('fr-FR') || '28/07/2025'}`,
-      `Total à payer: ${this.calculateTotal(invoice).toFixed(2)}€`,
-      `Échéance: ${invoice.payment?.dueDate?.toLocaleDateString('fr-FR') || '27/08/2025'}`
-    ];
-
-    // Commencer PLUS PRÈS du titre FACTURE (factureY - 25 au lieu de -50)
-    let detailY = factureY - 25;
-    buyerDetails.forEach(detail => {
-      if (!detail.includes('undefined')) {
-        const detailWidth = this.fontRegular.widthOfTextAtSize(detail, 9);
-        page.drawText(detail, {
-          x: this.A4_WIDTH - this.MARGIN - detailWidth,
-          y: detailY,
-          size: 9,
-          font: this.fontRegular,
-          color: this.COLORS.gray
-        });
-        detailY -= 12;
-      }
-    });
-
-    // Calculer la hauteur totale utilisée pour retourner la bonne position
-    const sellerInfoHeight = sellerInfo.filter(line => line.trim() && !line.includes('undefined')).length * 12 + 20;
-    const buyerDetailsHeight = buyerDetails.filter(detail => !detail.includes('undefined')).length * 12 + 25; // Réduit de 50 à 25
-    const totalHeight = Math.max(sellerInfoHeight, buyerDetailsHeight);
-
-    return yPosition - totalHeight;
+    const usedHeight = Math.max(
+      sellerInfo.length * 12 + 20,
+      rightDetails.length * 12 + 20,
+      this.LOGO_HEIGHT + 10
+    );
+    return yPosition - usedHeight;
   }
 
   /**
-   * Header simplifié pour les pages suivantes
+   * Header layout 'above' : logo centré, infos dessous
    */
-  private async drawSimpleHeader(
-    invoice: FacturXInvoice, 
+  private async drawCompleteHeaderAbove(
+    invoice: FacturXInvoice,
     yPosition: number
   ): Promise<number> {
     const {page} = this.pages[this.currentPageIndex];
-    
-    // PARTIE GAUCHE - Logo et nom seulement
-    await this.drawBase64Image(
-      page, 
-      SELLER_LOGO_BASE64, 
-      this.MARGIN, 
-      yPosition, 
-      this.LOGO_WIDTH, 
-      this.LOGO_HEIGHT
-    );
 
-    const sellerStartX = this.MARGIN + this.LOGO_WIDTH + this.TEXT_OFFSET_X;
-    page.drawText(invoice.seller?.name || 'Ma Société SARL', {
-      x: sellerStartX,
-      y: yPosition - 10,
+    // Logo centré
+    const logoX = (this.A4_WIDTH - this.LOGO_WIDTH) / 2;
+    await this.drawBase64Image(page, SELLER_LOGO_BASE64, logoX, yPosition, this.LOGO_WIDTH, this.LOGO_HEIGHT);
+    let y = yPosition - this.LOGO_HEIGHT - 8;
+
+    // Nom centré
+    const name = invoice.seller?.name || '';
+    const nameWidth = this.fontBold.widthOfTextAtSize(name, 14);
+    page.drawText(name, {
+      x: (this.A4_WIDTH - nameWidth) / 2,
+      y,
       size: 14,
       font: this.fontBold,
       color: this.COLORS.dark
     });
+    y -= 14;
 
-    // PARTIE DROITE - Titre "FACTURE" aligné sur la bordure droite  
-    const factureText = 'FACTURE';
-    const factureSize = 32;
-    const factureWidth = this.fontBold.widthOfTextAtSize(factureText, factureSize);
-    // Aligné sur la bordure droite (angle droit du texte sur la bordure)
-    const factureX = this.A4_WIDTH - this.MARGIN - factureWidth;
-    // Aligné verticalement avec le logo de l'émetteur
-    const factureY = yPosition - 10; // Même hauteur que le logo de l'émetteur
-    
-    page.drawText(factureText, {
-      x: factureX,
-      y: factureY,
-      size: factureSize,
-      font: this.fontBold,
-      color: this.COLORS.pink
+    // Infos centrées
+    const lines: string[] = [];
+    if (invoice.seller?.postalAddress?.line1) lines.push(invoice.seller.postalAddress.line1);
+    const city = [invoice.seller?.postalAddress?.postalCode, invoice.seller?.postalAddress?.city].filter(Boolean).join(' ');
+    if (city) lines.push(city);
+    if ((invoice.seller as any)?.vatNumber) lines.push(`TVA : ${(invoice.seller as any).vatNumber}`);
+    if (this.config.sellerSiren) lines.push(`SIREN : ${this.config.sellerSiren}`);
+
+    lines.forEach(line => {
+      const w = this.fontRegular.widthOfTextAtSize(line, 9);
+      page.drawText(line, { x: (this.A4_WIDTH - w) / 2, y, size: 9, font: this.fontRegular, color: this.COLORS.gray });
+      y -= 12;
     });
 
-    // Infos essentielles DIRECTEMENT en dessous du titre "FACTURE"
+    // Détails facture alignés à droite
+    const rightDetails = [
+      `Client : ${invoice.buyer?.name || ''}`,
+      `Total : ${this.formatCurrency(this.calculateTotal(invoice))}`,
+      `Ech. : ${invoice.payment?.dueDate?.toLocaleDateString('fr-FR') || ''}`
+    ].filter(d => !d.includes('undefined'));
+
+    let ry = yPosition - 10;
+    rightDetails.forEach(detail => {
+      const dw = this.fontRegular.widthOfTextAtSize(detail, 9);
+      page.drawText(detail, { x: this.A4_WIDTH - this.MARGIN - dw, y: ry, size: 9, font: this.fontRegular, color: this.COLORS.gray });
+      ry -= 12;
+    });
+
+    return y - 10;
+  }
+
+  /**
+   * Header simplifié pour les pages suivantes (pas de watermark)
+   */
+  private async drawSimpleHeader(
+    invoice: FacturXInvoice,
+    yPosition: number
+  ): Promise<number> {
+    const {page} = this.pages[this.currentPageIndex];
+
+    // Logo vendeur + nom à gauche (compact)
+    await this.drawBase64Image(
+      page,
+      SELLER_LOGO_BASE64,
+      this.MARGIN,
+      yPosition,
+      this.LOGO_WIDTH * 0.7,
+      this.LOGO_HEIGHT * 0.7
+    );
+
+    const sellerStartX = this.MARGIN + this.LOGO_WIDTH * 0.7 + this.TEXT_OFFSET_X;
+    page.drawText(invoice.seller?.name || '', {
+      x: sellerStartX,
+      y: yPosition - 10,
+      size: 11,
+      font: this.fontBold,
+      color: this.COLORS.dark
+    });
+
+    // Infos essentielles alignées à droite
     const essentialInfo = [
-      `N° ${invoice.header?.invoiceNumber || 'FACT-2025-001'}`,
-      `${invoice.header?.invoiceDate?.toLocaleDateString('fr-FR') || '28/07/2025'}`,
-      `Total: ${this.calculateTotal(invoice).toFixed(2)}€`,
-      `Échéance: ${invoice.payment?.dueDate?.toLocaleDateString('fr-FR') || '27/08/2025'}`
+      `N\u00b0 ${invoice.header?.invoiceNumber || ''}`,
+      `Total : ${this.formatCurrency(this.calculateTotal(invoice))}`,
     ];
 
-    // Commencer DIRECTEMENT après le titre FACTURE (15 points d'espacement)
-    let infoY = factureY - 15;
+    let infoY = yPosition - 8;
     essentialInfo.forEach(info => {
       const infoWidth = this.fontRegular.widthOfTextAtSize(info, 9);
       page.drawText(info, {
@@ -416,9 +488,16 @@ export class InvoiceTemplateFancy<T extends BaseInvoiceItem> {
       infoY -= 12;
     });
 
-    // Calculer la hauteur basée sur les infos essentielles avec espacement réduit
-    const infoHeight = essentialInfo.length * 12 + 15; // 15 pour l'espace après FACTURE
-    return yPosition - Math.max(60, infoHeight); // Au minimum 60 pour le logo/nom
+    // Ligne de séparation fine
+    const lineY = yPosition - this.LOGO_HEIGHT * 0.7 - 5;
+    page.drawLine({
+      start: { x: this.MARGIN, y: lineY },
+      end: { x: this.A4_WIDTH - this.MARGIN, y: lineY },
+      thickness: 0.5,
+      color: this.COLORS.primary
+    });
+
+    return lineY - 10;
   }
 
   /**
@@ -462,35 +541,28 @@ export class InvoiceTemplateFancy<T extends BaseInvoiceItem> {
 
     yPosition -= 35; // Move down after titles
 
-    // Buyer logo placeholder
-    await this.drawBase64Image(
-      page, 
-      BUYER_LOGO_BASE64, 
-      this.MARGIN, 
-      yPosition, 
-      this.LOGO_WIDTH - 14.17, // -5mm comme dans pdfExport.js
-      this.LOGO_HEIGHT - 14.17  // -5mm comme dans pdfExport.js
-    );
-
-    // Buyer information (FACTURÉ À)
+    // Buyer information (FACTURÉ À) - PAS d'icône client
     const buyerLines = [
-      invoice.buyer?.name || 'Client XYZ SARL',
-      invoice.buyer?.postalAddress?.line1 || '45 Avenue Ach',
-      `${invoice.buyer?.postalAddress?.postalCode || '69002'} ${invoice.buyer?.postalAddress?.city || 'Lyon'} ${invoice.buyer?.postalAddress?.countryCode || 'FR'}`,
-    ];
+      invoice.buyer?.name || '',
+      invoice.buyer?.postalAddress?.line1 || '',
+      [invoice.buyer?.postalAddress?.postalCode, invoice.buyer?.postalAddress?.city, invoice.buyer?.postalAddress?.countryCode].filter(Boolean).join(' '),
+    ].filter(l => l.trim());
 
+    if (this.config.buyerSiren) {
+      buyerLines.push(`SIREN : ${this.config.buyerSiren}`);
+    }
     if (invoice.buyer?.registrationNumber) {
       buyerLines.push(`SIRET : ${invoice.buyer.registrationNumber}`);
     }
     if (invoice.buyer?.vatNumber) {
-      buyerLines.push(`TVA : ${invoice.buyer.vatNumber || 'FR98765432100'}`);
+      buyerLines.push(`TVA : ${invoice.buyer.vatNumber}`);
     }
 
     let buyerY = yPosition - 5;
-    buyerLines.forEach((line, i) => {
+    buyerLines.forEach((line) => {
       if (line.trim()) {
         page.drawText(line, {
-          x: this.MARGIN + 5.67 + (this.LOGO_WIDTH - 14.17) + this.TEXT_OFFSET_X,
+          x: this.MARGIN + 5.67,
           y: buyerY,
           size: 9,
           font: fontRegular,
@@ -561,26 +633,62 @@ export class InvoiceTemplateFancy<T extends BaseInvoiceItem> {
     const summaryWidth = this.A4_WIDTH - this.MARGIN * 2 - qrSize - gap;
     const summaryX = this.MARGIN + qrSize + gap;
 
-    // QR code placeholder
+    // QR Code avec données de paiement
+    const qrX = this.MARGIN;
+    const qrY = yPosition - qrSize;
+
+    // Fond blanc + bordure
     page.drawRectangle({
-      x: this.MARGIN,
-      y: yPosition - qrSize,
+      x: qrX,
+      y: qrY,
       width: qrSize,
       height: qrSize,
-      color: rgb(0.9, 0.9, 0.9), // Light gray placeholder
-      borderColor: rgb(0.5, 0.5, 0.5),
-      borderWidth: 1
+      color: rgb(1, 1, 1),
+      borderColor: this.COLORS.primary,
+      borderWidth: 1.5
     });
 
-    // QR Code label
-    let qrLabelText = 'QR Code facture';
-    let qrLabelWidth = fontRegular.widthOfTextAtSize(qrLabelText, 7);
-    page.drawText(qrLabelText, {
-      x: this.MARGIN + (qrSize - qrLabelWidth) / 2,
-      y: yPosition - qrSize - 15,
-      size: 7,
-      font: fontRegular,
-      color: this.COLORS.gray
+    // Pattern QR code (encodage simplifié des données de paiement)
+    const qrPattern = this.generateSimpleQRPattern();
+    const cellSize = Math.floor(qrSize / (qrPattern.length + 4));
+    const qrOffset = (qrSize - qrPattern.length * cellSize) / 2;
+    qrPattern.forEach((row: number[], i: number) => {
+      row.forEach((cell: number, j: number) => {
+        if (cell === 1) {
+          page.drawRectangle({
+            x: qrX + qrOffset + (j * cellSize),
+            y: qrY + qrSize - qrOffset - ((i + 1) * cellSize),
+            width: cellSize,
+            height: cellSize,
+            color: rgb(0, 0, 0)
+          });
+        }
+      });
+    });
+
+    // Label sous le QR code avec détails de paiement
+    const invoiceNum = invoice.header?.invoiceNumber || '';
+    const qrTotal = this.formatCurrency(this.calculateTotal(invoice));
+    const iban = invoice.payment?.payeeIBAN || '';
+
+    const qrLabels = [
+      this.config.paymentLink ? 'Scanner pour payer' : 'Paiement',
+      `Ref: ${invoiceNum}`,
+      `Montant: ${qrTotal}`,
+    ];
+    if (iban) qrLabels.push(`IBAN: ${iban.substring(0, 14)}...`);
+
+    let labelY = qrY - 10;
+    qrLabels.forEach(label => {
+      const lw = fontRegular.widthOfTextAtSize(label, 6.5);
+      page.drawText(label, {
+        x: qrX + (qrSize - lw) / 2,
+        y: labelY,
+        size: 6.5,
+        font: fontRegular,
+        color: this.COLORS.gray
+      });
+      labelY -= 9;
     });
 
     // Summary box avec hauteur ajustée
@@ -1172,7 +1280,7 @@ export class InvoiceTemplateFancy<T extends BaseInvoiceItem> {
     });
 
     // Titre en anglais aligné à droite
-    const paymentInfoText = 'PAYMENT INFORMATION';
+    const paymentInfoText = 'INFORMATIONS DE PAIEMENT';
     const paymentInfoWidth = this.fontBold.widthOfTextAtSize(paymentInfoText, 11);
     page.drawText(paymentInfoText, {
       x: this.A4_WIDTH - this.MARGIN - paymentInfoWidth,
@@ -1208,8 +1316,8 @@ export class InvoiceTemplateFancy<T extends BaseInvoiceItem> {
     const paymentDetails = [
       `IBAN : ${invoice.payment?.payeeIBAN || 'FR76 1234 5678 9012 3456 7890 123'}`,
       `BIC : ${invoice.payment?.payeeBIC || 'AGRIFRPP'}`,
-      `Reference: ${invoice.header?.invoiceNumber || 'FAC-2025-001'}`,
-      `Due date: ${invoice.payment?.dueDate?.toLocaleDateString('en-US') || '8/27/2025'}`
+      `Référence : ${invoice.header?.invoiceNumber || ''}`,
+      `Echéance : ${invoice.payment?.dueDate?.toLocaleDateString('fr-FR') || ''}`
     ];
 
     let paymentY = yPosition;
@@ -1283,7 +1391,8 @@ export class InvoiceTemplateFancy<T extends BaseInvoiceItem> {
   private addFooterToPage(page: PDFPage, invoice: FacturXInvoice, pageNumber: number): void {
     const footerY = 40;
     
-    const line1 = `${invoice.seller?.name || 'Mon Entreprise SAS'} - SIRET: ${invoice.seller?.registrationNumber || ''} - TVA: ${invoice.seller?.vatNumber || 'FR12345678901'}`;
+    const siret = this.config.sellerSiret || invoice.seller?.registrationNumber || '';
+    const line1 = `${invoice.seller?.name || ''} - SIRET: ${siret} - TVA: ${invoice.seller?.vatNumber || ''}`;
     const line2 = `${invoice.seller?.postalAddress?.line1 || '1 Boulevard de la République'}, ${invoice.seller?.postalAddress?.postalCode || '75010'} ${invoice.seller?.postalAddress?.city || 'Paris'}`;
 
     // Centered text

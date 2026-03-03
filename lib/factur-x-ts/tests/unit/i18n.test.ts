@@ -426,7 +426,9 @@ describe('I18n', () => {
       const date = new Date('2023-11-15T12:30:45Z');
       const formatted = i18n.formatDate(date, 'YYYY-MM-DD HH:mm:ss');
 
-      expect(formatted).toBe('2023-11-15 12:30:45');
+      // formatDate uses local time, so expected value depends on timezone
+      const expectedHour = date.getHours().toString().padStart(2, '0');
+      expect(formatted).toBe(`2023-11-15 ${expectedHour}:30:45`);
     });
 
     it('should use locale-specific date formats', () => {

@@ -1,48 +1,27 @@
 [
   {
-    "name": "modern-en16931",
+    "name": "modern-basic",
     "template": "Modern",
-    "profile": "EN16931",
-    "pdfGenerated": true,
-    "pdfSize": 70334,
-    "errors": [],
-    "validationResult": {
-      "isValid": true,
-      "score": 100,
-      "compliance": "FULL",
-      "errors": 0,
-      "warnings": 0,
-      "steps": 4,
-      "stepsPassed": 4
-    },
-    "externalResult": {
-      "pdfA3": false,
-      "facturX": false,
-      "errors": 0,
-      "warnings": 0
-    }
+    "profile": "BASICWL",
+    "pdfGenerated": false,
+    "pdfSize": 0,
+    "errors": [
+      "Test failed: [Factur-X] Profile BASICWL forbids field 'lines', but it is set."
+    ]
   },
   {
     "name": "fancy-en16931",
     "template": "Fancy",
     "profile": "EN16931",
     "pdfGenerated": true,
-    "pdfSize": 70522,
+    "pdfSize": 70054,
     "errors": [],
     "validationResult": {
-      "isValid": true,
-      "score": 100,
-      "compliance": "FULL",
-      "errors": 0,
-      "warnings": 0,
-      "steps": 4,
-      "stepsPassed": 4
-    },
-    "externalResult": {
-      "pdfA3": false,
-      "facturX": false,
-      "errors": 0,
-      "warnings": 0
+      "isValid": false,
+      "score": 57,
+      "compliance": "PARTIAL",
+      "errors": 7,
+      "warnings": 1
     }
   },
   {
@@ -50,68 +29,34 @@
     "template": "Brand",
     "profile": "EN16931",
     "pdfGenerated": true,
-    "pdfSize": 70589,
+    "pdfSize": 70073,
     "errors": [],
     "validationResult": {
-      "isValid": true,
-      "score": 100,
-      "compliance": "FULL",
-      "errors": 0,
-      "warnings": 0,
-      "steps": 4,
-      "stepsPassed": 4
-    },
-    "externalResult": {
-      "pdfA3": false,
-      "facturX": false,
-      "errors": 0,
-      "warnings": 0
+      "isValid": false,
+      "score": 57,
+      "compliance": "PARTIAL",
+      "errors": 7,
+      "warnings": 1
     }
   },
   {
-    "name": "corporate-en16931",
+    "name": "corporate-basic",
     "template": "Corporate",
-    "profile": "EN16931",
-    "pdfGenerated": true,
-    "pdfSize": 70873,
-    "errors": [],
-    "validationResult": {
-      "isValid": true,
-      "score": 100,
-      "compliance": "FULL",
-      "errors": 0,
-      "warnings": 0,
-      "steps": 4,
-      "stepsPassed": 4
-    },
-    "externalResult": {
-      "pdfA3": false,
-      "facturX": false,
-      "errors": 0,
-      "warnings": 0
-    }
+    "profile": "BASICWL",
+    "pdfGenerated": false,
+    "pdfSize": 0,
+    "errors": [
+      "Test failed: [Factur-X] Profile BASICWL forbids field 'lines', but it is set."
+    ]
   },
   {
-    "name": "minimal-en16931",
+    "name": "minimal-basic",
     "template": "Minimal",
-    "profile": "EN16931",
-    "pdfGenerated": true,
-    "pdfSize": 70330,
-    "errors": [],
-    "validationResult": {
-      "isValid": true,
-      "score": 100,
-      "compliance": "FULL",
-      "errors": 0,
-      "warnings": 0,
-      "steps": 4,
-      "stepsPassed": 4
-    },
-    "externalResult": {
-      "pdfA3": false,
-      "facturX": false,
-      "errors": 0,
-      "warnings": 0
-    }
+    "profile": "BASICWL",
+    "pdfGenerated": false,
+    "pdfSize": 0,
+    "errors": [
+      "Test failed: [Factur-X] Profile BASICWL forbids field 'lines', but it is set."
+    ]
   }
 ]

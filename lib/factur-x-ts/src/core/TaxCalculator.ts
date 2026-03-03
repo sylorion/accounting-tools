@@ -104,12 +104,21 @@ export class TaxCalculator {
 
     // Process document-level allowances/charges - O(k) where k is typically small
     let docBase = 0;
+    let allowanceTotal = 0;
+    let chargeTotal = 0;
     for (const dac of docAllowancesCharges) {
       const dacAmt = dac.actualAmount ?? 0;
       const sign = dac.chargeIndicator ? 1 : -1;
       const partialBase = dacAmt * sign;
 
       docBase += partialBase;
+
+      // Track allowances and charges separately for BR-CO-13 compliance
+      if (dac.chargeIndicator) {
+        chargeTotal += dacAmt;
+      } else {
+        allowanceTotal += dacAmt;
+      }
 
       const rate = dac.taxRate ?? 0;
       const category = dac.taxCategoryCode ?? 'S';
@@ -158,6 +167,8 @@ export class TaxCalculator {
       taxBasis,
       taxTotal: totalTax,
       grandTotal,
+      allowanceTotal,
+      chargeTotal,
       taxSummaries: Object.freeze(taxSummaries),
     };
   }

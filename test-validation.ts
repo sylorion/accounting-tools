@@ -8,14 +8,17 @@ import * as fs from 'fs/promises';
 import { existsSync } from 'fs';
 import * as path from 'path';
 import {
-  FacturXInvoice,
   FacturxProfile,
-  DocumentHeader,
-  TradeParty,
-  PostalAddress,
-  PaymentDetails,
-  InvoiceLine as IInvoiceLine,
 } from './lib/factur-x-ts/src';
+import { FacturXInvoice } from './lib/factur-x-ts/src/core/FacturXInvoice';
+import {
+  PostalAddressImpl,
+  TradePartyImpl,
+  DocumentHeaderImpl,
+  PaymentDetailsImpl,
+  InvoiceLine as InvoiceLineImpl,
+} from './lib/factur-x-ts/src/core/entities';
+import { DocTypeCode, PaymentMeansCode } from './lib/factur-x-ts/src/types';
 
 import {
   generateModernPDF,
@@ -41,72 +44,71 @@ interface TestResult {
 
 async function createSimpleInvoice(profile: FacturxProfile): Promise<FacturXInvoice> {
   // Create addresses
-  const sellerAddress = new PostalAddress(
-    '123 Business Street',
-    'Paris',
-    '75001',
-    'FR'
+  const sellerAddress = new PostalAddressImpl(
+    'Paris',             // city
+    '75001',             // postalCode
+    'FR',                // countryCode
+    '123 Business Street' // street
   );
 
-  const buyerAddress = new PostalAddress(
-    '456 Client Avenue',
-    'Lyon',
-    '69001',
-    'FR'
+  const buyerAddress = new PostalAddressImpl(
+    'Lyon',              // city
+    '69001',             // postalCode
+    'FR',                // countryCode
+    '456 Client Avenue'  // street
   );
 
   // Create parties
-  const seller = new TradeParty(
+  const seller = new TradePartyImpl(
     'Test Company SARL',
     sellerAddress,
-    'FR12345678901'
+    undefined,             // tradingName
+    'FR12345678901'        // vatId
   );
 
-  const buyer = new TradeParty(
+  const buyer = new TradePartyImpl(
     'Client Test SAS',
     buyerAddress,
-    'FR98765432109'
+    undefined,             // tradingName
+    'FR98765432109'        // vatId
   );
 
   // Create header
-  const header = new DocumentHeader(
-    `TEST-${Date.now()}`,
-    new Date('2024-01-15'),
-    new Date('2024-02-15'),
-    'EUR'
+  const invoiceId = `TEST-${Date.now()}`;
+  const header = new DocumentHeaderImpl(
+    invoiceId,                   // id
+    invoiceId,                   // invoiceNumber
+    'Test Invoice',              // name
+    new Date('2024-01-15'),      // invoiceDate
+    DocTypeCode.INVOICE,         // typeCode
+    new Date('2024-02-15')       // dueDate
   );
 
   // Create payment details
-  const payment = new PaymentDetails();
+  const payment = new PaymentDetailsImpl(
+    PaymentMeansCode.SEPA_CREDIT_TRANSFER
+  );
 
   // Create invoice lines
-  const lines: IInvoiceLine[] = [
-    {
-      id: '1',
-      name: 'Consulting Service',
-      quantity: 10,
-      unit: 'HOURS',
-      unitPrice: 100,
-      netAmount: 1000,
-      taxAmount: 200,
-      totalAmount: 1200,
-      vatRate: 20,
-      vatCategory: 'S',
-      description: 'Professional consulting services',
-    },
-    {
-      id: '2',
-      name: 'Software License',
-      quantity: 1,
-      unit: 'MONTHLY',
-      unitPrice: 500,
-      netAmount: 500,
-      taxAmount: 100,
-      totalAmount: 600,
-      vatRate: 20,
-      vatCategory: 'S',
-      description: 'Annual software license',
-    },
+  const lines: InvoiceLineImpl[] = [
+    new InvoiceLineImpl(
+      '1',
+      'Professional consulting services',
+      10,
+      100,
+      20,
+      'S',
+      'HUR'
+    ),
+    new InvoiceLineImpl(
+      '2',
+      'Annual software license',
+      1,
+      500,
+      20,
+      'S',
+      'C62'
+    ),
   ];
 
   // Create invoice
@@ -189,7 +191,7 @@ async function main() {
       // Generate PDF
       console.log('  [1/3] Generating PDF...');
       const invoice = await createSimpleInvoice(testCase.profile);
-      const pdfResult = await testCase.generator(invoice, { language: 'fr' });
+      const pdfResult = await testCase.generator(invoice as any, { language: 'fr' });
 
       const pdfPath = path.join(pdfsDir, `${testCase.name}.pdf`);
       await fs.writeFile(pdfPath, pdfResult.pdf);
@@ -203,7 +205,7 @@ async function main() {
       try {
         const xmlContent = invoice.generateXml(true);
         const validationResult = await internalPipeline.validateAfterGeneration(
-          invoice,
+          invoice as any,
           pdfResult.pdf,
           xmlContent
         );

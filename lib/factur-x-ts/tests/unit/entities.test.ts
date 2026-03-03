@@ -137,18 +137,24 @@ describe('TradePartyImpl', () => {
         'FR12345678901',
         'TAX123',
         'LEGAL456',
+        '0002',
         'contact@acme.com',
         '+33123456789',
-        'GLOBAL789'
+        'GLOBAL789',
+        'contact@acme.com',
+        'EM'
       );
 
       expect(party.tradingName).toBe('ACME');
       expect(party.vatId).toBe('FR12345678901');
       expect(party.taxId).toBe('TAX123');
       expect(party.legalId).toBe('LEGAL456');
+      expect(party.legalIdScheme).toBe('0002');
       expect(party.email).toBe('contact@acme.com');
       expect(party.phone).toBe('+33123456789');
       expect(party.globalId).toBe('GLOBAL789');
+      expect(party.electronicAddress).toBe('contact@acme.com');
+      expect(party.electronicAddressScheme).toBe('EM');
     });
 
     it('should throw error if name is missing', () => {

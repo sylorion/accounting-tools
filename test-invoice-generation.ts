@@ -7,7 +7,7 @@
 
 import { FacturXInvoice } from './lib/factur-x-ts/src/core/FacturXInvoice';
 import { FacturxProfile, DocTypeCode, TaxCategoryCode, PaymentMeansCode, CurrencyCode } from './lib/factur-x-ts/src/types';
-import { PostalAddressImpl, TradePartyImpl, DocumentHeaderImpl, PaymentDetailsImpl, InvoiceLine as IInvoiceLine } from './lib/factur-x-ts/src/core/entities';
+import { PostalAddressImpl, TradePartyImpl, DocumentHeaderImpl, PaymentDetailsImpl, InvoiceLine as InvoiceLineImpl } from './lib/factur-x-ts/src/core/entities';
 import { validateXml } from './lib/factur-x-ts/src/validation/XsdValidator';
 import { createI18n } from './lib/factur-x-ts/src/i18n';
 import fs from 'fs';
@@ -43,33 +43,41 @@ console.log(`  Date: ${timestamp.toISOString()}\n`);
 
 // Créer les entités
 const sellerAddress = new PostalAddressImpl(
-  '123 Rue du Commerce',
-  'Paris',
-  '75001',
-  'FR',
-  'Bâtiment A'
+  'Paris',             // city
+  '75001',             // postalCode
+  'FR',                // countryCode
+  '123 Rue du Commerce', // street
+  'Bâtiment A'         // additionalStreet
 );
 
 const seller = new TradePartyImpl(
   'ACME Corporation SAS',
   sellerAddress,
-  'FR12345678901',
-  'contact@acme.com',
-  '+33 1 23 45 67 89'
+  undefined,             // tradingName
+  'FR12345678901',       // vatId
+  undefined,             // taxId
+  undefined,             // legalId
+  undefined,             // legalIdScheme
+  'contact@acme.com',    // email
+  '+33 1 23 45 67 89'    // phone
 );
 
 const buyerAddress = new PostalAddressImpl(
-  '45 Avenue Client',
-  'Lyon',
-  '69001',
-  'FR'
+  'Lyon',              // city
+  '69001',             // postalCode
+  'FR',                // countryCode
+  '45 Avenue Client'   // street
 );
 
 const buyer = new TradePartyImpl(
   'Client ABC SARL',
   buyerAddress,
-  'FR98765432100',
-  'client@abc.com'
+  undefined,             // tradingName
+  'FR98765432100',       // vatId
+  undefined,             // taxId
+  undefined,             // legalId
+  undefined,             // legalIdScheme
+  'client@abc.com'       // email
 );
 
 const header = new DocumentHeaderImpl(
@@ -90,36 +98,26 @@ const payment = new PaymentDetailsImpl(
   'Paiement sous 30 jours'
 );
 
-// Créer les lignes de facture (implémentation basique pour le test)
-const lines: IInvoiceLine[] = [
-  {
-    id: '1',
-    description: 'Services de conseil professionnel - 10 heures',
-    quantity: 10,
-    unitPrice: 150.00,
-    vatRate: 20.0,
-    taxCategory: TaxCategoryCode.STANDARD,
-    unitCode: 'HUR',
-    allowances: [],
-    charges: [],
-    lineTotalAmount(): number { return this.quantity * this.unitPrice; },
-    taxAmount(): number { return (this.lineTotalAmount() * this.vatRate) / 100; },
-    grossAmount(): number { return this.lineTotalAmount() + this.taxAmount(); }
-  },
-  {
-    id: '2',
-    description: 'Licence logicielle entreprise - Abonnement annuel',
-    quantity: 1,
-    unitPrice: 599.00,
-    vatRate: 20.0,
-    taxCategory: TaxCategoryCode.STANDARD,
-    unitCode: 'C62',
-    allowances: [],
-    charges: [],
-    lineTotalAmount(): number { return this.quantity * this.unitPrice; },
-    taxAmount(): number { return (this.lineTotalAmount() * this.vatRate) / 100; },
-    grossAmount(): number { return this.lineTotalAmount() + this.taxAmount(); }
-  }
+// Créer les lignes de facture
+const lines: InvoiceLineImpl[] = [
+  new InvoiceLineImpl(
+    '1',
+    'Services de conseil professionnel - 10 heures',
+    10,
+    150.00,
+    20.0,
+    TaxCategoryCode.STANDARD,
+    'HUR'
+  ),
+  new InvoiceLineImpl(
+    '2',
+    'Licence logicielle entreprise - Abonnement annuel',
+    1,
+    599.00,
+    20.0,
+    TaxCategoryCode.STANDARD,
+    'C62'
+  )
 ];
 
 // Test 4: Génération XML

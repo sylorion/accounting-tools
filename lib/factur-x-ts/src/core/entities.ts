@@ -11,6 +11,7 @@ import {
   DocumentHeader,
   AllowanceCharge as IAllowanceCharge,
   InvoiceLine as IInvoiceLine,
+  NoteWithCode,
   DocTypeCode,
   PaymentMeansCode,
 } from '../types';
@@ -108,9 +109,12 @@ export class TradePartyImpl implements TradeParty {
     public readonly vatId?: string,
     public readonly taxId?: string,
     public readonly legalId?: string,
+    public readonly legalIdScheme?: string,
     public readonly email?: string,
     public readonly phone?: string,
-    public readonly globalId?: string
+    public readonly globalId?: string,
+    public readonly electronicAddress?: string,
+    public readonly electronicAddressScheme?: string
   ) {
     if (!name || !address) {
       throw new Error('Name and address are required');
@@ -130,9 +134,12 @@ class TradePartyBuilder {
   private _vatId?: string;
   private _taxId?: string;
   private _legalId?: string;
+  private _legalIdScheme?: string;
   private _email?: string;
   private _phone?: string;
   private _globalId?: string;
+  private _electronicAddress?: string;
+  private _electronicAddressScheme?: string;
 
   name(value: string): this {
     this._name = value;
@@ -158,6 +165,10 @@ class TradePartyBuilder {
     this._legalId = value;
     return this;
   }
+  legalIdScheme(value: string): this {
+    this._legalIdScheme = value;
+    return this;
+  }
   email(value: string): this {
     this._email = value;
     return this;
@@ -168,6 +179,14 @@ class TradePartyBuilder {
   }
   globalId(value: string): this {
     this._globalId = value;
+    return this;
+  }
+  electronicAddress(value: string): this {
+    this._electronicAddress = value;
+    return this;
+  }
+  electronicAddressScheme(value: string): this {
+    this._electronicAddressScheme = value;
     return this;
   }
 
@@ -182,9 +201,12 @@ class TradePartyBuilder {
       this._vatId,
       this._taxId,
       this._legalId,
+      this._legalIdScheme,
       this._email,
       this._phone,
-      this._globalId
+      this._globalId,
+      this._electronicAddress,
+      this._electronicAddressScheme
     );
   }
 }
@@ -275,7 +297,7 @@ export class DocumentHeaderImpl implements DocumentHeader {
     public readonly purchaseOrderReference?: string,
     public readonly salesOrderReference?: string,
     public readonly contractReference?: string,
-    public readonly notes?: string[]
+    public readonly notes?: (string | NoteWithCode)[]
   ) {
     if (!id || !invoiceNumber || !invoiceDate) {
       throw new Error('ID, invoice number, and date are required');
@@ -303,7 +325,7 @@ class DocumentHeaderBuilder {
   private _purchaseOrderReference?: string;
   private _salesOrderReference?: string;
   private _contractReference?: string;
-  private _notes?: string[];
+  private _notes?: (string | NoteWithCode)[];
 
   id(value: string): this {
     this._id = value;
@@ -351,6 +373,13 @@ class DocumentHeaderBuilder {
       this._notes = [];
     }
     this._notes.push(note);
+    return this;
+  }
+  addNoteWithCode(content: string, subjectCode: string): this {
+    if (!this._notes) {
+      this._notes = [];
+    }
+    this._notes.push({ content, subjectCode });
     return this;
   }
 

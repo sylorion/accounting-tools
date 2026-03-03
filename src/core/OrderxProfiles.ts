@@ -81,7 +81,7 @@ export interface OrderxProfileConfig {
 export const ORDERX_PROFILE_CONFIGS: Record<OrderxProfiles, OrderxProfileConfig> = {
   [OrderxProfiles.BASIC]: {
     profile: OrderxProfiles.BASIC,
-    urn: "urn:order-x.eu:1p0:basic#",
+    urn: "urn:order-x.eu:1p0:basic",
     requiredFields: [
       "orderNumber",
       "orderDate",
@@ -108,7 +108,7 @@ export const ORDERX_PROFILE_CONFIGS: Record<OrderxProfiles, OrderxProfileConfig>
 
   [OrderxProfiles.COMFORT]: {
     profile: OrderxProfiles.COMFORT,
-    urn: "urn:order-x.eu:1p0:comfort#",
+    urn: "urn:order-x.eu:1p0:comfort",
     requiredFields: [
       "orderNumber",
       "orderDate",
@@ -136,7 +136,7 @@ export const ORDERX_PROFILE_CONFIGS: Record<OrderxProfiles, OrderxProfileConfig>
 
   [OrderxProfiles.EXTENDED]: {
     profile: OrderxProfiles.EXTENDED,
-    urn: "urn:order-x.eu:1p0:extended#",
+    urn: "urn:order-x.eu:1p0:extended",
     requiredFields: [
       "orderNumber",
       "orderDate",

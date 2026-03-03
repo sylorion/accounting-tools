@@ -1,0 +1,22 @@
+{
+  "numeroFacture": "FAC-2026-46790768",
+  "dateGeneration": "2026-03-03T14:06:30.768Z",
+  "vendeur": {
+    "nom": "ACME Solutions SAS",
+    "siret": "FR12345678901",
+    "ville": "Paris"
+  },
+  "acheteur": {
+    "nom": "Client Innovant SARL",
+    "siret": "FR98765432100",
+    "ville": "Lyon"
+  },
+  "montants": {
+    "ht": 8499,
+    "tva": 169980,
+    "ttc": 178479,
+    "devise": "EUR"
+  },
+  "lignes": 4,
+  "profil": "EN16931"
+}

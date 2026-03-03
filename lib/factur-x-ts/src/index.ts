@@ -113,7 +113,7 @@ export {
 } from './utils/CurrencyFormatter';
 
 export {
-  // XSD Validation
+  // XSD Validation (structural)
   XsdValidator,
   getDefaultValidator,
   validateXml,
@@ -122,6 +122,37 @@ export {
   type XsdValidationError,
   type ValidatorOptions,
 } from './validation/XsdValidator';
+
+export {
+  // Real XSD Validation (against actual XSD schemas)
+  RealXsdValidator,
+  type RealXsdValidationResult,
+} from './validation/RealXsdValidator';
+
+export {
+  // Business Rule Validation (EN16931 Schematron rules + BR-FR)
+  BusinessRuleValidator,
+  getDefaultBusinessRuleValidator,
+  validateBusinessRules,
+  type BusinessRule,
+  type BusinessRuleResult,
+  type BusinessRuleValidationResult,
+} from './validation/BusinessRuleValidator';
+
+export {
+  // Code List Validation (ISO 4217, ISO 3166, UNTDID, etc.)
+  CodeListValidator,
+  getDefaultCodeListValidator,
+  isValidCode,
+  validateInvoiceCodes,
+  type CodeListName,
+  type CodeListValidationResult,
+} from './validation/CodeListValidator';
+
+export {
+  // NoteWithCode type for FR compliance
+  type NoteWithCode,
+} from './types';
 
 // ============================================================================
 // VERSION INFO

@@ -83,9 +83,8 @@ const lines: InvoiceLine[] = [
     10, // heures
     150.00,
     20.0, // 20% TVA
-    TaxCategoryCode.STANDARD_RATE,
-    'HUR', // Hour
-    'Prestation de conseil technique pour l\'optimisation du système d\'information'
+    TaxCategoryCode.STANDARD,
+    'HUR' // Hour
   ),
   new InvoiceLine(
     '2',
@@ -93,9 +92,8 @@ const lines: InvoiceLine[] = [
     5, // jours
     800.00,
     20.0,
-    TaxCategoryCode.STANDARD_RATE,
-    'DAY',
-    'Développement d\'un module spécifique selon cahier des charges'
+    TaxCategoryCode.STANDARD,
+    'DAY'
   ),
   new InvoiceLine(
     '3',
@@ -103,9 +101,8 @@ const lines: InvoiceLine[] = [
     1,
     599.00,
     20.0,
-    TaxCategoryCode.STANDARD_RATE,
-    'C62', // Unit
-    'Licence entreprise incluant support et mises à jour'
+    TaxCategoryCode.STANDARD,
+    'C62' // Unit
   ),
   new InvoiceLine(
     '4',
@@ -113,9 +110,8 @@ const lines: InvoiceLine[] = [
     2, // jours
     1200.00,
     20.0,
-    TaxCategoryCode.STANDARD_RATE,
-    'DAY',
-    'Formation sur site pour 10 utilisateurs'
+    TaxCategoryCode.STANDARD,
+    'DAY'
   )
 ];
 
@@ -170,13 +166,13 @@ const metadata = {
   dateGeneration: timestamp,
   vendeur: {
     nom: seller.name,
-    siret: seller.taxId,
-    ville: seller.address.city
+    siret: seller.vatNumber,
+    ville: seller.postalAddress.city
   },
   acheteur: {
     nom: buyer.name,
-    siret: buyer.taxId,
-    ville: buyer.address.city
+    siret: buyer.vatNumber,
+    ville: buyer.postalAddress.city
   },
   montants: {
     ht: totals.taxBasis,

@@ -61,6 +61,10 @@ function createSellerParty(): TradePartyImpl {
     .name('SMP Solutions SAS')
     .address(address)
     .vatId('FR89123456789')
+    .legalId('891234567')
+    .legalIdScheme('0002')
+    .electronicAddress('facturation@smp-solutions.fr')
+    .electronicAddressScheme('EM')
     .email('facturation@smp-solutions.fr')
     .phone('+33 1 42 68 53 00')
     .build();
@@ -78,6 +82,10 @@ function createBuyerParty(): TradePartyImpl {
     .name('Acme Industries SARL')
     .address(address)
     .vatId('FR45987654321')
+    .legalId('459876543')
+    .legalIdScheme('0002')
+    .electronicAddress('comptabilite@acme-industries.fr')
+    .electronicAddressScheme('EM')
     .email('comptabilite@acme-industries.fr')
     .build();
 }
@@ -92,6 +100,9 @@ function createInvoice(): FacturXInvoice {
     .name('FACTURE')
     .invoiceDate(now)
     .typeCode(DocTypeCode.INVOICE)
+    .addNoteWithCode('En cas de retard de paiement, une indemnite forfaitaire de 40 euros pour frais de recouvrement sera exigee (art. L.441-10 du Code de commerce).', 'PMT')
+    .addNoteWithCode('Taux des penalites de retard : 3 fois le taux d\'interet legal en vigueur.', 'PMD')
+    .addNoteWithCode('Pas d\'escompte pour paiement anticipe.', 'AAB')
     .build();
 
   const payment = PaymentDetailsImpl.builder()
@@ -139,6 +150,9 @@ function createCreditNote(): FacturXInvoice {
     .name('AVOIR')
     .invoiceDate(now)
     .typeCode(DocTypeCode.CREDIT_NOTE)
+    .addNoteWithCode('En cas de retard de paiement, une indemnite forfaitaire de 40 euros pour frais de recouvrement sera exigee (art. L.441-10 du Code de commerce).', 'PMT')
+    .addNoteWithCode('Taux des penalites de retard : 3 fois le taux d\'interet legal en vigueur.', 'PMD')
+    .addNoteWithCode('Pas d\'escompte pour paiement anticipe.', 'AAB')
     .build();
 
   const payment = PaymentDetailsImpl.builder()
@@ -176,6 +190,9 @@ function createQuote(): FacturXInvoice {
     .invoiceDate(now)
     .typeCode(DocTypeCode.PRO_FORMAT)
     .dueDate(validUntil)
+    .addNoteWithCode('En cas de retard de paiement, une indemnite forfaitaire de 40 euros pour frais de recouvrement sera exigee (art. L.441-10 du Code de commerce).', 'PMT')
+    .addNoteWithCode('Taux des penalites de retard : 3 fois le taux d\'interet legal en vigueur.', 'PMD')
+    .addNoteWithCode('Pas d\'escompte pour paiement anticipe.', 'AAB')
     .build();
 
   const payment = PaymentDetailsImpl.builder()
@@ -224,10 +241,76 @@ interface DocumentConfig {
   factory: () => FacturXInvoice;
 }
 
+function createExtendedMultiItem(): FacturXInvoice {
+  const now = new Date();
+  const dueDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+  const header = DocumentHeaderImpl.builder()
+    .id(`FA-${now.getFullYear()}-EXT-001`)
+    .invoiceNumber(`FA-${now.getFullYear()}-EXT-001`)
+    .name('FACTURE')
+    .invoiceDate(now)
+    .typeCode(DocTypeCode.INVOICE)
+    .addNoteWithCode('En cas de retard de paiement, une indemnite forfaitaire de 40 euros pour frais de recouvrement sera exigee.', 'PMT')
+    .build();
+
+  const payment = PaymentDetailsImpl.builder()
+    .meansCode(PaymentMeansCode.SEPA_CREDIT_TRANSFER)
+    .iban('FR7630004000031234567890143')
+    .bic('BNPAFRPPXXX')
+    .dueDate(dueDate)
+    .termsDescription('Paiement a 30 jours nets')
+    .build();
+
+  const invoice = new FacturXInvoice(
+    FacturxProfile.EXTENDED,
+    header,
+    createSellerParty(),
+    createBuyerParty(),
+    payment,
+    [],
+    [],
+    CurrencyCode.EUR,
+  );
+
+  // 30 items with varied descriptions to test multi-page and text wrapping
+  const descriptions = [
+    'Developpement application web - Sprint 1 (React, TypeScript, Node.js)',
+    'Design UI/UX - Maquettes et prototypes Figma haute fidelite',
+    'Optimisation SEO - Audit complet et implementation des recommandations techniques et editoriales',
+    'Redaction contenu - Articles blog optimises pour le referencement naturel',
+    'Hebergement cloud - Infrastructure AWS avec auto-scaling et monitoring',
+    'Formation equipe - Session dediee sur les pratiques DevOps modernes (CI/CD, Docker, Kubernetes)',
+    'Support et maintenance - Forfait trimestriel incluant corrections de bugs et mises a jour de securite',
+    'Migration base de donnees - De MySQL vers PostgreSQL avec zero downtime',
+    'Audit securite - Tests de penetration et analyse des vulnerabilites OWASP Top 10',
+    'Integration API - Connexion avec systemes tiers (Stripe, Mailchimp, Salesforce)',
+  ];
+
+  for (let i = 0; i < 30; i++) {
+    const desc = descriptions[i % descriptions.length];
+    invoice.addLine(new InvoiceLineImpl(
+      (i + 1).toString(),
+      desc,
+      Math.floor(Math.random() * 10) + 1,
+      Math.random() * 300 + 50,
+      i % 4 === 0 ? 0.10 : 0.20
+    ));
+  }
+
+  // Remise commerciale
+  invoice.addDocAllowanceCharge(
+    new AllowanceChargeImpl(false, 500.00, 'Remise volume', '95', 0.20)
+  );
+
+  return invoice;
+}
+
 const DOCUMENTS: DocumentConfig[] = [
   { name: 'facture', label: 'Facture', factory: createInvoice },
   { name: 'avoir', label: 'Avoir', factory: createCreditNote },
   { name: 'devis', label: 'Devis', factory: createQuote },
+  { name: 'extended-multi', label: 'Extended Multi-Items', factory: createExtendedMultiItem },
 ];
 
 interface TemplateConfig {
@@ -248,6 +331,8 @@ const COMMON_OPTIONS: Partial<TemplateOptions> = {
   language: 'fr',
   showTaxBreakdown: true,
   showPaymentTerms: true,
+  sellerSiren: '891234567',
+  sellerSiret: '89123456700012',
   validateBeforeGeneration: false,
   validateAfterGeneration: false,
 };
@@ -301,6 +386,50 @@ async function main(): Promise<void> {
         console.error(`  ERREUR: ${doc.name}-${tmpl.name}: ${err.message}`);
       }
     }
+  }
+
+  // --- Extended multi-item variants (Fancy only, with and without logo) ---
+  console.log('\n--- VARIANTES EXTENDED (avec/sans logo) ---');
+  const extInvoice = createExtendedMultiItem();
+
+  // Variant 1: Without logo
+  try {
+    const result = await generateFancyPDF(extInvoice, {
+      ...COMMON_OPTIONS,
+      logoLayout: 'none',
+      sellerSiren: '891234567',
+      sellerSiret: '89123456700012',
+      paymentLink: 'https://pay.smp-solutions.fr/inv/EXT-001',
+    });
+    const filename = 'extended-multi-fancy-sans-logo.pdf';
+    fs.writeFileSync(path.join(OUTPUT_DIR, filename), result.pdf);
+    const sizeKB = (result.fileSize / 1024).toFixed(1);
+    console.log(`  PDF: ${filename} (${result.pageCount} page(s), ${sizeKB} KB)`);
+    totalGenerated++;
+    totalSize += result.fileSize;
+    results.push(`${filename} - ${result.pageCount} page(s), ${sizeKB} KB`);
+  } catch (err: any) {
+    console.error(`  ERREUR: extended-sans-logo: ${err.message}`);
+  }
+
+  // Variant 2: With logo above (using a placeholder - no actual image file)
+  try {
+    const result = await generateFancyPDF(extInvoice, {
+      ...COMMON_OPTIONS,
+      logoLayout: 'above',
+      sellerSiren: '891234567',
+      sellerSiret: '89123456700012',
+      paymentLink: 'https://pay.smp-solutions.fr/inv/EXT-001',
+    });
+    const filename = 'extended-multi-fancy-avec-logo.pdf';
+    fs.writeFileSync(path.join(OUTPUT_DIR, filename), result.pdf);
+    const sizeKB = (result.fileSize / 1024).toFixed(1);
+    console.log(`  PDF: ${filename} (${result.pageCount} page(s), ${sizeKB} KB)`);
+    totalGenerated++;
+    totalSize += result.fileSize;
+    results.push(`${filename} - ${result.pageCount} page(s), ${sizeKB} KB`);
+  } catch (err: any) {
+    console.error(`  ERREUR: extended-avec-logo: ${err.message}`);
   }
 
   // Summary

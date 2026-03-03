@@ -37,10 +37,10 @@
     "node": ">=18.0.0"
   },
   "dependencies": {
-    "xmlbuilder2": "^3.1.1",
+    "@xmldom/xmldom": "^0.8.10",
     "big.js": "^6.2.1",
     "fast-xml-parser": "^4.3.2",
-    "@xmldom/xmldom": "^0.8.10"
+    "xmlbuilder2": "^3.1.1"
   },
   "devDependencies": {
     "@types/big.js": "^6.2.2",
@@ -54,7 +54,6 @@
     "ts-jest": "^29.1.1",
     "typescript": "^5.3.3"
   },
-  "peerDependencies": {},
   "files": [
     "dist",
     "compliance",

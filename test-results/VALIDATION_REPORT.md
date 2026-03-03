@@ -1,113 +1,71 @@
 # Factur-X Validation Test Results
 
-**Test Date:** 2025-11-16T23:59:10.680Z
-**External Tools:** veraPDF: ✓, Mustangproject: ✗
+**Test Date:** 2026-03-03T14:07:03.590Z
+**External Tools:** veraPDF: ✗, Mustangproject: ✗
 
 ## Summary Table
 
-| Test | Template | Profile | PDF | Valid | Score | Steps | Errors | Warnings | External |
-|------|----------|---------|-----|-------|-------|-------|--------|----------|----------|
-| modern-en16931 | Modern | EN16931 | ✓ | ✓ | 100% | 4/4 | 0 | 0 | ⚠ |
-| fancy-en16931 | Fancy | EN16931 | ✓ | ✓ | 100% | 4/4 | 0 | 0 | ⚠ |
-| brand-en16931 | Brand | EN16931 | ✓ | ✓ | 100% | 4/4 | 0 | 0 | ⚠ |
-| corporate-en16931 | Corporate | EN16931 | ✓ | ✓ | 100% | 4/4 | 0 | 0 | ⚠ |
-| minimal-en16931 | Minimal | EN16931 | ✓ | ✓ | 100% | 4/4 | 0 | 0 | ⚠ |
+| Test | Template | Profile | PDF | Valid | Score | Errors | Warnings | External |
+|------|----------|---------|-----|-------|-------|--------|----------|----------|
+| modern-basic | Modern | BASICWL | ✗ | ✗ | 0% | 0 | 0 | N/A |
+| fancy-en16931 | Fancy | EN16931 | ✓ | ⚠ | 57% | 7 | 1 | N/A |
+| brand-en16931 | Brand | EN16931 | ✓ | ⚠ | 57% | 7 | 1 | N/A |
+| corporate-basic | Corporate | BASICWL | ✗ | ✗ | 0% | 0 | 0 | N/A |
+| minimal-basic | Minimal | BASICWL | ✗ | ✗ | 0% | 0 | 0 | N/A |
 
 ## Detailed Results
 
-### modern-en16931
+### modern-basic
 
 - **Template:** Modern
-- **Profile:** EN16931
-- **PDF Generated:** Yes (70334 bytes)
-- **Internal Validation:**
-  - Valid: Yes ✓
-  - Score: 100%
-  - Compliance: FULL
-  - Steps Passed: 4/4
-  - Errors: 0
-  - Warnings: 0
-- **External Validation:**
-  - PDF/A-3: No ✗
-  - Factur-X: No ✗
-  - Errors: 0
-  - Warnings: 0
+- **Profile:** BASICWL
+- **PDF Generated:** No (0 bytes)
+- **Errors:**
+  - Test failed: [Factur-X] Profile BASICWL forbids field 'lines', but it is set.
 
 ### fancy-en16931
 
 - **Template:** Fancy
 - **Profile:** EN16931
-- **PDF Generated:** Yes (70522 bytes)
+- **PDF Generated:** Yes (70054 bytes)
 - **Internal Validation:**
-  - Valid: Yes ✓
-  - Score: 100%
-  - Compliance: FULL
-  - Steps Passed: 4/4
-  - Errors: 0
-  - Warnings: 0
-- **External Validation:**
-  - PDF/A-3: No ✗
-  - Factur-X: No ✗
-  - Errors: 0
-  - Warnings: 0
+  - Valid: No ✗
+  - Score: 57%
+  - Compliance: PARTIAL
+  - Errors: 7
+  - Warnings: 1
 
 ### brand-en16931
 
 - **Template:** Brand
 - **Profile:** EN16931
-- **PDF Generated:** Yes (70589 bytes)
+- **PDF Generated:** Yes (70073 bytes)
 - **Internal Validation:**
-  - Valid: Yes ✓
-  - Score: 100%
-  - Compliance: FULL
-  - Steps Passed: 4/4
-  - Errors: 0
-  - Warnings: 0
-- **External Validation:**
-  - PDF/A-3: No ✗
-  - Factur-X: No ✗
-  - Errors: 0
-  - Warnings: 0
+  - Valid: No ✗
+  - Score: 57%
+  - Compliance: PARTIAL
+  - Errors: 7
+  - Warnings: 1
 
-### corporate-en16931
+### corporate-basic
 
 - **Template:** Corporate
-- **Profile:** EN16931
-- **PDF Generated:** Yes (70873 bytes)
-- **Internal Validation:**
-  - Valid: Yes ✓
-  - Score: 100%
-  - Compliance: FULL
-  - Steps Passed: 4/4
-  - Errors: 0
-  - Warnings: 0
-- **External Validation:**
-  - PDF/A-3: No ✗
-  - Factur-X: No ✗
-  - Errors: 0
-  - Warnings: 0
+- **Profile:** BASICWL
+- **PDF Generated:** No (0 bytes)
+- **Errors:**
+  - Test failed: [Factur-X] Profile BASICWL forbids field 'lines', but it is set.
 
-### minimal-en16931
+### minimal-basic
 
 - **Template:** Minimal
-- **Profile:** EN16931
-- **PDF Generated:** Yes (70330 bytes)
-- **Internal Validation:**
-  - Valid: Yes ✓
-  - Score: 100%
-  - Compliance: FULL
-  - Steps Passed: 4/4
-  - Errors: 0
-  - Warnings: 0
-- **External Validation:**
-  - PDF/A-3: No ✗
-  - Factur-X: No ✗
-  - Errors: 0
-  - Warnings: 0
+- **Profile:** BASICWL
+- **PDF Generated:** No (0 bytes)
+- **Errors:**
+  - Test failed: [Factur-X] Profile BASICWL forbids field 'lines', but it is set.
 
 ## Statistics
 
 - **Total Tests:** 5
-- **PDFs Generated:** 5/5 (100%)
-- **Internal Validation Pass:** 5/5 (100%)
-- **Average Score:** 100.0%
+- **PDFs Generated:** 2/5
+- **Internal Validation Pass:** 0/5
+- **Average Score:** 22.8%
