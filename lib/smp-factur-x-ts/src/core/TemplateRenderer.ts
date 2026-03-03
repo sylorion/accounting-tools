@@ -559,6 +559,11 @@ export abstract class TemplateRenderer {
     // Pre-load seller logo once (non-blocking)
     const logoImage = await this.loadLogo();
 
+    // Compute invoice# font size once (constant across all pages)
+    const invoiceRef = invoice.header.id;
+    const textWidthAt10 = fontBold.widthOfTextAtSize(invoiceRef, 10);
+    const scaledFontSize = Math.max(4, Math.min(14, (qrSize * 10) / textWidthAt10));
+
     for (let i = 1; i < this.allPages.length; i++) {
       const page = this.allPages[i];
       const pageWidth = page.getWidth();
@@ -567,11 +572,18 @@ export abstract class TemplateRenderer {
       const topY = pageHeight - margins.top;
       const bandBottom = topY - headerH;
 
-      // Zone widths
-      const sellerZoneW = contentWidth * 0.34;
-      const clientZoneW = contentWidth * 0.37;
-      const qrX = margins.left + sellerZoneW + clientZoneW + 5;
+      // QR flush to right content boundary
+      const qrX = pageWidth - margins.right - qrSize;
       const qrY = bandBottom + 5;
+
+      // Invoice# to the LEFT of QR: x is the left visual edge, text extends rightward by ~scaledFontSize
+      const vertX = qrX - 2 - scaledFontSize;
+
+      // Zone widths derived from available space
+      const sellerZoneW = contentWidth * 0.34;
+      const cx = margins.left + sellerZoneW + 10;
+      const clientZoneMaxX = vertX - 4;  // 4px gap between client zone and invoice#
+      const clientZoneW = Math.max(20, clientZoneMaxX - cx);
 
       // ── Background band ──
       page.drawRectangle({
@@ -635,40 +647,25 @@ export abstract class TemplateRenderer {
       });
 
       // ── MIDDLE: Client summary ──
-      const cx = margins.left + sellerZoneW + 10;
       page.drawText(invoice.buyer.name, {
         x: cx, y: topY - 18,
         size: 9, font: fontBold, color: this.parseColor('#1e293b'),
-        maxWidth: clientZoneW - 8,
+        maxWidth: clientZoneW,
       });
       page.drawText(
         `${this.strings.issueDate}: ${this.formatInvoiceDateFull()}`,
-        { x: cx, y: topY - 30, size: 7.5, font, color: this.parseColor('#64748b') }
+        { x: cx, y: topY - 30, size: 7.5, font, color: this.parseColor('#64748b'), maxWidth: clientZoneW }
       );
       page.drawText(
         `${this.strings.grandTotal}: ${formatAmount(summary.grandTotal)} ${invoice.currency}`,
-        { x: cx, y: topY - 42, size: 8.5, font: fontBold, color: this.parseColor('#1e293b') }
+        { x: cx, y: topY - 42, size: 8.5, font: fontBold, color: this.parseColor('#1e293b'), maxWidth: clientZoneW }
       );
       page.drawText(
         `${this.strings.dueDate}: ${this.formatDateFull(this.getDueDate())}`,
-        { x: cx, y: topY - 55, size: 7.5, font, color: this.parseColor('#64748b') }
+        { x: cx, y: topY - 55, size: 7.5, font, color: this.parseColor('#64748b'), maxWidth: clientZoneW }
       );
 
-      // ── QR code ──
-      if (qrImage) {
-        page.drawImage(qrImage, { x: qrX, y: qrY, width: qrSize, height: qrSize });
-      } else {
-        page.drawRectangle({
-          x: qrX, y: qrY, width: qrSize, height: qrSize,
-          borderColor: this.parseColor('#e2e8f0'), borderWidth: 1,
-        });
-      }
-
-      // ── FAR RIGHT: Invoice# vertical, auto-sized to fill qrSize height exactly ──
-      const invoiceRef = invoice.header.id;
-      const textWidthAt10 = fontBold.widthOfTextAtSize(invoiceRef, 10);
-      const scaledFontSize = Math.max(4, Math.min(14, (qrSize * 10) / textWidthAt10));
-      const vertX = qrX + qrSize + 2;
+      // ── Invoice# vertical: LEFT of QR, 2px gap, auto-sized to fill qrSize ──
       page.drawText(invoiceRef, {
         x: vertX,
         y: qrY,
@@ -677,6 +674,16 @@ export abstract class TemplateRenderer {
         color: this.parseColor('#94a3b8'),
         rotate: degrees(90),
       });
+
+      // ── QR flush right ──
+      if (qrImage) {
+        page.drawImage(qrImage, { x: qrX, y: qrY, width: qrSize, height: qrSize });
+      } else {
+        page.drawRectangle({
+          x: qrX, y: qrY, width: qrSize, height: qrSize,
+          borderColor: this.parseColor('#e2e8f0'), borderWidth: 1,
+        });
+      }
     }
   }
 
