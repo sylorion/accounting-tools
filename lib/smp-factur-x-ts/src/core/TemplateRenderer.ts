@@ -531,20 +531,21 @@ export abstract class TemplateRenderer {
 
   /**
    * Draw continuation headers on pages 2+ (after content is fully rendered).
-   * Layout: [Client summary left] [QR center-right] [Invoice# vertical far-right]
+   * Layout: [Seller info left] [Client summary] [QR] [Invoice# vertical right]
+   * Pages 2+ only.
    */
   protected async drawContinuationPageHeaders(): Promise<void> {
     if (this.allPages.length <= 1) return;
 
     const qrData = this.buildInvoiceQRData();
-    const { margins } = this.context.options;
+    const { margins, sellerSiret, sellerSiren } = this.context.options;
     const { invoice, summary } = this.context;
     const headerH = TemplateRenderer.CONTINUATION_HEADER_HEIGHT;
     const qrSize = 60;
     const font = this.getFont('Helvetica');
     const fontBold = this.getFont('Helvetica-Bold');
 
-    // Pre-generate QR image once, reuse across pages
+    // Pre-generate QR image once
     let qrImage: PDFImage | undefined;
     try {
       const qrPngBuffer = await QRCode.toBuffer(qrData, {
@@ -553,24 +554,31 @@ export abstract class TemplateRenderer {
         errorCorrectionLevel: 'M',
       });
       qrImage = await this.pdfDoc.embedPng(qrPngBuffer);
-    } catch { /* will use fallback */ }
+    } catch { /* fallback */ }
+
+    // Pre-load seller logo once (non-blocking)
+    const logoImage = await this.loadLogo();
 
     for (let i = 1; i < this.allPages.length; i++) {
       const page = this.allPages[i];
       const pageWidth = page.getWidth();
       const contentWidth = pageWidth - margins.left - margins.right;
-      const summaryWidth = contentWidth * 0.55;
       const pageHeight = page.getHeight();
       const topY = pageHeight - margins.top;
       const bandBottom = topY - headerH;
 
-      // Background band
+      // Zone widths
+      const sellerZoneW = contentWidth * 0.34;
+      const clientZoneW = contentWidth * 0.37;
+      const qrX = margins.left + sellerZoneW + clientZoneW + 5;
+      const qrY = bandBottom + 5;
+
+      // ── Background band ──
       page.drawRectangle({
         x: margins.left, y: bandBottom,
         width: contentWidth, height: headerH,
         color: this.parseColor('#f8fafc'),
       });
-      // Bottom separator
       page.drawLine({
         start: { x: margins.left, y: bandBottom },
         end: { x: pageWidth - margins.right, y: bandBottom },
@@ -578,29 +586,75 @@ export abstract class TemplateRenderer {
         thickness: 0.5,
       });
 
-      // ── LEFT: Client summary ──
-      const sx = margins.left + 10;
-      page.drawText(invoice.buyer.name, {
-        x: sx, y: topY - 18,
-        size: 10, font: fontBold, color: this.parseColor('#1e293b'),
+      // ── LEFT: Seller info (logo + name + SIRET + TVA) ──
+      const sellerX = margins.left + 6;
+      let logoW = 0;
+      if (logoImage) {
+        const maxLogoH = headerH - 14;
+        const maxLogoW = Math.round(sellerZoneW * 0.4);
+        const dims = logoImage.scaleToFit(maxLogoW, maxLogoH);
+        page.drawImage(logoImage, {
+          x: sellerX,
+          y: bandBottom + Math.round((headerH - dims.height) / 2),
+          width: dims.width,
+          height: dims.height,
+        });
+        logoW = dims.width + 5;
+      }
+      const stx = sellerX + logoW;
+      page.drawText(invoice.seller.name, {
+        x: stx, y: topY - 18,
+        size: 9, font: fontBold, color: this.parseColor('#1e293b'),
+        maxWidth: sellerZoneW - logoW - 4,
+      });
+      let sellerDetailY = topY - 30;
+      if (sellerSiret) {
+        page.drawText(`SIRET ${sellerSiret}`, {
+          x: stx, y: sellerDetailY, size: 7, font, color: this.parseColor('#64748b'),
+        });
+        sellerDetailY -= 11;
+      } else if (sellerSiren) {
+        page.drawText(`SIREN ${sellerSiren}`, {
+          x: stx, y: sellerDetailY, size: 7, font, color: this.parseColor('#64748b'),
+        });
+        sellerDetailY -= 11;
+      }
+      if (invoice.seller.vatId) {
+        page.drawText(`TVA ${invoice.seller.vatId}`, {
+          x: stx, y: sellerDetailY, size: 7, font, color: this.parseColor('#64748b'),
+        });
+      }
+
+      // Vertical separator between seller and client zones
+      const sep1X = margins.left + sellerZoneW + 2;
+      page.drawLine({
+        start: { x: sep1X, y: bandBottom + 8 },
+        end: { x: sep1X, y: topY - 8 },
+        color: this.parseColor('#e2e8f0'),
+        thickness: 0.5,
       });
 
+      // ── MIDDLE: Client summary ──
+      const cx = margins.left + sellerZoneW + 10;
+      page.drawText(invoice.buyer.name, {
+        x: cx, y: topY - 18,
+        size: 9, font: fontBold, color: this.parseColor('#1e293b'),
+        maxWidth: clientZoneW - 8,
+      });
       page.drawText(
         `${this.strings.issueDate}: ${this.formatInvoiceDateFull()}`,
-        { x: sx, y: topY - 32, size: 8, font, color: this.parseColor('#64748b') }
+        { x: cx, y: topY - 30, size: 7.5, font, color: this.parseColor('#64748b') }
       );
       page.drawText(
         `${this.strings.grandTotal}: ${formatAmount(summary.grandTotal)} ${invoice.currency}`,
-        { x: sx, y: topY - 46, size: 9, font: fontBold, color: this.parseColor('#1e293b') }
+        { x: cx, y: topY - 42, size: 8.5, font: fontBold, color: this.parseColor('#1e293b') }
       );
       page.drawText(
         `${this.strings.dueDate}: ${this.formatDateFull(this.getDueDate())}`,
-        { x: sx, y: topY - 60, size: 8, font, color: this.parseColor('#64748b') }
+        { x: cx, y: topY - 55, size: 7.5, font, color: this.parseColor('#64748b') }
       );
 
-      // ── CENTER-RIGHT: QR code ──
-      const qrX = margins.left + summaryWidth + 10;
-      const qrY = bandBottom + 5;
+      // ── QR code ──
       if (qrImage) {
         page.drawImage(qrImage, { x: qrX, y: qrY, width: qrSize, height: qrSize });
       } else {
@@ -610,14 +664,15 @@ export abstract class TemplateRenderer {
         });
       }
 
-      // ── FAR RIGHT: Invoice number vertical (bottom-to-top) ──
+      // ── FAR RIGHT: Invoice# vertical, auto-sized to fill qrSize height exactly ──
       const invoiceRef = invoice.header.id;
-      const vertX = Math.min(qrX + qrSize + 18, pageWidth - margins.right - 10);
-      const vertBaseY = bandBottom + 8;
+      const textWidthAt10 = fontBold.widthOfTextAtSize(invoiceRef, 10);
+      const scaledFontSize = Math.max(4, Math.min(14, (qrSize * 10) / textWidthAt10));
+      const vertX = qrX + qrSize + 2;
       page.drawText(invoiceRef, {
         x: vertX,
-        y: vertBaseY,
-        size: 8,
+        y: qrY,
+        size: scaledFontSize,
         font: fontBold,
         color: this.parseColor('#94a3b8'),
         rotate: degrees(90),
