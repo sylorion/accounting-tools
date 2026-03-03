@@ -126,12 +126,21 @@ export abstract class TemplateRenderer {
     await this.loadEmbeddedFonts();
 
     // STEP 3.2: Apply PDF/A-3 compliance (XMP metadata, OutputIntent, etc.)
+    const PROFILE_CONFORMANCE: Record<string, string> = {
+      MINIMUM: 'MINIMUM',
+      BASICWL: 'BASIC WL',
+      BASIC: 'BASIC',
+      EN16931: 'EN 16931',
+      EXTENDED: 'EXTENDED',
+    };
+    const conformanceLevel = PROFILE_CONFORMANCE[invoice.profile] ?? 'EN 16931';
     await setupPDFA3Compliance(this.pdfDoc, {
       title: invoice.header.name || 'Invoice',
       author: invoice.seller.name,
       subject: `Invoice ${invoice.header.invoiceNumber}`,
       creator: 'factur-x-ts',
-      keywords: ['Invoice', 'Factur-X', 'EN16931', 'PDF/A-3'],
+      keywords: ['Invoice', 'Factur-X', invoice.profile, 'PDF/A-3'],
+      conformanceLevel,
     });
 
     // Add metadata (basic PDF metadata, XMP is already added by setupPDFA3Compliance)

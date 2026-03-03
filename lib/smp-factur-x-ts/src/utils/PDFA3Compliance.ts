@@ -424,6 +424,8 @@ export interface PDFA3SetupOptions {
   subject?: string;
   creator?: string;
   keywords?: string[];
+  /** Factur-X conformance level for fx:ConformanceLevel XMP property */
+  conformanceLevel?: string;
 }
 
 /**
@@ -435,6 +437,7 @@ export async function setupPDFA3Compliance(
 ): Promise<void> {
   const metadataOptions: PDFA3MetadataOptions = {
     ...options,
+    conformanceLevel: options.conformanceLevel ?? 'EN 16931',
     createDate: new Date(),
     modifyDate: new Date(),
   };

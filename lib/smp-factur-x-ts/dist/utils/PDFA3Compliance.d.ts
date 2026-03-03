@@ -38,6 +38,7 @@ export interface PDFA3SetupOptions {
     subject?: string;
     creator?: string;
     keywords?: string[];
+    conformanceLevel?: string;
 }
 export declare function setupPDFA3Compliance(pdfDoc: PDFDocument, options: PDFA3SetupOptions): Promise<void>;
 //# sourceMappingURL=PDFA3Compliance.d.ts.map

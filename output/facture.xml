@@ -9,7 +9,7 @@
     <ram:ID>FA-2026-001</ram:ID>
     <ram:TypeCode>380</ram:TypeCode>
     <ram:IssueDateTime>
-      <udt:DateTimeString format="102">20260303</udt:DateTimeString>
+      <udt:DateTimeString format="102">20260304</udt:DateTimeString>
     </ram:IssueDateTime>
     <ram:IncludedNote>
       <ram:Content>En cas de retard de paiement, une indemnite forfaitaire de 40 euros pour frais de recouvrement sera exigee (art. L.441-10 du Code de commerce).</ram:Content>
@@ -248,7 +248,7 @@
     <ram:ApplicableHeaderTradeDelivery>
       <ram:ActualDeliverySupplyChainEvent>
         <ram:OccurrenceDateTime>
-          <udt:DateTimeString format="102">20260303</udt:DateTimeString>
+          <udt:DateTimeString format="102">20260304</udt:DateTimeString>
         </ram:OccurrenceDateTime>
       </ram:ActualDeliverySupplyChainEvent>
     </ram:ApplicableHeaderTradeDelivery>
