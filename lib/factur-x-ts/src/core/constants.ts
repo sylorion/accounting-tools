@@ -24,21 +24,15 @@ export const XML_NAMESPACES = Object.freeze({
 
 export const GUIDELINE_URNS = new Map<FacturxProfile, string>([
   [FacturxProfile.MINIMUM, 'urn:factur-x.eu:1p0:minimum'],
-  [
-    FacturxProfile.BASICWL,
-    'urn:cen.eu:en16931:2017#conformant#urn:factur-x.eu:1p0:basicwl',
-  ],
+  [FacturxProfile.BASICWL, 'urn:factur-x.eu:1p0:basicwl'],
   [
     FacturxProfile.BASIC,
-    'urn:cen.eu:en16931:2017#conformant#urn:factur-x.eu:1p0:basic',
+    'urn:cen.eu:en16931:2017#compliant#urn:factur-x.eu:1p0:basic',
   ],
-  [
-    FacturxProfile.EN16931,
-    'urn:cen.eu:en16931:2017#compliant#urn:factur-x.eu:1p0:en16931',
-  ],
+  [FacturxProfile.EN16931, 'urn:cen.eu:en16931:2017'],
   [
     FacturxProfile.EXTENDED,
-    'urn:cen.eu:en16931:2017#compliant#urn:factur-x.eu:1p0:extended',
+    'urn:cen.eu:en16931:2017#conformant#urn:factur-x.eu:1p0:extended',
   ],
 ]);
 
