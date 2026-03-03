@@ -1,3 +1,4 @@
+import { PDFPage } from 'pdf-lib';
 import { TemplateRenderer } from '../core/TemplateRenderer';
 import { TemplateType } from '../types';
 export declare class MinimalTemplate extends TemplateRenderer {
@@ -6,10 +7,8 @@ export declare class MinimalTemplate extends TemplateRenderer {
     private renderMinimalHeader;
     private renderMinimalParties;
     private renderMinimalLineItems;
-    private renderMinimalTotals;
+    private renderPaymentAndTotals;
     private renderTaxBreakdown;
-    private renderPaymentInfo;
-    private renderMinimalFooter;
-    private formatCurrency;
+    protected drawSinglePageFooter(page: PDFPage, pageNum: number, totalPages: number): void;
 }
 //# sourceMappingURL=MinimalTemplate.d.ts.map

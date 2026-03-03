@@ -38,6 +38,9 @@ export interface TemplateOptions {
   readonly theme?: Partial<TemplateTheme>;
   readonly logo?: Buffer | string | ''; // Base64 or Buffer or empty string
   readonly showLogo?: boolean;
+  readonly logoLayout?: 'above' | 'left' | 'none'; // 'above' = logo centered above name, 'left' = logo left of name
+  readonly logoData?: Buffer | string; // Base64 PNG/JPEG data for the logo
+  readonly logoPath?: string; // File system path to a PNG or JPEG logo image
   readonly showWatermark?: boolean;
   readonly watermarkText?: string;
   readonly showQRCode?: boolean;
@@ -54,6 +57,10 @@ export interface TemplateOptions {
   readonly showTaxBreakdown?: boolean;
   readonly showPaymentTerms?: boolean;
   readonly customFooter?: string;
+  readonly sellerSiren?: string;
+  readonly sellerSiret?: string;
+  readonly showDeliveryAddress?: boolean;
+  readonly paymentLink?: string; // URL for payment QR code
   // Validation options
   readonly validateBeforeGeneration?: boolean; // Default: true
   readonly validateAfterGeneration?: boolean; // Default: true

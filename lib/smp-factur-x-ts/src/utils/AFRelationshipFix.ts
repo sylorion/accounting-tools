@@ -36,9 +36,13 @@ export async function attachFileWithAFRelationship(
   // Step 1: Create the embedded file stream
   const fileBytes = fileData instanceof Uint8Array ? fileData : new Uint8Array(fileData);
 
+  // PDF/A-3: Subtype must be a PDFName with encoded MIME type
+  // 'text/xml' → 'text#2Fxml' (/ encoded as #2F in PDF name encoding)
+  const subtypeName = PDFName.of(mimeType.replace('/', '#2F'));
+
   const embeddedFileStream = pdfDoc.context.stream(fileBytes, {
     Type: 'EmbeddedFile',
-    Subtype: mimeType,
+    Subtype: subtypeName,
     Params: {
       Size: fileBytes.length,
       CreationDate: PDFString.fromDate(creationDate),

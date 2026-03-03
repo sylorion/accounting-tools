@@ -1,5 +1,8 @@
+/// <reference types="node" />
+/// <reference types="node" />
 import { FacturXInvoice, FacturxProfile } from '@facturx/core';
 import { XsdValidationResult } from '@facturx/core';
+import { RealXsdValidationResult, BusinessRuleValidationResult, CodeListValidationResult } from '@facturx/core';
 import { ExternalValidationResult, ExternalValidatorConfig } from './ExternalValidators';
 type ProfileValidationResult = {
     isValid: boolean;
@@ -19,6 +22,9 @@ export interface ValidationPipelineResult {
     readonly steps: {
         readonly profile: ValidationStepResult<ProfileValidationResult>;
         readonly xsd: ValidationStepResult<XsdValidationResult>;
+        readonly realXsd?: ValidationStepResult<RealXsdValidationResult>;
+        readonly businessRules?: ValidationStepResult<BusinessRuleValidationResult>;
+        readonly codeLists?: ValidationStepResult<CodeListValidationResult>;
         readonly pdfA3: ValidationStepResult<PDFA3ValidationResult>;
         readonly xmlAttachment: ValidationStepResult<XMLAttachmentResult>;
         readonly external?: ValidationStepResult<ExternalValidationResult>;
@@ -70,15 +76,23 @@ export interface ValidationSummary {
 export interface ValidationOptions {
     readonly enableProfileValidation?: boolean;
     readonly enableXsdValidation?: boolean;
+    readonly enableRealXsdValidation?: boolean;
+    readonly enableBusinessRuleValidation?: boolean;
+    readonly enableCodeListValidation?: boolean;
     readonly enablePdfA3Validation?: boolean;
     readonly enableXmlAttachmentCheck?: boolean;
     readonly enableExternalValidation?: boolean;
     readonly externalValidatorConfig?: ExternalValidatorConfig;
+    readonly complianceBasePath?: string;
+    readonly enableFrenchRules?: boolean;
     readonly strictMode?: boolean;
     readonly skipCache?: boolean;
 }
 export declare class ValidationPipeline {
     private readonly xsdValidator;
+    private readonly realXsdValidator?;
+    private readonly businessRuleValidator?;
+    private readonly codeListValidator?;
     private readonly externalValidator?;
     private readonly options;
     constructor(options?: ValidationOptions);

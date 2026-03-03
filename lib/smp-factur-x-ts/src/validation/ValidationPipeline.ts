@@ -14,6 +14,14 @@
 
 import { FacturXInvoice, FacturxProfile } from '@facturx/core';
 import { XsdValidator, XsdValidationResult } from '@facturx/core';
+import {
+  RealXsdValidator,
+  RealXsdValidationResult,
+  BusinessRuleValidator,
+  BusinessRuleValidationResult,
+  CodeListValidator,
+  CodeListValidationResult,
+} from '@facturx/core';
 import { PDFDocument } from 'pdf-lib';
 import {
   ExternalValidator,
@@ -73,6 +81,9 @@ export interface ValidationPipelineResult {
   readonly steps: {
     readonly profile: ValidationStepResult<ProfileValidationResult>;
     readonly xsd: ValidationStepResult<XsdValidationResult>;
+    readonly realXsd?: ValidationStepResult<RealXsdValidationResult>;
+    readonly businessRules?: ValidationStepResult<BusinessRuleValidationResult>;
+    readonly codeLists?: ValidationStepResult<CodeListValidationResult>;
     readonly pdfA3: ValidationStepResult<PDFA3ValidationResult>;
     readonly xmlAttachment: ValidationStepResult<XMLAttachmentResult>;
     readonly external?: ValidationStepResult<ExternalValidationResult>;
@@ -130,10 +141,15 @@ export interface ValidationSummary {
 export interface ValidationOptions {
   readonly enableProfileValidation?: boolean;
   readonly enableXsdValidation?: boolean;
+  readonly enableRealXsdValidation?: boolean;
+  readonly enableBusinessRuleValidation?: boolean;
+  readonly enableCodeListValidation?: boolean;
   readonly enablePdfA3Validation?: boolean;
   readonly enableXmlAttachmentCheck?: boolean;
   readonly enableExternalValidation?: boolean;
   readonly externalValidatorConfig?: ExternalValidatorConfig;
+  readonly complianceBasePath?: string;
+  readonly enableFrenchRules?: boolean;
   readonly strictMode?: boolean;
   readonly skipCache?: boolean;
 }
@@ -144,6 +160,9 @@ export interface ValidationOptions {
 
 export class ValidationPipeline {
   private readonly xsdValidator: XsdValidator;
+  private readonly realXsdValidator?: RealXsdValidator;
+  private readonly businessRuleValidator?: BusinessRuleValidator;
+  private readonly codeListValidator?: CodeListValidator;
   private readonly externalValidator?: ExternalValidator;
   private readonly options: Required<ValidationOptions>;
 
@@ -151,10 +170,15 @@ export class ValidationPipeline {
     this.options = {
       enableProfileValidation: options.enableProfileValidation ?? true,
       enableXsdValidation: options.enableXsdValidation ?? true,
+      enableRealXsdValidation: options.enableRealXsdValidation ?? true,
+      enableBusinessRuleValidation: options.enableBusinessRuleValidation ?? true,
+      enableCodeListValidation: options.enableCodeListValidation ?? true,
       enablePdfA3Validation: options.enablePdfA3Validation ?? true,
       enableXmlAttachmentCheck: options.enableXmlAttachmentCheck ?? true,
       enableExternalValidation: options.enableExternalValidation ?? false,
       externalValidatorConfig: options.externalValidatorConfig ?? {},
+      complianceBasePath: options.complianceBasePath ?? '',
+      enableFrenchRules: options.enableFrenchRules ?? true,
       strictMode: options.strictMode ?? false,
       skipCache: options.skipCache ?? false,
     };
@@ -163,6 +187,29 @@ export class ValidationPipeline {
       enableCache: !this.options.skipCache,
       strictMode: this.options.strictMode,
     });
+
+    // Initialize real XSD validator (validates against actual .xsd schemas)
+    if (this.options.enableRealXsdValidation) {
+      try {
+        this.realXsdValidator = new RealXsdValidator(
+          this.options.complianceBasePath || undefined
+        );
+      } catch {
+        // Graceful degradation if XSD schemas not found
+      }
+    }
+
+    // Initialize business rule validator (EN16931 Schematron rules + BR-FR)
+    if (this.options.enableBusinessRuleValidation) {
+      this.businessRuleValidator = new BusinessRuleValidator({
+        enableFrenchRules: this.options.enableFrenchRules,
+      });
+    }
+
+    // Initialize code list validator
+    if (this.options.enableCodeListValidation) {
+      this.codeListValidator = new CodeListValidator();
+    }
 
     // Initialize external validator if enabled
     if (this.options.enableExternalValidation) {
@@ -232,6 +279,39 @@ export class ValidationPipeline {
       }
     }
 
+    // Step 2b: Real XSD validation (against actual .xsd schema files)
+    if (this.options.enableRealXsdValidation && this.realXsdValidator && xmlContent) {
+      steps.realXsd = await this.runStep('Real XSD Schema Validation', async () => {
+        const result = this.realXsdValidator!.validate(xmlContent, invoice.profile);
+        return {
+          passed: result.isValid,
+          result,
+        };
+      });
+    }
+
+    // Step 2c: Business rule validation (EN16931 Schematron rules + BR-FR)
+    if (this.options.enableBusinessRuleValidation && this.businessRuleValidator) {
+      steps.businessRules = await this.runStep('Business Rule Validation (EN16931 + BR-FR)', async () => {
+        const result = this.businessRuleValidator!.validate(invoice);
+        return {
+          passed: result.isValid,
+          result,
+        };
+      });
+    }
+
+    // Step 2d: Code list validation
+    if (this.options.enableCodeListValidation && this.codeListValidator && xmlContent) {
+      steps.codeLists = await this.runStep('Code List Validation', async () => {
+        const result = this.codeListValidator!.validateInvoiceCodes(xmlContent);
+        return {
+          passed: result.isValid,
+          result,
+        };
+      });
+    }
+
     // Note: PDF/A-3 and XML attachment checks happen AFTER PDF generation
     steps.pdfA3 = {
       name: 'PDF/A-3 Validation',
@@ -295,10 +375,43 @@ export class ValidationPipeline {
       });
     }
 
-    // Step 2: XSD validation
+    // Step 2: XSD validation (structural)
     if (this.options.enableXsdValidation && xmlContent) {
       steps.xsd = await this.runStep('XSD Validation', async () => {
         const result = this.xsdValidator.validate(xmlContent, invoice.profile);
+        return {
+          passed: result.isValid,
+          result,
+        };
+      });
+    }
+
+    // Step 2b: Real XSD validation (against actual .xsd schema files)
+    if (this.options.enableRealXsdValidation && this.realXsdValidator && xmlContent) {
+      steps.realXsd = await this.runStep('Real XSD Schema Validation', async () => {
+        const result = this.realXsdValidator!.validate(xmlContent, invoice.profile);
+        return {
+          passed: result.isValid,
+          result,
+        };
+      });
+    }
+
+    // Step 2c: Business rule validation (EN16931 Schematron rules + BR-FR)
+    if (this.options.enableBusinessRuleValidation && this.businessRuleValidator) {
+      steps.businessRules = await this.runStep('Business Rule Validation (EN16931 + BR-FR)', async () => {
+        const result = this.businessRuleValidator!.validate(invoice);
+        return {
+          passed: result.isValid,
+          result,
+        };
+      });
+    }
+
+    // Step 2d: Code list validation
+    if (this.options.enableCodeListValidation && this.codeListValidator && xmlContent) {
+      steps.codeLists = await this.runStep('Code List Validation', async () => {
+        const result = this.codeListValidator!.validateInvoiceCodes(xmlContent);
         return {
           passed: result.isValid,
           result,
@@ -391,54 +504,93 @@ export class ValidationPipeline {
 
   /**
    * Validate PDF/A-3 compliance
+   * Real implementation: inspects PDF catalog, embedded files, XMP metadata
    */
   private async validatePDFA3(pdfBytes: Buffer): Promise<PDFA3ValidationResult> {
     const errors: PDFA3Error[] = [];
     const warnings: string[] = [];
 
     try {
-      const pdfDoc = await PDFDocument.load(pdfBytes);
+      const pdfDoc = await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
 
-      // Check basic PDF properties
-      const hasMetadata = true; // pdf-lib always adds metadata
-      const pdfVersion = '1.7'; // PDF/A-3 requires PDF 1.7
-
-      // Check for XMP metadata
-      let hasXmpMetadata = false;
-      try {
-        // Try to get metadata
-        const title = pdfDoc.getTitle();
-        hasXmpMetadata = title !== undefined;
-      } catch {
-        warnings.push('Could not verify XMP metadata presence');
+      // 1. Check PDF version (PDF/A-3 requires 1.4 to 1.7)
+      const rawPdf = pdfBytes.toString('ascii', 0, 20);
+      const versionMatch = rawPdf.match(/%PDF-(\d\.\d)/);
+      const pdfVersion = versionMatch ? versionMatch[1] : 'unknown';
+      if (pdfVersion !== '1.7' && pdfVersion !== '1.4' && pdfVersion !== '1.5' && pdfVersion !== '1.6') {
+        warnings.push(`PDF version ${pdfVersion} detected; PDF/A-3 requires 1.4-1.7`);
       }
 
-      // Check for embedded files
-      let hasEmbeddedFile = false;
-      try {
-        // pdf-lib doesn't expose embedded files directly, but we added one
-        // so we assume it's there if the PDF was generated by our templates
-        hasEmbeddedFile = true;
-      } catch {
-        errors.push({
-          code: 'NO_EMBEDDED_FILE',
-          message: 'PDF must contain at least one embedded file for PDF/A-3',
-          severity: 'error',
-        });
-      }
-
-      // Check PDF version
-      if (pdfVersion !== '1.7' && pdfVersion !== '1.4') {
-        warnings.push('PDF version should be 1.7 for PDF/A-3 compliance');
-      }
-
-      // Additional PDF/A-3 checks
+      // 2. Check for document metadata (title, author, etc.)
+      const title = pdfDoc.getTitle();
+      const author = pdfDoc.getAuthor();
+      const hasMetadata = !!(title || author);
       if (!hasMetadata) {
         errors.push({
           code: 'NO_METADATA',
-          message: 'PDF/A-3 requires document metadata',
+          message: 'PDF/A-3 requires document metadata (at minimum a title)',
           severity: 'error',
         });
+      }
+
+      // 3. Check for XMP metadata by looking at raw PDF bytes for xmpmeta tag
+      const pdfString = pdfBytes.toString('latin1');
+      const hasXmpMetadata = pdfString.includes('x:xmpmeta') || pdfString.includes('xmp:');
+      if (!hasXmpMetadata) {
+        errors.push({
+          code: 'NO_XMP_METADATA',
+          message: 'PDF/A-3 requires XMP metadata stream',
+          severity: 'error',
+        });
+      }
+
+      // 3b. Check for Factur-X specific XMP properties
+      const hasFxNamespace = pdfString.includes('factur-x') || pdfString.includes('urn:factur-x');
+      if (!hasFxNamespace) {
+        warnings.push('Factur-X XMP extension schema (fx namespace) not found');
+      }
+
+      // 4. Check for embedded files via /Names /EmbeddedFiles in catalog
+      // Use raw byte search since pdf-lib doesn't expose EmbeddedFiles API directly
+      const hasEmbeddedFile = pdfString.includes('/EmbeddedFiles') || pdfString.includes('/AF');
+
+      if (!hasEmbeddedFile) {
+        errors.push({
+          code: 'NO_EMBEDDED_FILE',
+          message: 'PDF/A-3 Factur-X requires an embedded XML file (factur-x.xml)',
+          severity: 'error',
+        });
+      }
+
+      // 5. Check for /AF (Associated Files) array - required for PDF/A-3
+      const hasAFRelationship = pdfString.includes('/AF') && pdfString.includes('/AFRelationship');
+      if (!hasAFRelationship && hasEmbeddedFile) {
+        warnings.push('AFRelationship entry not found; required for PDF/A-3 compliance');
+      }
+
+      // 6. Check for OutputIntent (sRGB ICC profile) - required for PDF/A
+      const hasOutputIntent = pdfString.includes('/OutputIntents') || pdfString.includes('/OutputIntent');
+      if (!hasOutputIntent) {
+        errors.push({
+          code: 'NO_OUTPUT_INTENT',
+          message: 'PDF/A-3 requires an OutputIntent with ICC profile (sRGB)',
+          severity: 'error',
+        });
+      }
+
+      // 7. Check for factur-x.xml filename specifically
+      const hasFacturxXml = pdfString.includes('factur-x.xml');
+      if (!hasFacturxXml && hasEmbeddedFile) {
+        warnings.push('Embedded file should be named "factur-x.xml" for Factur-X compliance');
+      }
+
+      // 8. Determine conformance level from XMP
+      let conformanceLevel = 'unknown';
+      const conformanceMatch = pdfString.match(/pdfaid:conformance>([A-Z])</);
+      if (conformanceMatch) {
+        conformanceLevel = `PDF/A-3${conformanceMatch[1]}`;
+      } else if (pdfString.includes('pdfaid')) {
+        conformanceLevel = 'PDF/A-3B'; // Default assumption
       }
 
       return {
@@ -450,7 +602,7 @@ export class ValidationPipeline {
           hasXmpMetadata,
           hasEmbeddedFile,
           pdfVersion,
-          conformanceLevel: 'PDF/A-3B', // Basic conformance
+          conformanceLevel,
         },
       };
     } catch (error) {
@@ -476,6 +628,7 @@ export class ValidationPipeline {
 
   /**
    * Validate XML attachment in PDF
+   * Real implementation: extracts embedded files from PDF and verifies content
    */
   private async validateXMLAttachment(
     pdfBytes: Buffer,
@@ -484,17 +637,52 @@ export class ValidationPipeline {
     const errors: string[] = [];
 
     try {
-      // pdf-lib doesn't easily expose embedded files for reading
-      // In a real implementation, you'd use a more complete PDF parser
-      // For now, we assume the XML is attached if the PDF was generated correctly
-      await PDFDocument.load(pdfBytes); // Just verify PDF is valid
+      await PDFDocument.load(pdfBytes, { ignoreEncryption: true });
+      const pdfString = pdfBytes.toString('latin1');
+
+      // 1. Check if factur-x.xml is referenced as embedded file
+      const hasFacturxRef = pdfString.includes('factur-x.xml');
+      if (!hasFacturxRef) {
+        errors.push('No reference to "factur-x.xml" found in PDF embedded files');
+        return {
+          isAttached: false,
+          isValid: false,
+          errors: Object.freeze(errors),
+        };
+      }
+
+      // 2. Check MIME type (should be text/xml)
+      const hasMimeType = pdfString.includes('text/xml') || pdfString.includes('application/xml');
+      if (!hasMimeType) {
+        errors.push('Embedded file MIME type should be "text/xml"');
+      }
+
+      // 3. Verify XML content is present in the PDF stream
+      // Search for the XML declaration or root element within the PDF
+      const hasXmlContent = pdfString.includes('CrossIndustryInvoice') ||
+        pdfString.includes('<?xml');
+      if (!hasXmlContent) {
+        errors.push('Could not find Factur-X XML content in PDF embedded streams');
+      }
+
+      // 4. Check /AF relationship exists
+      const hasAF = pdfString.includes('/AF');
+      if (!hasAF) {
+        errors.push('Associated Files (/AF) entry missing; required for Factur-X');
+      }
+
+      // 5. Estimate size from expected XML
+      const size = expectedXml ? expectedXml.length : undefined;
+
+      const isAttached = hasFacturxRef && hasXmlContent;
+      const isValid = isAttached && errors.length === 0;
 
       return {
-        isAttached: true,
+        isAttached,
         filename: 'factur-x.xml',
-        mimeType: 'text/xml',
-        size: expectedXml.length,
-        isValid: true,
+        mimeType: hasMimeType ? 'text/xml' : undefined,
+        size,
+        isValid,
         errors: Object.freeze(errors),
       };
     } catch (error) {

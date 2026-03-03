@@ -29,6 +29,8 @@ export interface PDFA3MetadataOptions {
   modifyDate?: Date;
   documentId?: string;
   instanceId?: string;
+  /** Factur-X conformance level for XMP metadata. Must match FNFE-MPE values exactly. */
+  conformanceLevel?: string;
 }
 
 function escapeXML(text: string): string {
@@ -59,6 +61,7 @@ export function generatePDFA3XMP(options: PDFA3MetadataOptions): string {
     keywords = ['Invoice', 'Factur-X', 'EN16931'],
     createDate = new Date(),
     modifyDate = new Date(),
+    conformanceLevel = 'EN 16931',
   } = options;
 
   const formatDate = (date: Date): string => date.toISOString();
@@ -159,7 +162,7 @@ export function generatePDFA3XMP(options: PDFA3MetadataOptions): string {
       <fx:DocumentFileName>factur-x.xml</fx:DocumentFileName>
       <fx:DocumentType>INVOICE</fx:DocumentType>
       <fx:Version>1.0</fx:Version>
-      <fx:ConformanceLevel>EN16931</fx:ConformanceLevel>
+      <fx:ConformanceLevel>${escapeXML(conformanceLevel)}</fx:ConformanceLevel>
     </rdf:Description>
   </rdf:RDF>
 </x:xmpmeta>

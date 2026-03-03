@@ -1,3 +1,4 @@
+import { PDFPage } from 'pdf-lib';
 import { TemplateRenderer } from '../core/TemplateRenderer';
 import { TemplateType } from '../types';
 export declare class BrandTemplate extends TemplateRenderer {
@@ -6,10 +7,8 @@ export declare class BrandTemplate extends TemplateRenderer {
     private renderBrandHeader;
     private renderBrandParties;
     private renderBrandLineItems;
-    private renderBrandTotals;
+    private renderPaymentAndTotals;
     private renderTaxBreakdown;
-    private renderPaymentInfo;
-    private renderBrandFooter;
-    private formatCurrency;
+    protected drawSinglePageFooter(page: PDFPage, pageNum: number, totalPages: number): void;
 }
 //# sourceMappingURL=BrandTemplate.d.ts.map

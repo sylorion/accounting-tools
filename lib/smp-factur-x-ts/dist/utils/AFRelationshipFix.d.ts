@@ -1,3 +1,5 @@
+/// <reference types="node" />
+/// <reference types="node" />
 import { PDFDocument, PDFRef } from 'pdf-lib';
 export declare function attachFileWithAFRelationship(pdfDoc: PDFDocument, fileData: Buffer | Uint8Array, fileName: string, options?: {
     mimeType?: string;

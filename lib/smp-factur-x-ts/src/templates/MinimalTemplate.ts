@@ -31,7 +31,7 @@ export class MinimalTemplate extends TemplateRenderer {
 
     // Side-by-side: payment (left) + totals (right)
     this.checkPageBreak(110);
-    this.renderPaymentAndTotals();
+    await this.renderPaymentAndTotals();
 
     // Tax breakdown below totals
     if (this.context.options.showTaxBreakdown) {
@@ -48,13 +48,30 @@ export class MinimalTemplate extends TemplateRenderer {
   private async renderMinimalHeader(): Promise<void> {
     const { margins } = this.context.options;
     const { width } = this.renderContext;
-    const startY = this.renderContext.currentY;
     const invoice = this.context.invoice;
+
+    const logoLayout = this.context.options.logoLayout || 'none';
+    const contentWidth = width - margins.left - margins.right;
+
+    // Step 1: Handle 'above' logo — render before the top line, shift currentY down
+    if (logoLayout === 'above') {
+      const logoConsumedH = await this.renderLogo(margins.left, this.renderContext.currentY, contentWidth, 55);
+      this.renderContext.currentY -= logoConsumedH;
+    }
+
+    const startY = this.renderContext.currentY;
 
     this.drawLine(margins.left, startY - 2, width - margins.right, startY - 2, { color: '#000000', width: 2 });
 
+    // Step 2: Handle 'left' logo — render below the top line, compute text offset
+    let textOffsetX = 0;
+    if (logoLayout === 'left') {
+      const logoH = await this.renderLogo(margins.left, startY - 5, 70, 70);
+      if (logoH > 0) textOffsetX = 80;
+    }
+
     const docTitle = invoice.header.name || this.strings.invoice;
-    this.drawText(docTitle, margins.left, startY - 35, { size: 36, bold: true, color: '#000000' });
+    this.drawText(docTitle, margins.left + textOffsetX, startY - 35, { size: 36, bold: true, color: '#000000' });
 
     const rightX = width - margins.right - 170;
     this.drawText(this.strings.invoiceNumber, rightX, startY - 20, { size: 8, color: '#808080' });
@@ -96,6 +113,16 @@ export class MinimalTemplate extends TemplateRenderer {
     if (invoice.seller.vatId) {
       y -= 14;
       this.drawText(`TVA: ${invoice.seller.vatId}`, margins.left, y, { size: 8, color: '#808080' });
+    }
+
+    // SIREN / SIRET after VAT
+    const { sellerSiret, sellerSiren } = this.context.options;
+    if (sellerSiret) {
+      y -= 12;
+      this.drawText(`SIRET: ${sellerSiret}`, margins.left, y, { size: 8, color: '#808080' });
+    } else if (sellerSiren) {
+      y -= 12;
+      this.drawText(`SIREN: ${sellerSiren}`, margins.left, y, { size: 8, color: '#808080' });
     }
 
     // Buyer
@@ -157,9 +184,18 @@ export class MinimalTemplate extends TemplateRenderer {
 
     let y = startY - 12;
 
+    const descFontSize = 9;
+    const descMaxWidth = colWidths.description - 8;
+    const lineSpacing = 12;
+    const minRowHeight = 20;
+
     for (let i = 0; i < invoice.lines.length; i++) {
       const line = invoice.lines[i];
-      const rowHeight = 20;
+
+      // Compute wrapped lines to determine row height
+      const descLines = this.wrapText(line.description, descMaxWidth, descFontSize);
+      const textHeight = descLines.length * lineSpacing;
+      const rowHeight = Math.max(minRowHeight, textHeight + 8);
 
       const pageBefore = this.renderContext.pageNumber;
       this.checkPageBreak(rowHeight + 5);
@@ -172,16 +208,24 @@ export class MinimalTemplate extends TemplateRenderer {
 
       this.drawLine(margins.left, y, width - margins.right, y, { color: '#e5e5e5', width: 0.3 });
 
-      let x = margins.left;
-      this.drawText(line.description, x, y - 13, { size: 9, color: '#333333' });
-      x += colWidths.description;
-      this.drawText(String(line.quantity), x, y - 13, { size: 9, color: '#333333' });
+      // Description: multi-line rendering
+      let descY = y - 13;
+      for (const descLine of descLines) {
+        this.drawText(descLine, margins.left, descY, { size: descFontSize, color: '#333333' });
+        descY -= lineSpacing;
+      }
+
+      // Other columns: vertically centered
+      const colY = y - Math.round(rowHeight / 2) - 4;
+
+      let x = margins.left + colWidths.description;
+      this.drawText(String(line.quantity), x, colY, { size: 9, color: '#333333' });
       x += colWidths.quantity;
-      this.drawText(formatAmount(line.unitPrice) + ' €', x, y - 13, { size: 9, color: '#333333' });
+      this.drawText(formatAmount(line.unitPrice) + ' €', x, colY, { size: 9, color: '#333333' });
       x += colWidths.unitPrice;
-      this.drawText(`${formatAmount(line.vatRate * 100)}%`, x, y - 13, { size: 9, color: '#333333' });
+      this.drawText(`${formatAmount(line.vatRate * 100)}%`, x, colY, { size: 9, color: '#333333' });
       x += colWidths.vatRate;
-      this.drawText(formatAmount(line.lineTotal) + ' €', x, y - 13, { size: 9, bold: true, color: '#000000' });
+      this.drawText(formatAmount(line.lineTotal) + ' €', x, colY, { size: 9, bold: true, color: '#000000' });
 
       y -= rowHeight;
     }
@@ -194,7 +238,7 @@ export class MinimalTemplate extends TemplateRenderer {
   // PAYMENT (left) + TOTALS (right) - Side by side
   // ===========================================================================
 
-  private renderPaymentAndTotals(): void {
+  private async renderPaymentAndTotals(): Promise<void> {
     const { margins } = this.context.options;
     const { width } = this.renderContext;
     const { invoice, summary } = this.context;
@@ -227,8 +271,18 @@ export class MinimalTemplate extends TemplateRenderer {
         }
         if (invoice.payment.termsDescription) {
           this.drawText(invoice.payment.termsDescription, margins.left + 5, py, { size: 8, color: '#333333' });
+          py -= 14;
         }
       }
+
+      // QR paiement
+      const paymentLink = this.context.options.paymentLink ||
+        `https://pay.services.ceo/invoices/${this.context.invoice.header.id}`;
+      const qrSize = 80;
+      const qrX = margins.left + 5;
+      const minY = margins.bottom + TemplateRenderer.PAGE_FOOTER_HEIGHT + 14;
+      const qrY = Math.max(py - qrSize, minY);
+      await this.renderQRCode(qrX, qrY, paymentLink, qrSize, 'Scannez pour payer', '#000000');
     }
 
     // ---- RIGHT: Totals ----
@@ -289,11 +343,11 @@ export class MinimalTemplate extends TemplateRenderer {
     const footerH = 40;
     const footerTop = margins.bottom + footerH;
     const contentW = pageWidth - margins.left - margins.right;
-    const font = (this as any).getFont('Helvetica');
-    const fontBold = (this as any).getFont('Helvetica-Bold');
-    const black = (this as any).parseColor('#333333');
-    const muted = (this as any).parseColor('#808080');
-    const veryLight = (this as any).parseColor('#cccccc');
+    const font = this.getFont('Helvetica');
+    const fontBold = this.getFont('Helvetica-Bold');
+    const black = this.parseColor('#333333');
+    const muted = this.parseColor('#808080');
+    const veryLight = this.parseColor('#cccccc');
 
     page.drawText(this.getGeneratedDateText(), {
       x: margins.left, y: footerTop - 10, size: 7, font: fontBold, color: black,

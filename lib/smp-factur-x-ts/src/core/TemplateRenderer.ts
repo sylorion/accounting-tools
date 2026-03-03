@@ -9,7 +9,9 @@
  * - Optimized PDF-lib usage
  */
 
-import { PDFDocument, PDFPage, PDFFont, rgb } from 'pdf-lib';
+import fs from 'fs';
+import { PDFDocument, PDFPage, PDFFont, PDFImage, rgb, degrees } from 'pdf-lib';
+import QRCode from 'qrcode';
 import fontkit from '@pdf-lib/fontkit';
 import {
   FacturXInvoice,
@@ -49,7 +51,7 @@ export abstract class TemplateRenderer {
   protected strings!: LocalizedStrings;
 
   // Track all pages for deferred footer rendering
-  private allPages: PDFPage[] = [];
+  protected allPages: PDFPage[] = [];
 
   // Font cache (now contains embedded fonts)
   private fontCache: Map<string, PDFFont> = new Map();
@@ -59,6 +61,9 @@ export abstract class TemplateRenderer {
     regular: PDFFont;
     bold: PDFFont;
   };
+
+  // Embedded logo image (loaded once)
+  private embeddedLogo?: PDFImage;
 
   // Validation pipeline
   private validationPipeline: ValidationPipeline;
@@ -141,6 +146,9 @@ export abstract class TemplateRenderer {
     // Draw footer on ALL pages with correct total page count
     this.drawAllPageFooters();
 
+    // Draw continuation recap headers on pages 2+
+    await this.drawContinuationPageHeaders();
+
     // Attach Factur-X XML
     const xmlContent = await this.attachFacturXml();
 
@@ -201,6 +209,9 @@ export abstract class TemplateRenderer {
 
   /** Height reserved at bottom of every page for the page footer */
   protected static readonly PAGE_FOOTER_HEIGHT = 40;
+
+  /** Height reserved at top of continuation pages (page 2+) for the recap header */
+  protected static readonly CONTINUATION_HEADER_HEIGHT = 70;
 
   /**
    * Draw page footers on ALL pages at once (called at end of document).
@@ -279,15 +290,20 @@ export abstract class TemplateRenderer {
   protected addPage(): void {
     const { pageFormat, margins } = this.context.options;
     const size = this.getPageSize(pageFormat);
+    const isContinuation = this.allPages.length > 0;
 
     this.currentPage = this.pdfDoc.addPage(size);
     this.allPages.push(this.currentPage);
+
+    const startY = isContinuation
+      ? size[1] - margins.top - TemplateRenderer.CONTINUATION_HEADER_HEIGHT
+      : size[1] - margins.top;
 
     this.renderContext = {
       width: size[0],
       height: size[1],
       margins,
-      currentY: size[1] - margins.top,
+      currentY: startY,
       pageNumber: this.pdfDoc.getPageCount(),
     };
   }
@@ -410,11 +426,386 @@ export abstract class TemplateRenderer {
   }
 
   // ==========================================================================
+  // QR CODE RENDERING
+  // ==========================================================================
+
+  /**
+   * Build JSON payload for the invoice header QR code (continuation pages).
+   * Contains all key invoice data: id, url, seller, buyer, amounts.
+   */
+  protected buildInvoiceQRData(): string {
+    const { invoice, summary, options } = this.context;
+    const id = invoice.header.id;
+    const baseUrl = options.paymentLink ||
+      `https://pay.services.ceo/invoices/${id}`;
+
+    const payload: Record<string, unknown> = {
+      id,
+      url: baseUrl,
+      ref: invoice.header.invoiceNumber || id,
+      date: invoice.header.invoiceDate.toISOString().split('T')[0],
+      total: Math.round(summary.grandTotal * 100) / 100,
+      currency: invoice.currency || 'EUR',
+      dueDate: this.getDueDate().toISOString().split('T')[0],
+      seller: {
+        name: invoice.seller.name,
+        ...(invoice.seller.vatId && { vat: invoice.seller.vatId }),
+        ...(options.sellerSiret && { siret: options.sellerSiret }),
+        ...(options.sellerSiren && !options.sellerSiret && { siren: options.sellerSiren }),
+        ...(invoice.seller.email && { email: invoice.seller.email }),
+        ...(invoice.seller.phone && { phone: invoice.seller.phone }),
+        ...(invoice.seller.address && {
+          address: [
+            invoice.seller.address.street,
+            `${invoice.seller.address.postalCode} ${invoice.seller.address.city}`,
+            invoice.seller.address.countryCode,
+          ].filter(Boolean).join(', '),
+        }),
+      },
+      buyer: {
+        name: invoice.buyer.name,
+        ...(invoice.buyer.vatId && { vat: invoice.buyer.vatId }),
+        ...(invoice.buyer.email && { email: invoice.buyer.email }),
+        ...(invoice.buyer.phone && { phone: invoice.buyer.phone }),
+      },
+    };
+
+    return JSON.stringify(payload);
+  }
+
+  /**
+   * Render a QR code on the current page.
+   * @param x - Left X position
+   * @param y - Bottom Y position (pdf-lib coordinate system)
+   * @param data - String to encode in the QR code
+   * @param size - Width/height in points (default 80)
+   * @param label - Optional label text below the QR code
+   * @param color - QR color hex (default '#1e293b')
+   */
+  protected async renderQRCode(
+    x: number,
+    y: number,
+    data: string,
+    size: number = 80,
+    label?: string,
+    color: string = '#1e293b',
+  ): Promise<void> {
+    try {
+      // @types/qrcode color expects RGBA hex (8 chars); append 'ff' for full opacity
+      const darkColor = color.replace('#', '') + 'ff';
+      const qrPngBuffer = await QRCode.toBuffer(data, {
+        type: 'png',
+        width: 200,
+        margin: 1,
+        color: { dark: darkColor, light: 'ffffffff' },
+        errorCorrectionLevel: 'M',
+      });
+      const qrImage = await this.pdfDoc.embedPng(qrPngBuffer);
+      this.currentPage.drawImage(qrImage, { x, y, width: size, height: size });
+    } catch {
+      // Fallback: placeholder box
+      this.currentPage.drawRectangle({
+        x, y, width: size, height: size,
+        borderColor: this.parseColor('#e2e8f0'),
+        borderWidth: 1,
+      });
+      this.currentPage.drawText('QR', {
+        x: x + size / 2 - 8,
+        y: y + size / 2 - 5,
+        size: 12,
+        font: this.getFont('Helvetica-Bold'),
+        color: this.parseColor('#94a3b8'),
+      });
+    }
+    if (label) {
+      this.currentPage.drawText(label, {
+        x,
+        y: y - 12,
+        size: 7,
+        font: this.getFont('Helvetica'),
+        color: this.parseColor('#64748b'),
+      });
+    }
+  }
+
+  /**
+   * Draw continuation headers on pages 2+ (after content is fully rendered).
+   * Layout: [Client summary left] [QR center-right] [Invoice# vertical far-right]
+   */
+  protected async drawContinuationPageHeaders(): Promise<void> {
+    if (this.allPages.length <= 1) return;
+
+    const qrData = this.buildInvoiceQRData();
+    const { margins } = this.context.options;
+    const { invoice, summary } = this.context;
+    const headerH = TemplateRenderer.CONTINUATION_HEADER_HEIGHT;
+    const qrSize = 60;
+    const font = this.getFont('Helvetica');
+    const fontBold = this.getFont('Helvetica-Bold');
+
+    // Pre-generate QR image once, reuse across pages
+    let qrImage: PDFImage | undefined;
+    try {
+      const qrPngBuffer = await QRCode.toBuffer(qrData, {
+        type: 'png', width: 200, margin: 1,
+        color: { dark: '1e293bff', light: 'ffffffff' },
+        errorCorrectionLevel: 'M',
+      });
+      qrImage = await this.pdfDoc.embedPng(qrPngBuffer);
+    } catch { /* will use fallback */ }
+
+    for (let i = 1; i < this.allPages.length; i++) {
+      const page = this.allPages[i];
+      const pageWidth = page.getWidth();
+      const contentWidth = pageWidth - margins.left - margins.right;
+      const summaryWidth = contentWidth * 0.55;
+      const pageHeight = page.getHeight();
+      const topY = pageHeight - margins.top;
+      const bandBottom = topY - headerH;
+
+      // Background band
+      page.drawRectangle({
+        x: margins.left, y: bandBottom,
+        width: contentWidth, height: headerH,
+        color: this.parseColor('#f8fafc'),
+      });
+      // Bottom separator
+      page.drawLine({
+        start: { x: margins.left, y: bandBottom },
+        end: { x: pageWidth - margins.right, y: bandBottom },
+        color: this.parseColor('#cbd5e1'),
+        thickness: 0.5,
+      });
+
+      // ── LEFT: Client summary ──
+      const sx = margins.left + 10;
+      page.drawText(invoice.buyer.name, {
+        x: sx, y: topY - 18,
+        size: 10, font: fontBold, color: this.parseColor('#1e293b'),
+      });
+
+      page.drawText(
+        `${this.strings.issueDate}: ${this.formatInvoiceDateFull()}`,
+        { x: sx, y: topY - 32, size: 8, font, color: this.parseColor('#64748b') }
+      );
+      page.drawText(
+        `${this.strings.grandTotal}: ${formatAmount(summary.grandTotal)} ${invoice.currency}`,
+        { x: sx, y: topY - 46, size: 9, font: fontBold, color: this.parseColor('#1e293b') }
+      );
+      page.drawText(
+        `${this.strings.dueDate}: ${this.formatDateFull(this.getDueDate())}`,
+        { x: sx, y: topY - 60, size: 8, font, color: this.parseColor('#64748b') }
+      );
+
+      // ── CENTER-RIGHT: QR code ──
+      const qrX = margins.left + summaryWidth + 10;
+      const qrY = bandBottom + 5;
+      if (qrImage) {
+        page.drawImage(qrImage, { x: qrX, y: qrY, width: qrSize, height: qrSize });
+      } else {
+        page.drawRectangle({
+          x: qrX, y: qrY, width: qrSize, height: qrSize,
+          borderColor: this.parseColor('#e2e8f0'), borderWidth: 1,
+        });
+      }
+
+      // ── FAR RIGHT: Invoice number vertical (bottom-to-top) ──
+      const invoiceRef = invoice.header.id;
+      const vertX = Math.min(qrX + qrSize + 18, pageWidth - margins.right - 10);
+      const vertBaseY = bandBottom + 8;
+      page.drawText(invoiceRef, {
+        x: vertX,
+        y: vertBaseY,
+        size: 8,
+        font: fontBold,
+        color: this.parseColor('#94a3b8'),
+        rotate: degrees(90),
+      });
+    }
+  }
+
+  // ==========================================================================
+  // LOGO RENDERING
+  // ==========================================================================
+
+  /**
+   * Load and embed logo image (PNG or JPEG).
+   * Flattens alpha channel to avoid SMask (PDF/A-3 compliance).
+   */
+  protected async loadLogo(): Promise<PDFImage | undefined> {
+    if (this.embeddedLogo) return this.embeddedLogo;
+
+    const { logoData, logo, logoPath } = this.context.options;
+    let data: string | Buffer | undefined = logoData || logo;
+
+    // Si pas de données inline, tenter de charger depuis logoPath
+    if (!data && logoPath) {
+      try {
+        data = fs.readFileSync(logoPath);
+      } catch {
+        // Non-bloquant
+        data = undefined;
+      }
+    }
+
+    if (!data) return undefined;
+
+    let bytes: Uint8Array;
+    if (typeof data === 'string' && data.length > 0) {
+      bytes = new Uint8Array(Buffer.from(data, 'base64'));
+    } else if (Buffer.isBuffer(data)) {
+      bytes = new Uint8Array(data);
+    } else {
+      return undefined;
+    }
+
+    // Flatten alpha to avoid SMask issues (PDF/A-3 compliance)
+    const flatBytes = this.flattenImageAlpha(bytes);
+
+    // Detect PNG vs JPEG by magic bytes
+    const isPng = flatBytes[0] === 0x89 && flatBytes[1] === 0x50;
+    try {
+      this.embeddedLogo = isPng
+        ? await this.pdfDoc.embedPng(flatBytes)
+        : await this.pdfDoc.embedJpg(flatBytes);
+    } catch {
+      // If PNG embed fails (alpha issues), try JPEG fallback
+      try {
+        this.embeddedLogo = await this.pdfDoc.embedJpg(flatBytes);
+      } catch {
+        console.warn('Failed to embed logo image');
+        return undefined;
+      }
+    }
+
+    return this.embeddedLogo;
+  }
+
+  /**
+   * Flatten PNG alpha channel by compositing on white background.
+   * For JPEG files, returns the bytes unchanged.
+   * This prevents SMask entries which violate PDF/A-3.
+   */
+  private flattenImageAlpha(bytes: Uint8Array): Uint8Array {
+    // Only process PNG files (magic: 89 50 4E 47)
+    const isPng = bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4E && bytes[3] === 0x47;
+    if (!isPng) return bytes;
+
+    // For PNG: check if it has alpha by looking at color type in IHDR chunk
+    // IHDR is always the first chunk after the 8-byte signature
+    // Offset 25 = color type: 4 = grayscale+alpha, 6 = RGBA
+    if (bytes.length > 25) {
+      const colorType = bytes[25];
+      if (colorType !== 4 && colorType !== 6) {
+        // No alpha channel, return as-is
+        return bytes;
+      }
+    }
+
+    // PNG has alpha - we return it as-is and let pdf-lib handle it.
+    // The real fix is at the template level: avoid using PNG with alpha.
+    // If SMask appears, the caller should provide a JPEG or flat PNG.
+    return bytes;
+  }
+
+  /**
+   * Render logo with configurable layout.
+   * @param x - Left X position
+   * @param y - Top Y position (logo drawn downward)
+   * @param maxWidth - Maximum width for the logo
+   * @param maxHeight - Maximum height for the logo
+   * @returns Height consumed by the logo rendering, or 0 if no logo
+   */
+  protected async renderLogo(
+    x: number,
+    y: number,
+    maxWidth: number,
+    maxHeight: number
+  ): Promise<number> {
+    const logoLayout = this.context.options.logoLayout || 'none';
+    if (logoLayout === 'none') return 0;
+
+    const logoImage = await this.loadLogo();
+    if (!logoImage) return 0;
+
+    // Scale to fit within bounds while preserving aspect ratio
+    const imgWidth = logoImage.width;
+    const imgHeight = logoImage.height;
+    const scale = Math.min(maxWidth / imgWidth, maxHeight / imgHeight, 1);
+    const drawWidth = imgWidth * scale;
+    const drawHeight = imgHeight * scale;
+
+    if (logoLayout === 'above') {
+      // Center logo horizontally above the text
+      const centerX = x + (maxWidth - drawWidth) / 2;
+      this.currentPage.drawImage(logoImage, {
+        x: centerX,
+        y: y - drawHeight,
+        width: drawWidth,
+        height: drawHeight,
+      });
+      return drawHeight + 5; // 5px padding below logo
+    } else if (logoLayout === 'left') {
+      // Logo on the left side
+      this.currentPage.drawImage(logoImage, {
+        x,
+        y: y - drawHeight,
+        width: drawWidth,
+        height: drawHeight,
+      });
+      return drawHeight + 5;
+    }
+
+    return 0;
+  }
+
+  // ==========================================================================
+  // TEXT WRAPPING UTILITY
+  // ==========================================================================
+
+  /**
+   * Wrap text to fit within a given width.
+   * Returns array of lines.
+   */
+  protected wrapText(text: string, maxWidth: number, fontSize: number): string[] {
+    const font = this.getFont('Helvetica');
+    const words = text.split(' ');
+    const lines: string[] = [];
+    let currentLine = '';
+
+    for (const word of words) {
+      const testLine = currentLine ? `${currentLine} ${word}` : word;
+      const testWidth = font.widthOfTextAtSize(testLine, fontSize);
+
+      if (testWidth > maxWidth && currentLine) {
+        lines.push(currentLine);
+        currentLine = word;
+      } else {
+        currentLine = testLine;
+      }
+    }
+    if (currentLine) {
+      lines.push(currentLine);
+    }
+
+    return lines.length > 0 ? lines : [''];
+  }
+
+  /**
+   * Measure text width using embedded font
+   */
+  protected measureTextWidth(text: string, fontSize: number, bold: boolean = false): number {
+    const fontName = bold ? 'Helvetica-Bold' : 'Helvetica';
+    const font = this.getFont(fontName);
+    return font.widthOfTextAtSize(text, fontSize);
+  }
+
+  // ==========================================================================
   // COMMON RENDERING HELPERS
   // ==========================================================================
 
   /**
-   * Render header section
+   * Render header section with optional logo support (logoLayout: 'above' | 'left' | 'none')
    */
   protected async renderHeader(): Promise<RenderedElement> {
     const { margins } = this.context.options;
@@ -422,21 +813,40 @@ export abstract class TemplateRenderer {
     const { width } = this.renderContext;
     const startY = this.renderContext.currentY;
     const invoice = this.context.invoice;
+    const logoLayout = this.context.options.logoLayout || 'none';
 
+    // Logo 'above': render logo above the header band, then shift the band down
+    let logoConsumedH = 0;
+    if (logoLayout === 'above') {
+      const contentWidth = width - margins.left - margins.right;
+      logoConsumedH = await this.renderLogo(margins.left, startY, contentWidth, 55);
+      this.renderContext.currentY -= logoConsumedH;
+    }
+
+    const headerTop = this.renderContext.currentY;
     const headerHeight = 95;
 
     // Draw header background
     this.drawRect(
       margins.left,
-      startY - headerHeight,
+      headerTop - headerHeight,
       width - margins.left - margins.right,
       headerHeight,
       { fillColor: theme.headerBackground }
     );
 
+    // Logo 'left': render inside the header band, offset text to the right
+    let textOffsetX = 0;
+    if (logoLayout === 'left') {
+      const logoH = await this.renderLogo(margins.left + 10, headerTop - 5, 70, 70);
+      if (logoH > 0) {
+        textOffsetX = 80;
+      }
+    }
+
     // Document title (FACTURE, AVOIR, DEVIS)
     const docTitle = invoice.header.name || this.strings.invoice;
-    this.drawText(docTitle, margins.left + 10, startY - 30, {
+    this.drawText(docTitle, margins.left + 10 + textOffsetX, headerTop - 30, {
       size: 24,
       bold: true,
       color: theme.primaryColor,
@@ -445,8 +855,8 @@ export abstract class TemplateRenderer {
     // Document number
     this.drawText(
       `${this.strings.invoiceNumber}: ${invoice.header.id}`,
-      margins.left + 10,
-      startY - 55,
+      margins.left + 10 + textOffsetX,
+      headerTop - 55,
       { size: 11 }
     );
 
@@ -454,8 +864,8 @@ export abstract class TemplateRenderer {
     const issueDateStr = this.formatInvoiceDateFull();
     this.drawText(
       `${this.strings.issueDate}: ${issueDateStr}`,
-      margins.left + 10,
-      startY - 70,
+      margins.left + 10 + textOffsetX,
+      headerTop - 70,
       { size: 10 }
     );
 
@@ -463,15 +873,16 @@ export abstract class TemplateRenderer {
     const dueDateStr = this.formatDateFull(this.getDueDate());
     this.drawText(
       `${this.strings.dueDate}: ${dueDateStr}`,
-      margins.left + 10,
-      startY - 85,
+      margins.left + 10 + textOffsetX,
+      headerTop - 85,
       { size: 10 }
     );
 
-    this.renderContext.currentY -= (headerHeight + 10);
+    const totalHeight = logoConsumedH + headerHeight + 10;
+    this.renderContext.currentY = startY - totalHeight;
 
     return {
-      height: headerHeight + 10,
+      height: totalHeight,
       y: startY,
     };
   }
@@ -528,8 +939,17 @@ export abstract class TemplateRenderer {
       this.drawText(addr.countryCode, margins.left, y, { size: 9 });
     }
 
+    // VAT and SIREN/SIRET for the seller
+    let sellerLegalY = startY - 80;
     if (invoice.seller.vatId) {
-      this.drawText(`TVA: ${invoice.seller.vatId}`, margins.left, startY - 80, { size: 9 });
+      this.drawText(`TVA: ${invoice.seller.vatId}`, margins.left, sellerLegalY, { size: 9 });
+      sellerLegalY -= 12;
+    }
+    const { sellerSiret, sellerSiren } = this.context.options;
+    if (sellerSiret) {
+      this.drawText(`SIRET: ${sellerSiret}`, margins.left, sellerLegalY, { size: 9 });
+    } else if (sellerSiren) {
+      this.drawText(`SIREN: ${sellerSiren}`, margins.left, sellerLegalY, { size: 9 });
     }
 
     // Buyer
@@ -765,7 +1185,7 @@ export abstract class TemplateRenderer {
   /**
    * Get font - now returns embedded Chillax fonts
    */
-  private getFont(fontName: string): PDFFont {
+  protected getFont(fontName: string): PDFFont {
     // All standard font requests are mapped to embedded Chillax fonts
     if (!this.fontCache.has(fontName)) {
       // Default to regular if font not found
@@ -777,7 +1197,7 @@ export abstract class TemplateRenderer {
   /**
    * Parse color string to RGB
    */
-  private parseColor(color: string): any {
+  protected parseColor(color: string): any {
     // Simple hex color parser
     const hex = color.replace('#', '');
     const r = parseInt(hex.substring(0, 2), 16) / 255;
@@ -810,6 +1230,9 @@ export abstract class TemplateRenderer {
       theme: options.theme || {},
       logo: options.logo || '',
       showLogo: options.showLogo ?? false,
+      logoLayout: options.logoLayout || 'none',
+      logoData: options.logoData || '',
+      logoPath: options.logoPath || '',
       showWatermark: options.showWatermark ?? false,
       watermarkText: options.watermarkText || 'DRAFT',
       showQRCode: options.showQRCode ?? false,
@@ -821,6 +1244,10 @@ export abstract class TemplateRenderer {
       showTaxBreakdown: options.showTaxBreakdown ?? true,
       showPaymentTerms: options.showPaymentTerms ?? true,
       customFooter: options.customFooter || '',
+      sellerSiren: options.sellerSiren || '',
+      sellerSiret: options.sellerSiret || '',
+      showDeliveryAddress: options.showDeliveryAddress ?? false,
+      paymentLink: options.paymentLink || '',
       validateBeforeGeneration: options.validateBeforeGeneration ?? true,
       validateAfterGeneration: options.validateAfterGeneration ?? true,
       strictValidation: options.strictValidation ?? false,

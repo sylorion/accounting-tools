@@ -1,4 +1,4 @@
-import { PDFDocument, PDFPage } from 'pdf-lib';
+import { PDFDocument, PDFPage, PDFFont, PDFImage } from 'pdf-lib';
 import { FacturXInvoice } from '@facturx/core';
 import { TemplateOptions, TemplateContext, PDFGenerationResult, RenderContext, RenderedElement, LocalizedStrings, TemplateType } from '../types';
 import { ValidationPipelineResult } from '../validation/ValidationPipeline';
@@ -8,8 +8,10 @@ export declare abstract class TemplateRenderer {
     protected context: TemplateContext;
     protected renderContext: RenderContext;
     protected strings: LocalizedStrings;
+    protected allPages: PDFPage[];
     private fontCache;
     private chillaxFonts?;
+    private embeddedLogo?;
     private validationPipeline;
     constructor();
     generate(invoice: FacturXInvoice, options?: Partial<TemplateOptions>): Promise<PDFGenerationResult & {
@@ -17,6 +19,10 @@ export declare abstract class TemplateRenderer {
     }>;
     protected abstract renderContent(): Promise<void>;
     protected abstract getTemplateType(): TemplateType;
+    protected static readonly PAGE_FOOTER_HEIGHT = 40;
+    protected static readonly CONTINUATION_HEADER_HEIGHT = 70;
+    protected drawAllPageFooters(): void;
+    protected drawSinglePageFooter(page: PDFPage, pageNum: number, totalPages: number): void;
     protected addPage(): void;
     protected needsNewPage(requiredHeight: number): boolean;
     protected checkPageBreak(requiredHeight: number): void;
@@ -35,13 +41,25 @@ export declare abstract class TemplateRenderer {
         color?: string;
         width?: number;
     }): void;
+    protected buildInvoiceQRData(): string;
+    protected renderQRCode(x: number, y: number, data: string, size?: number, label?: string, color?: string): Promise<void>;
+    protected drawContinuationPageHeaders(): Promise<void>;
+    protected loadLogo(): Promise<PDFImage | undefined>;
+    private flattenImageAlpha;
+    protected renderLogo(x: number, y: number, maxWidth: number, maxHeight: number): Promise<number>;
+    protected wrapText(text: string, maxWidth: number, fontSize: number): string[];
+    protected measureTextWidth(text: string, fontSize: number, bold?: boolean): number;
     protected renderHeader(): Promise<RenderedElement>;
+    protected getDueDate(): Date;
     protected renderParties(): RenderedElement;
     protected renderLineItems(): RenderedElement;
     protected renderTotals(): RenderedElement;
+    protected formatDateFull(date: Date): string;
+    protected getGeneratedDateText(): string;
+    protected formatInvoiceDateFull(): string;
     private loadEmbeddedFonts;
-    private getFont;
-    private parseColor;
+    protected getFont(fontName: string): PDFFont;
+    protected parseColor(color: string): any;
     private getPageSize;
     private mergeOptions;
     private mergeTheme;

@@ -1,3 +1,5 @@
+/// <reference types="node" />
+/// <reference types="node" />
 import { PDFDocument, PDFDict } from 'pdf-lib';
 export interface PDFA3MetadataOptions {
     title: string;
@@ -10,6 +12,7 @@ export interface PDFA3MetadataOptions {
     modifyDate?: Date;
     documentId?: string;
     instanceId?: string;
+    conformanceLevel?: string;
 }
 export declare function generatePDFA3XMP(options: PDFA3MetadataOptions): string;
 export declare function generatePDFFileID(pdfBytes: Uint8Array): string;

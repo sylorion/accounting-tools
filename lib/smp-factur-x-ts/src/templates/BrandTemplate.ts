@@ -30,7 +30,7 @@ export class BrandTemplate extends TemplateRenderer {
     this.renderContext.currentY -= 15;
 
     this.checkPageBreak(120);
-    this.renderPaymentAndTotals();
+    await this.renderPaymentAndTotals();
 
     if (this.context.options.showTaxBreakdown) {
       this.renderContext.currentY -= 15;
@@ -47,34 +47,51 @@ export class BrandTemplate extends TemplateRenderer {
   private async renderBrandHeader(): Promise<void> {
     const { margins } = this.context.options;
     const { width } = this.renderContext;
-    const startY = this.renderContext.currentY;
     const invoice = this.context.invoice;
 
+    const logoLayout = this.context.options.logoLayout || 'none';
+    const contentWidth = width - margins.left - margins.right;
+
+    // Step 1: Handle 'above' logo — render before background, shift currentY down
+    let logoConsumedH = 0;
+    if (logoLayout === 'above') {
+      logoConsumedH = await this.renderLogo(margins.left, this.renderContext.currentY, contentWidth, 55);
+      this.renderContext.currentY -= logoConsumedH;
+    }
+
+    const headerTop = this.renderContext.currentY;
     const headerHeight = 100;
 
     // Navy background
     this.drawRect(
-      margins.left, startY - headerHeight,
-      width - margins.left - margins.right, headerHeight,
+      margins.left, headerTop - headerHeight,
+      contentWidth, headerHeight,
       { fillColor: '#0d2f5e' }
     );
 
     // Orange accent stripe at top
     this.drawRect(
-      margins.left, startY - 8,
-      width - margins.left - margins.right, 8,
+      margins.left, headerTop - 8,
+      contentWidth, 8,
       { fillColor: '#ff6600' }
     );
 
+    // Step 2: Handle 'left' logo — render inside band, compute text offset
+    let textOffsetX = 0;
+    if (logoLayout === 'left') {
+      const logoH = await this.renderLogo(margins.left + 10, headerTop - 5, 70, 80);
+      if (logoH > 0) textOffsetX = 80;
+    }
+
     // Seller company name (dynamic, not placeholder)
-    this.drawText(invoice.seller.name, margins.left + 20, startY - 35, {
+    this.drawText(invoice.seller.name, margins.left + 20 + textOffsetX, headerTop - 35, {
       size: 20, bold: true, color: '#ffffff',
     });
 
     // Orange underline
     this.drawLine(
-      margins.left + 20, startY - 42,
-      margins.left + 220, startY - 42,
+      margins.left + 20 + textOffsetX, headerTop - 42,
+      margins.left + 220 + textOffsetX, headerTop - 42,
       { color: '#ff6600', width: 2 }
     );
 
@@ -82,32 +99,32 @@ export class BrandTemplate extends TemplateRenderer {
     const docTitle = invoice.header.name || this.strings.invoice;
     const rightX = width - margins.right - 200;
 
-    this.drawText(docTitle, rightX, startY - 25, {
+    this.drawText(docTitle, rightX, headerTop - 25, {
       size: 22, bold: true, color: '#ff6600',
     });
 
     // Number
     this.drawText(
       `${this.strings.invoiceNumber}: ${invoice.header.id}`,
-      rightX, startY - 48,
+      rightX, headerTop - 48,
       { size: 10, color: '#ffffff' }
     );
 
     // Issue date
     this.drawText(
       `${this.strings.issueDate}: ${this.formatInvoiceDateFull()}`,
-      rightX, startY - 63,
+      rightX, headerTop - 63,
       { size: 9, color: '#ffffff' }
     );
 
     // Due date
     this.drawText(
       `${this.strings.dueDate}: ${this.formatDateFull(this.getDueDate())}`,
-      rightX, startY - 78,
+      rightX, headerTop - 78,
       { size: 9, color: '#ffffff' }
     );
 
-    this.renderContext.currentY -= headerHeight + 10;
+    this.renderContext.currentY = headerTop - headerHeight - 10;
   }
 
   // ===========================================================================
@@ -146,8 +163,20 @@ export class BrandTemplate extends TemplateRenderer {
       this.drawText(`${addr.postalCode} ${addr.city}`, margins.left + 10, y, { size: 9 }); y -= 14;
       this.drawText(addr.countryCode, margins.left + 10, y, { size: 9 });
     }
+
+    // VAT bottom-left of seller content
+    let vatY = startY - totalH + 22;
     if (invoice.seller.vatId) {
-      this.drawText(`TVA: ${invoice.seller.vatId}`, margins.left + 10, startY - totalH + 10, { size: 9, color: '#4d4d4d' });
+      this.drawText(`TVA: ${invoice.seller.vatId}`, margins.left + 10, vatY, { size: 9, color: '#4d4d4d' });
+      vatY -= 12;
+    }
+
+    // SIREN / SIRET after VAT
+    const { sellerSiret, sellerSiren } = this.context.options;
+    if (sellerSiret) {
+      this.drawText(`SIRET: ${sellerSiret}`, margins.left + 10, vatY, { size: 8, color: '#4d4d4d' });
+    } else if (sellerSiren) {
+      this.drawText(`SIREN: ${sellerSiren}`, margins.left + 10, vatY, { size: 8, color: '#4d4d4d' });
     }
 
     // --- BUYER ---
@@ -218,9 +247,18 @@ export class BrandTemplate extends TemplateRenderer {
     drawTableHeader(startY);
     let y = startY - 26;
 
+    const descFontSize = 9;
+    const descMaxWidth = colWidths.description - 16; // 8px padding each side
+    const lineSpacing = 12;
+    const minRowHeight = 20;
+
     for (let i = 0; i < invoice.lines.length; i++) {
       const line = invoice.lines[i];
-      const rowHeight = 20;
+
+      // Compute wrapped lines to determine row height
+      const descLines = this.wrapText(line.description, descMaxWidth, descFontSize);
+      const textHeight = descLines.length * lineSpacing;
+      const rowHeight = Math.max(minRowHeight, textHeight + 8);
 
       const pageBefore = this.renderContext.pageNumber;
       this.checkPageBreak(rowHeight + 5);
@@ -235,16 +273,24 @@ export class BrandTemplate extends TemplateRenderer {
       this.drawRect(margins.left, y - rowHeight, tableWidth, rowHeight, { fillColor: bgColor });
       this.drawLine(margins.left, y - rowHeight, margins.left + tableWidth, y - rowHeight, { color: '#e0e0e0', width: 0.5 });
 
-      let x = margins.left + 8;
-      this.drawText(line.description, x, y - 13, { size: 9 });
-      x += colWidths.description;
-      this.drawText(String(line.quantity), x, y - 13, { size: 9 });
+      // Description: multi-line rendering
+      let descY = y - 14;
+      for (const descLine of descLines) {
+        this.drawText(descLine, margins.left + 8, descY, { size: descFontSize });
+        descY -= lineSpacing;
+      }
+
+      // Other columns: vertically centered
+      const colY = y - Math.round(rowHeight / 2) - 4;
+
+      let x = margins.left + 8 + colWidths.description;
+      this.drawText(String(line.quantity), x, colY, { size: 9 });
       x += colWidths.quantity;
-      this.drawText(formatAmount(line.unitPrice) + ' €', x, y - 13, { size: 9 });
+      this.drawText(formatAmount(line.unitPrice) + ' €', x, colY, { size: 9 });
       x += colWidths.unitPrice;
-      this.drawText(`${formatAmount(line.vatRate * 100)}%`, x, y - 13, { size: 9 });
+      this.drawText(`${formatAmount(line.vatRate * 100)}%`, x, colY, { size: 9 });
       x += colWidths.vatRate;
-      this.drawText(formatAmount(line.lineTotal) + ' €', x, y - 13, { size: 9, bold: true, color: '#0d2f5e' });
+      this.drawText(formatAmount(line.lineTotal) + ' €', x, colY, { size: 9, bold: true, color: '#0d2f5e' });
 
       y -= rowHeight;
     }
@@ -256,7 +302,7 @@ export class BrandTemplate extends TemplateRenderer {
   // PAYMENT (left) + TOTALS (right) - Side by side
   // ===========================================================================
 
-  private renderPaymentAndTotals(): void {
+  private async renderPaymentAndTotals(): Promise<void> {
     const { margins } = this.context.options;
     const { width } = this.renderContext;
     const { invoice, summary } = this.context;
@@ -290,8 +336,18 @@ export class BrandTemplate extends TemplateRenderer {
         }
         if (invoice.payment.termsDescription) {
           this.drawText(invoice.payment.termsDescription, margins.left + 10, py, { size: 8 });
+          py -= 14;
         }
       }
+
+      // QR paiement
+      const paymentLink = this.context.options.paymentLink ||
+        `https://pay.services.ceo/invoices/${this.context.invoice.header.id}`;
+      const qrSize = 80;
+      const qrX = margins.left + 10;
+      const minY = margins.bottom + TemplateRenderer.PAGE_FOOTER_HEIGHT + 14;
+      const qrY = Math.max(py - qrSize, minY);
+      await this.renderQRCode(qrX, qrY, paymentLink, qrSize, 'Scannez pour payer', '#0d2f5e');
     }
 
     // ---- RIGHT: Totals with orange highlight ----

@@ -31,7 +31,7 @@ export class ModernTemplate extends TemplateRenderer {
 
     // Side-by-side: payment terms (left) + totals (right)
     this.checkPageBreak(120);
-    this.renderPaymentAndTotals();
+    await this.renderPaymentAndTotals();
 
     // Tax breakdown below totals
     if (this.context.options.showTaxBreakdown) {
@@ -45,7 +45,7 @@ export class ModernTemplate extends TemplateRenderer {
   // PAYMENT (left) + TOTALS (right) - Side by side
   // ===========================================================================
 
-  private renderPaymentAndTotals(): void {
+  private async renderPaymentAndTotals(): Promise<void> {
     const { margins } = this.context.options;
     const { width } = this.renderContext;
     const { invoice, summary } = this.context;
@@ -56,6 +56,7 @@ export class ModernTemplate extends TemplateRenderer {
     const rightX = margins.left + leftWidth + 20;
 
     // ---- LEFT: Payment terms ----
+    let currentPaymentY = startY;
     if (this.context.options.showPaymentTerms) {
       this.drawText(this.strings.paymentTerms, margins.left, startY, {
         size: 11, bold: true, color: '#2563eb',
@@ -90,6 +91,17 @@ export class ModernTemplate extends TemplateRenderer {
           y -= 15;
         }
       }
+
+      currentPaymentY = y;
+
+      // QR code paiement
+      const paymentLink = this.context.options.paymentLink ||
+        `https://pay.services.ceo/invoices/${this.context.invoice.header.id}`;
+      const qrSize = 80;
+      const qrX = margins.left + 5;
+      const minY = margins.bottom + TemplateRenderer.PAGE_FOOTER_HEIGHT + 5;
+      const qrY = Math.max(currentPaymentY - qrSize, minY);
+      await this.renderQRCode(qrX, qrY, paymentLink, qrSize, 'Scannez pour payer', '#2563eb');
     }
 
     // ---- RIGHT: Totals ----

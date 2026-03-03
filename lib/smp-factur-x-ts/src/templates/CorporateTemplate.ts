@@ -30,7 +30,7 @@ export class CorporateTemplate extends TemplateRenderer {
     this.renderContext.currentY -= 15;
 
     this.checkPageBreak(120);
-    this.renderPaymentAndTotals();
+    await this.renderPaymentAndTotals();
 
     if (this.context.options.showTaxBreakdown) {
       this.renderContext.currentY -= 15;
@@ -47,25 +47,42 @@ export class CorporateTemplate extends TemplateRenderer {
   private async renderCorporateHeader(): Promise<void> {
     const { margins } = this.context.options;
     const { width } = this.renderContext;
-    const startY = this.renderContext.currentY;
     const invoice = this.context.invoice;
 
+    const logoLayout = this.context.options.logoLayout || 'none';
+    const contentWidth = width - margins.left - margins.right;
+
+    // Step 1: Handle 'above' logo — render before background, shift currentY down
+    let logoConsumedH = 0;
+    if (logoLayout === 'above') {
+      logoConsumedH = await this.renderLogo(margins.left, this.renderContext.currentY, contentWidth, 55);
+      this.renderContext.currentY -= logoConsumedH;
+    }
+
+    const startY = this.renderContext.currentY;
     const headerHeight = 95;
 
     // Gold accent line at top
-    this.drawRect(margins.left, startY - 4, width - margins.left - margins.right, 4, { fillColor: '#b8a643' });
+    this.drawRect(margins.left, startY - 4, contentWidth, 4, { fillColor: '#b8a643' });
 
     // Light blue background
-    this.drawRect(margins.left, startY - headerHeight, width - margins.left - margins.right, headerHeight - 4, { fillColor: '#d9e5f2' });
+    this.drawRect(margins.left, startY - headerHeight, contentWidth, headerHeight - 4, { fillColor: '#d9e5f2' });
+
+    // Step 2: Handle 'left' logo — render inside band, compute text offset
+    let textOffsetX = 0;
+    if (logoLayout === 'left') {
+      const logoH = await this.renderLogo(margins.left + 10, startY - 5, 70, 80);
+      if (logoH > 0) textOffsetX = 80;
+    }
 
     // Seller company name (dynamic)
-    this.drawText(invoice.seller.name, margins.left + 20, startY - 28, {
+    this.drawText(invoice.seller.name, margins.left + 20 + textOffsetX, startY - 28, {
       size: 18, bold: true, color: '#293a73',
     });
 
     // Seller email if available
     if (invoice.seller.email) {
-      this.drawText(invoice.seller.email, margins.left + 20, startY - 44, {
+      this.drawText(invoice.seller.email, margins.left + 20 + textOffsetX, startY - 44, {
         size: 8, color: '#404040',
       });
     }
@@ -121,8 +138,19 @@ export class CorporateTemplate extends TemplateRenderer {
       this.drawText(`${a.postalCode} ${a.city}`, margins.left + 12, ay, { size: 9 }); ay -= 13;
       this.drawText(a.countryCode, margins.left + 12, ay, { size: 9 });
     }
+
+    // VAT and SIREN/SIRET in seller block
+    let vatY = y - 75;
     if (invoice.seller.vatId) {
-      this.drawText(`N° TVA: ${invoice.seller.vatId}`, margins.left + 12, y - 80, { size: 8, color: '#999999' });
+      this.drawText(`N° TVA: ${invoice.seller.vatId}`, margins.left + 12, vatY, { size: 8, color: '#999999' });
+      vatY -= 12;
+    }
+
+    const { sellerSiret, sellerSiren } = this.context.options;
+    if (sellerSiret) {
+      this.drawText(`SIRET: ${sellerSiret}`, margins.left + 12, vatY, { size: 8, color: '#293a73' });
+    } else if (sellerSiren) {
+      this.drawText(`SIREN: ${sellerSiren}`, margins.left + 12, vatY, { size: 8, color: '#293a73' });
     }
 
     // --- BUYER ---
@@ -185,9 +213,18 @@ export class CorporateTemplate extends TemplateRenderer {
     drawTableHeader(startY);
     let y = startY - 24;
 
+    const descFontSize = 9;
+    const descMaxWidth = colWidths.description - 20; // 10px padding each side
+    const lineSpacing = 12;
+    const minRowHeight = 22;
+
     for (let i = 0; i < invoice.lines.length; i++) {
       const line = invoice.lines[i];
-      const rowHeight = 22;
+
+      // Compute wrapped lines to determine row height
+      const descLines = this.wrapText(line.description, descMaxWidth, descFontSize);
+      const textHeight = descLines.length * lineSpacing;
+      const rowHeight = Math.max(minRowHeight, textHeight + 8);
 
       const pageBefore = this.renderContext.pageNumber;
       this.checkPageBreak(rowHeight + 5);
@@ -202,16 +239,24 @@ export class CorporateTemplate extends TemplateRenderer {
       this.drawRect(margins.left, y - rowHeight, tableWidth, rowHeight, { fillColor: bgColor });
       this.drawLine(margins.left, y - rowHeight, margins.left + tableWidth, y - rowHeight, { color: '#ededed', width: 0.5 });
 
-      let x = margins.left + 10;
-      this.drawText(line.description, x, y - 14, { size: 9 });
-      x += colWidths.description;
-      this.drawText(String(line.quantity), x, y - 14, { size: 9 });
+      // Description: multi-line rendering
+      let descY = y - 14;
+      for (const descLine of descLines) {
+        this.drawText(descLine, margins.left + 10, descY, { size: descFontSize });
+        descY -= lineSpacing;
+      }
+
+      // Other columns: vertically centered
+      const colY = y - Math.round(rowHeight / 2) - 4;
+
+      let x = margins.left + 10 + colWidths.description;
+      this.drawText(String(line.quantity), x, colY, { size: 9 });
       x += colWidths.quantity;
-      this.drawText(formatAmount(line.unitPrice) + ' €', x, y - 14, { size: 9 });
+      this.drawText(formatAmount(line.unitPrice) + ' €', x, colY, { size: 9 });
       x += colWidths.unitPrice;
-      this.drawText(`${formatAmount(line.vatRate * 100)}%`, x, y - 14, { size: 9 });
+      this.drawText(`${formatAmount(line.vatRate * 100)}%`, x, colY, { size: 9 });
       x += colWidths.vatRate;
-      this.drawText(formatAmount(line.lineTotal) + ' €', x, y - 14, { size: 9, bold: true, color: '#293a73' });
+      this.drawText(formatAmount(line.lineTotal) + ' €', x, colY, { size: 9, bold: true, color: '#293a73' });
 
       y -= rowHeight;
     }
@@ -223,7 +268,7 @@ export class CorporateTemplate extends TemplateRenderer {
   // PAYMENT (left) + TOTALS (right) - Side by side
   // ===========================================================================
 
-  private renderPaymentAndTotals(): void {
+  private async renderPaymentAndTotals(): Promise<void> {
     const { margins } = this.context.options;
     const { width } = this.renderContext;
     const { invoice, summary } = this.context;
@@ -258,8 +303,18 @@ export class CorporateTemplate extends TemplateRenderer {
         }
         if (invoice.payment.termsDescription) {
           this.drawText(invoice.payment.termsDescription, margins.left + 8, py, { size: 8, color: '#404040' });
+          py -= 14;
         }
       }
+
+      // QR paiement
+      const paymentLink = this.context.options.paymentLink ||
+        `https://pay.services.ceo/invoices/${this.context.invoice.header.id}`;
+      const qrSize = 80;
+      const qrX = margins.left + 10;
+      const minY = margins.bottom + TemplateRenderer.PAGE_FOOTER_HEIGHT + 14;
+      const qrY = Math.max(py - qrSize, minY);
+      await this.renderQRCode(qrX, qrY, paymentLink, qrSize, 'Scannez pour payer', '#293a73');
     }
 
     // ---- RIGHT: Totals with corporate styling ----
@@ -327,13 +382,13 @@ export class CorporateTemplate extends TemplateRenderer {
     const footerH = 40;
     const footerTop = margins.bottom + footerH;
     const contentW = pageWidth - margins.left - margins.right;
-    const font = (this as any).getFont('Helvetica');
-    const fontBold = (this as any).getFont('Helvetica-Bold');
+    const font = this.getFont('Helvetica');
+    const fontBold = this.getFont('Helvetica-Bold');
 
-    const lightGray = (this as any).parseColor('#f7f7f7');
-    const gold = (this as any).parseColor('#b8a643');
-    const darkText = (this as any).parseColor('#404040');
-    const mutedText = (this as any).parseColor('#999999');
+    const lightGray = this.parseColor('#f7f7f7');
+    const gold = this.parseColor('#b8a643');
+    const darkText = this.parseColor('#404040');
+    const mutedText = this.parseColor('#999999');
 
     // Light gray background
     page.drawRectangle({

@@ -1,8 +1,11 @@
+/// <reference types="node" />
+/// <reference types="node" />
 import { FacturXInvoice, MonetarySummary } from '@facturx/core';
 export declare enum TemplateType {
     MODERN = "modern",
     BRAND = "brand",
     FANCY = "fancy",
+    CORPORATE = "corporate",
     MINIMAL = "minimal"
 }
 export interface TemplateTheme {
@@ -25,6 +28,9 @@ export interface TemplateOptions {
     readonly theme?: Partial<TemplateTheme>;
     readonly logo?: Buffer | string | '';
     readonly showLogo?: boolean;
+    readonly logoLayout?: 'above' | 'left' | 'none';
+    readonly logoData?: Buffer | string;
+    readonly logoPath?: string;
     readonly showWatermark?: boolean;
     readonly watermarkText?: string;
     readonly showQRCode?: boolean;
@@ -41,6 +47,10 @@ export interface TemplateOptions {
     readonly showTaxBreakdown?: boolean;
     readonly showPaymentTerms?: boolean;
     readonly customFooter?: string;
+    readonly sellerSiren?: string;
+    readonly sellerSiret?: string;
+    readonly showDeliveryAddress?: boolean;
+    readonly paymentLink?: string;
     readonly validateBeforeGeneration?: boolean;
     readonly validateAfterGeneration?: boolean;
     readonly strictValidation?: boolean;
@@ -88,7 +98,9 @@ export interface LocalizedStrings {
     readonly invoice: string;
     readonly invoiceNumber: string;
     readonly invoiceDate: string;
+    readonly issueDate: string;
     readonly dueDate: string;
+    readonly generatedOn: string;
     readonly seller: string;
     readonly buyer: string;
     readonly description: string;

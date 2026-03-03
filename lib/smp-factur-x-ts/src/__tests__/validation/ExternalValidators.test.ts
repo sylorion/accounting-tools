@@ -10,7 +10,7 @@ import {
   MustangprojectValidator,
   ExternalValidator,
 } from '../../validation/ExternalValidators';
-import { writeFile, unlink, mkdir } from 'fs/promises';
+import { writeFile, unlink } from 'fs/promises';
 import { join } from 'path';
 import { tmpdir } from 'os';
 

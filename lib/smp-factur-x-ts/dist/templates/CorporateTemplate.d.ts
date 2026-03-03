@@ -1,3 +1,4 @@
+import { PDFPage } from 'pdf-lib';
 import { TemplateRenderer } from '../core/TemplateRenderer';
 import { TemplateType } from '../types';
 export declare class CorporateTemplate extends TemplateRenderer {
@@ -6,10 +7,8 @@ export declare class CorporateTemplate extends TemplateRenderer {
     private renderCorporateHeader;
     private renderCorporateParties;
     private renderCorporateLineItems;
-    private renderCorporateTotals;
+    private renderPaymentAndTotals;
     private renderTaxBreakdown;
-    private renderPaymentInfo;
-    private renderCorporateFooter;
-    private formatCurrency;
+    protected drawSinglePageFooter(page: PDFPage, pageNum: number, totalPages: number): void;
 }
 //# sourceMappingURL=CorporateTemplate.d.ts.map

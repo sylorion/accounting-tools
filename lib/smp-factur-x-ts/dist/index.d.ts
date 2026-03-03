@@ -28,6 +28,7 @@ export declare const LIBRARY_INFO: Readonly<{
         modern: string;
         fancy: string;
         brand: string;
+        corporate: string;
         minimal: string;
     };
 }>;

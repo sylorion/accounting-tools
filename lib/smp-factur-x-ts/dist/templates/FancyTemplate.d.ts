@@ -1,3 +1,4 @@
+import { PDFPage } from 'pdf-lib';
 import { TemplateRenderer } from '../core/TemplateRenderer';
 import { TemplateType } from '../types';
 export declare class FancyTemplate extends TemplateRenderer {
@@ -6,10 +7,8 @@ export declare class FancyTemplate extends TemplateRenderer {
     private renderFancyHeader;
     private renderFancyParties;
     private renderFancyLineItems;
-    private renderFancyTotals;
+    private renderPaymentAndTotals;
     private renderFancyTaxBreakdown;
-    private renderPaymentTerms;
-    private renderFancyFooter;
-    private formatCurrency;
+    protected drawSinglePageFooter(page: PDFPage, pageNum: number, totalPages: number): void;
 }
 //# sourceMappingURL=FancyTemplate.d.ts.map
