@@ -519,11 +519,12 @@ export abstract class TemplateRenderer {
     }
     if (label) {
       this.currentPage.drawText(label, {
-        x,
-        y: y - 12,
+        x: x + size + 10,
+        y,
         size: 7,
         font: this.getFont('Helvetica'),
         color: this.parseColor('#64748b'),
+        rotate: degrees(90),
       });
     }
   }
