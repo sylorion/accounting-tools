@@ -196,6 +196,8 @@ export class FacturXInvoice {
   private buildDocumentHeader(root: XMLBuilder): void {
     const doc = root.ele('rsm:ExchangedDocument');
 
+    // CII EN16931 schema order: ID > TypeCode > IssueDateTime > IncludedNote
+    // Note: Name is NOT allowed in EN16931 profile ExchangedDocument
     doc.ele('ram:ID').txt(this.header.id);
     doc.ele('ram:TypeCode').txt(String(this.header.typeCode));
 
@@ -204,11 +206,7 @@ export class FacturXInvoice {
       .ele('udt:DateTimeString', { format: '102' })
       .txt(formatDateFacturX(this.header.invoiceDate));
 
-    if (this.header.name) {
-      doc.ele('ram:Name').txt(this.header.name);
-    }
-
-    // Notes (if any)
+    // Notes (if any) - must come after IssueDateTime
     if (this.header.notes && this.header.notes.length > 0) {
       for (const note of this.header.notes) {
         const noteNode = doc.ele('ram:IncludedNote');
@@ -223,6 +221,15 @@ export class FacturXInvoice {
   private buildSupplyChainTransaction(root: XMLBuilder, summary: MonetarySummary): void {
     const tx = root.ele('rsm:SupplyChainTradeTransaction');
 
+    // CII schema order: IncludedSupplyChainTradeLineItem FIRST, then header elements
+    // Lines (if not BASICWL or MINIMUM)
+    if (
+      this.profile !== FacturxProfile.BASICWL &&
+      this.profile !== FacturxProfile.MINIMUM
+    ) {
+      this.buildLineItems(tx);
+    }
+
     // Agreement (Seller/Buyer)
     this.buildHeaderTradeAgreement(tx);
 
@@ -231,14 +238,6 @@ export class FacturXInvoice {
 
     // Settlement (Payment, Taxes, Totals)
     this.buildHeaderTradeSettlement(tx, summary);
-
-    // Lines (if not BASICWL or MINIMUM)
-    if (
-      this.profile !== FacturxProfile.BASICWL &&
-      this.profile !== FacturxProfile.MINIMUM
-    ) {
-      this.buildLineItems(tx);
-    }
   }
 
   /**
@@ -314,10 +313,30 @@ export class FacturXInvoice {
   private buildHeaderTradeSettlement(tx: XMLBuilder, summary: MonetarySummary): void {
     const settlement = tx.ele('ram:ApplicableHeaderTradeSettlement');
 
-    // Currency code (configurable - EUR, USD, GBP, etc.)
+    // EN16931 schema order:
+    // InvoiceCurrencyCode > SpecifiedTradePaymentMeans > ApplicableTradeTax >
+    // SpecifiedTradePaymentTerms > SpecifiedTradeSettlementHeaderMonetarySummation
+
+    // 1. Currency code
     settlement.ele('ram:InvoiceCurrencyCode').txt(this.currency);
 
-    // Tax breakdown - Optimized loop
+    // 2. Payment means
+    if (this.payment) {
+      const paymentMeans = settlement.ele('ram:SpecifiedTradeSettlementPaymentMeans');
+      paymentMeans.ele('ram:TypeCode').txt(String(this.payment.meansCode));
+
+      if (this.payment.iban) {
+        const account = paymentMeans.ele('ram:PayeePartyCreditorFinancialAccount');
+        account.ele('ram:IBANID').txt(this.payment.iban);
+      }
+
+      if (this.payment.bic) {
+        const institution = paymentMeans.ele('ram:PayeeSpecifiedCreditorFinancialInstitution');
+        institution.ele('ram:BICID').txt(this.payment.bic);
+      }
+    }
+
+    // 3. Tax breakdown
     for (const taxSummary of summary.taxSummaries) {
       const tax = settlement.ele('ram:ApplicableTradeTax');
       tax.ele('ram:CalculatedAmount').txt(formatAmount(taxSummary.taxAmount));
@@ -327,37 +346,13 @@ export class FacturXInvoice {
       tax.ele('ram:RateApplicablePercent').txt(formatAmount(taxSummary.rate));
     }
 
-    // Tax total
-    const taxTotal = settlement.ele('ram:TaxTotal');
-    taxTotal.ele('ram:TaxTotalAmount').txt(formatAmount(summary.taxTotal));
-
-    // Monetary summation
-    const monetary = settlement.ele('ram:SpecifiedTradeSettlementHeaderMonetarySummation');
-    monetary.ele('ram:LineTotalAmount').txt(formatAmount(summary.lineTotal));
-    monetary.ele('ram:TaxBasisTotalAmount').txt(formatAmount(summary.taxBasis));
-    monetary.ele('ram:TaxTotalAmount').txt(formatAmount(summary.taxTotal));
-    monetary.ele('ram:GrandTotalAmount').txt(formatAmount(summary.grandTotal));
-    monetary.ele('ram:DuePayableAmount').txt(formatAmount(summary.grandTotal));
-
-    // Payment means
-    if (this.payment) {
-      const paymentMeans = settlement.ele('ram:SpecifiedTradePaymentMeans');
-      paymentMeans.ele('ram:TypeCode').txt(String(this.payment.meansCode));
-
-      if (this.payment.iban) {
-        const account = paymentMeans.ele('ram:PayeePartyCreditorFinancialAccount');
-        account.ele('ram:IBANID').txt(this.payment.iban);
-
-        if (this.payment.bic) {
-          const institution = account.ele('ram:PayeeSpecifiedCreditorFinancialInstitution');
-          institution.ele('ram:BICID').txt(this.payment.bic);
-        }
-      }
-    }
-
-    // Payment terms
+    // 4. Payment terms
     if (this.payment?.dueDate || this.payment?.termsDescription) {
       const terms = settlement.ele('ram:SpecifiedTradePaymentTerms');
+
+      if (this.payment.termsDescription) {
+        terms.ele('ram:Description').txt(this.payment.termsDescription);
+      }
 
       if (this.payment.dueDate) {
         const dueDate = terms.ele('ram:DueDateDateTime');
@@ -365,11 +360,15 @@ export class FacturXInvoice {
           .ele('udt:DateTimeString', { format: '102' })
           .txt(formatDateFacturX(this.payment.dueDate));
       }
-
-      if (this.payment.termsDescription) {
-        terms.ele('ram:Description').txt(this.payment.termsDescription);
-      }
     }
+
+    // 5. Monetary summation (includes tax totals - no separate TaxTotal element in EN16931)
+    const monetary = settlement.ele('ram:SpecifiedTradeSettlementHeaderMonetarySummation');
+    monetary.ele('ram:LineTotalAmount').txt(formatAmount(summary.lineTotal));
+    monetary.ele('ram:TaxBasisTotalAmount').txt(formatAmount(summary.taxBasis));
+    monetary.ele('ram:TaxTotalAmount').txt(formatAmount(summary.taxTotal));
+    monetary.ele('ram:GrandTotalAmount').txt(formatAmount(summary.grandTotal));
+    monetary.ele('ram:DuePayableAmount').txt(formatAmount(summary.grandTotal));
   }
 
   /**

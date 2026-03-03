@@ -48,6 +48,9 @@ export abstract class TemplateRenderer {
   protected renderContext!: RenderContext;
   protected strings!: LocalizedStrings;
 
+  // Track all pages for deferred footer rendering
+  private allPages: PDFPage[] = [];
+
   // Font cache (now contains embedded fonts)
   private fontCache: Map<string, PDFFont> = new Map();
 
@@ -135,6 +138,9 @@ export abstract class TemplateRenderer {
     // Render content (implemented by subclasses)
     await this.renderContent();
 
+    // Draw footer on ALL pages with correct total page count
+    this.drawAllPageFooters();
+
     // Attach Factur-X XML
     const xmlContent = await this.attachFacturXml();
 
@@ -190,17 +196,92 @@ export abstract class TemplateRenderer {
   protected abstract getTemplateType(): TemplateType;
 
   // ==========================================================================
+  // PAGE FOOTER SYSTEM
+  // ==========================================================================
+
+  /** Height reserved at bottom of every page for the page footer */
+  protected static readonly PAGE_FOOTER_HEIGHT = 40;
+
+  /**
+   * Draw page footers on ALL pages at once (called at end of document).
+   * This ensures correct "Page X sur Y" with the final total page count.
+   */
+  protected drawAllPageFooters(): void {
+    const totalPages = this.allPages.length;
+    for (let i = 0; i < totalPages; i++) {
+      this.drawSinglePageFooter(this.allPages[i], i + 1, totalPages);
+    }
+  }
+
+  /**
+   * Draw footer on a single page. Override in subclasses for custom styling.
+   * @param page - The PDF page to draw on
+   * @param pageNum - Current page number (1-based)
+   * @param totalPages - Total number of pages
+   */
+  protected drawSinglePageFooter(page: PDFPage, pageNum: number, totalPages: number): void {
+    const { margins } = this.context.options;
+    const { theme } = this.context;
+    const size = this.getPageSize(this.context.options.pageFormat);
+    const pageWidth = size[0];
+    const footerTop = margins.bottom + TemplateRenderer.PAGE_FOOTER_HEIGHT;
+    const font = this.getFont('Helvetica');
+    const fontBold = this.getFont('Helvetica-Bold');
+
+    // Footer background
+    page.drawRectangle({
+      x: margins.left,
+      y: margins.bottom,
+      width: pageWidth - margins.left - margins.right,
+      height: TemplateRenderer.PAGE_FOOTER_HEIGHT,
+      color: this.parseColor(theme.footerBackground),
+    });
+
+    // Generation date (bold)
+    const generatedDateText = this.getGeneratedDateText();
+    page.drawText(generatedDateText, {
+      x: margins.left + 10,
+      y: footerTop - 14,
+      size: 8,
+      font: fontBold,
+      color: this.parseColor(theme.textColor),
+    });
+
+    // Page number
+    const pageText = `${this.strings.page} ${pageNum} ${this.strings.of} ${totalPages}`;
+    page.drawText(pageText, {
+      x: margins.left + 10,
+      y: footerTop - 28,
+      size: 8,
+      font,
+      color: this.parseColor(theme.textColor),
+    });
+
+    // Powered by (right-aligned)
+    const creditText = '@facturx/templates';
+    const creditX = pageWidth - margins.right - 120;
+    page.drawText(creditText, {
+      x: creditX,
+      y: footerTop - 28,
+      size: 8,
+      font,
+      color: this.parseColor(theme.secondaryColor),
+    });
+  }
+
+  // ==========================================================================
   // PAGE MANAGEMENT
   // ==========================================================================
 
   /**
-   * Add new page - Optimized
+   * Add new page and track it for deferred footer rendering
    */
   protected addPage(): void {
     const { pageFormat, margins } = this.context.options;
     const size = this.getPageSize(pageFormat);
 
     this.currentPage = this.pdfDoc.addPage(size);
+    this.allPages.push(this.currentPage);
 
     this.renderContext = {
       width: size[0],
@@ -212,11 +293,12 @@ export abstract class TemplateRenderer {
   }
 
   /**
-   * Check if we need new page
+   * Check if we need new page - accounts for reserved footer space
    */
   protected needsNewPage(requiredHeight: number): boolean {
     const { margins } = this.context.options;
-    return this.renderContext.currentY - requiredHeight < margins.bottom;
+    const reservedBottom = margins.bottom + TemplateRenderer.PAGE_FOOTER_HEIGHT;
+    return this.renderContext.currentY - requiredHeight < reservedBottom;
   }
 
   /**
@@ -339,46 +421,81 @@ export abstract class TemplateRenderer {
     const { theme } = this.context;
     const { width } = this.renderContext;
     const startY = this.renderContext.currentY;
+    const invoice = this.context.invoice;
+
+    const headerHeight = 95;
 
     // Draw header background
     this.drawRect(
       margins.left,
-      startY - 80,
+      startY - headerHeight,
       width - margins.left - margins.right,
-      80,
+      headerHeight,
       { fillColor: theme.headerBackground }
     );
 
-    // Invoice title
-    this.drawText(this.strings.invoice, margins.left + 10, startY - 30, {
+    // Document title (FACTURE, AVOIR, DEVIS)
+    const docTitle = invoice.header.name || this.strings.invoice;
+    this.drawText(docTitle, margins.left + 10, startY - 30, {
       size: 24,
       bold: true,
       color: theme.primaryColor,
     });
 
-    // Invoice number and date
-    const invoice = this.context.invoice;
+    // Document number
     this.drawText(
       `${this.strings.invoiceNumber}: ${invoice.header.id}`,
       margins.left + 10,
       startY - 55,
-      { size: 12 }
+      { size: 11 }
     );
 
-    const dateStr = invoice.header.invoiceDate.toLocaleDateString();
+    // Issue date
+    const issueDateStr = this.formatInvoiceDateFull();
     this.drawText(
-      `${this.strings.invoiceDate}: ${dateStr}`,
+      `${this.strings.issueDate}: ${issueDateStr}`,
       margins.left + 10,
       startY - 70,
       { size: 10 }
     );
 
-    this.renderContext.currentY -= 90;
+    // Due date (from payment, header, or default +60 days)
+    const dueDateStr = this.formatDateFull(this.getDueDate());
+    this.drawText(
+      `${this.strings.dueDate}: ${dueDateStr}`,
+      margins.left + 10,
+      startY - 85,
+      { size: 10 }
+    );
+
+    this.renderContext.currentY -= (headerHeight + 10);
 
     return {
-      height: 90,
+      height: headerHeight + 10,
       y: startY,
     };
+  }
+
+  /**
+   * Get due date: from payment, from header, or default to issueDate + 60 days
+   */
+  protected getDueDate(): Date {
+    const invoice = this.context.invoice;
+
+    // 1. From payment details
+    if (invoice.payment?.dueDate) {
+      return invoice.payment.dueDate;
+    }
+
+    // 2. From document header
+    if (invoice.header.dueDate) {
+      return invoice.header.dueDate;
+    }
+
+    // 3. Default: issue date + 60 days
+    const issueDate = invoice.header.invoiceDate;
+    const defaultDue = new Date(issueDate.getTime() + 60 * 24 * 60 * 60 * 1000);
+    return defaultDue;
   }
 
   /**
@@ -471,15 +588,16 @@ export abstract class TemplateRenderer {
     });
 
     let x = margins.left + 5;
-    this.drawText(this.strings.description, x, startY - 18, { bold: true });
+    const headerColor = theme.primaryColor;
+    this.drawText(this.strings.description, x, startY - 18, { bold: true, size: 9, color: headerColor });
     x += colWidths.description;
-    this.drawText(this.strings.quantity, x, startY - 18, { bold: true });
+    this.drawText(this.strings.quantity, x, startY - 18, { bold: true, size: 9, color: headerColor });
     x += colWidths.quantity;
-    this.drawText(this.strings.unitPrice, x, startY - 18, { bold: true });
+    this.drawText(this.strings.unitPrice, x, startY - 18, { bold: true, size: 9, color: headerColor });
     x += colWidths.unitPrice;
-    this.drawText(this.strings.vatRate, x, startY - 18, { bold: true });
+    this.drawText(this.strings.vatRate, x, startY - 18, { bold: true, size: 9, color: headerColor });
     x += colWidths.vatRate;
-    this.drawText(this.strings.lineTotal, x, startY - 18, { bold: true });
+    this.drawText(this.strings.lineTotal, x, startY - 18, { bold: true, size: 9, color: headerColor });
 
     let y = startY - 25;
 
@@ -489,14 +607,24 @@ export abstract class TemplateRenderer {
       const rowHeight = 20;
 
       // Check page break
-      this.checkPageBreak(rowHeight);
-      if (this.renderContext.currentY > startY - 25) {
-        // New page, redraw header
+      const pageBefore = this.renderContext.pageNumber;
+      this.checkPageBreak(rowHeight + 5);
+      if (this.renderContext.pageNumber > pageBefore) {
+        // New page actually created - redraw header
         y = this.renderContext.currentY;
         this.drawRect(margins.left, y - 25, tableWidth, 25, {
           fillColor: theme.tableHeaderBackground,
         });
-        // ... redraw headers
+        let hx = margins.left + 5;
+        this.drawText(this.strings.description, hx, y - 18, { bold: true });
+        hx += colWidths.description;
+        this.drawText(this.strings.quantity, hx, y - 18, { bold: true });
+        hx += colWidths.quantity;
+        this.drawText(this.strings.unitPrice, hx, y - 18, { bold: true });
+        hx += colWidths.unitPrice;
+        this.drawText(this.strings.vatRate, hx, y - 18, { bold: true });
+        hx += colWidths.vatRate;
+        this.drawText(this.strings.lineTotal, hx, y - 18, { bold: true });
         y -= 25;
       }
 
@@ -564,6 +692,43 @@ export abstract class TemplateRenderer {
       height: startY - y,
       y: startY,
     };
+  }
+
+  // ==========================================================================
+  // DATE FORMATTING
+  // ==========================================================================
+
+  /**
+   * Format date in full locale format (e.g., "2 mars 2026" for fr)
+   */
+  protected formatDateFull(date: Date): string {
+    const lang = this.context.options.language || 'fr';
+    const localeMap: Record<string, string> = {
+      fr: 'fr-FR',
+      en: 'en-GB',
+      de: 'de-DE',
+      es: 'es-ES',
+    };
+    const locale = localeMap[lang] || 'fr-FR';
+    return date.toLocaleDateString(locale, {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+  }
+
+  /**
+   * Get the generation date text (e.g., "Document généré le 2 mars 2026")
+   */
+  protected getGeneratedDateText(): string {
+    return `${this.strings.generatedOn} ${this.formatDateFull(this.context.generatedAt)}`;
+  }
+
+  /**
+   * Format invoice date in full locale format
+   */
+  protected formatInvoiceDateFull(): string {
+    return this.formatDateFull(this.context.invoice.header.invoiceDate);
   }
 
   // ==========================================================================

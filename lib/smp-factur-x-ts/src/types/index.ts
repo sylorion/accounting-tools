@@ -13,6 +13,7 @@ export enum TemplateType {
   MODERN = 'modern',
   BRAND = 'brand',
   FANCY = 'fancy',
+  CORPORATE = 'corporate',
   MINIMAL = 'minimal',
 }
 
@@ -154,7 +155,9 @@ export interface LocalizedStrings {
   readonly invoice: string;
   readonly invoiceNumber: string;
   readonly invoiceDate: string;
+  readonly issueDate: string;
   readonly dueDate: string;
+  readonly generatedOn: string;
   readonly seller: string;
   readonly buyer: string;
   readonly description: string;
@@ -182,7 +185,9 @@ export const LOCALIZED_STRINGS: Record<string, LocalizedStrings> = {
     invoice: 'FACTURE',
     invoiceNumber: 'N° de facture',
     invoiceDate: 'Date',
+    issueDate: 'Date d\'émission',
     dueDate: 'Date d\'échéance',
+    generatedOn: 'Document généré le',
     seller: 'Vendeur',
     buyer: 'Client',
     description: 'Description',
@@ -208,7 +213,9 @@ export const LOCALIZED_STRINGS: Record<string, LocalizedStrings> = {
     invoice: 'INVOICE',
     invoiceNumber: 'Invoice Number',
     invoiceDate: 'Date',
-    dueDate: 'Due Date',
+    issueDate: 'Issue date',
+    dueDate: 'Due date',
+    generatedOn: 'Generated on',
     seller: 'Seller',
     buyer: 'Buyer',
     description: 'Description',
@@ -234,7 +241,9 @@ export const LOCALIZED_STRINGS: Record<string, LocalizedStrings> = {
     invoice: 'RECHNUNG',
     invoiceNumber: 'Rechnungsnummer',
     invoiceDate: 'Datum',
+    issueDate: 'Ausstellungsdatum',
     dueDate: 'Fälligkeitsdatum',
+    generatedOn: 'Erstellt am',
     seller: 'Verkäufer',
     buyer: 'Käufer',
     description: 'Beschreibung',

@@ -184,6 +184,9 @@ export async function generatePDF(
     case TemplateType.FANCY:
       template = new FancyTemplate();
       break;
+    case TemplateType.CORPORATE:
+      template = new CorporateTemplate();
+      break;
     case TemplateType.MINIMAL:
       template = new MinimalTemplate();
       break;
@@ -210,12 +213,14 @@ export const LIBRARY_INFO = Object.freeze({
     TemplateType.MODERN,
     TemplateType.FANCY,
     TemplateType.BRAND,
+    TemplateType.CORPORATE,
     TemplateType.MINIMAL,
   ],
   templateDescriptions: {
     [TemplateType.MODERN]: 'Clean, professional design with blue color scheme',
     [TemplateType.FANCY]: 'Colorful template with pink and blue gradient design',
     [TemplateType.BRAND]: 'Professional corporate template with navy and orange colors',
+    [TemplateType.CORPORATE]: 'Elegant corporate design with gray, blue and gold accents',
     [TemplateType.MINIMAL]: 'Ultra-clean minimalist design with monochrome palette',
   },
 });

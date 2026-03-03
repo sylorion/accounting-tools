@@ -15,6 +15,8 @@
     "hbs": "ts-node src/example-hbs.ts",
     "order": "ts-node src/example-order.ts",
     "cli": "ts-node src/cli.ts",
+    "generate:all": "ts-node --project tsconfig.generate.json -r tsconfig-paths/register generate-all.ts",
+    "build:libs": "cd lib/factur-x-ts && npm run build && cd ../smp-factur-x-ts && npm run build",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
@@ -63,6 +65,7 @@
     "jest": "^29.7.0",
     "ts-jest": "^29.4.5",
     "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
     "typescript": "^4.9.5"
   },
   "jest": {
