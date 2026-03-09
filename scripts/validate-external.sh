@@ -118,7 +118,7 @@ validate_internal() {
     print_header "1. Internal Validation (Our Pipeline)"
 
     # Check if TypeScript/Node validation script exists
-    if [ -f "lib/smp-factur-x-ts/examples/06-validation-pipeline.ts" ]; then
+    if [ -f "packages/templates/examples/06-validation-pipeline.ts" ]; then
         echo "Running internal validation..."
         # In a real scenario, you'd run your validation script here
         # For now, we'll simulate it

@@ -11,18 +11,18 @@
     "moduleResolution": "node",
     "baseUrl": ".",
     "paths": {
-      "@facturx/core": ["lib/factur-x-ts/src"],
-      "@facturx/templates": ["lib/smp-factur-x-ts/src"]
+      "@facturx/core": ["packages/core/src"],
+      "@facturx/templates": ["packages/templates/src"]
     }
   },
   "include": [
-    "generate-all.ts",
-    "test-long-descriptions.ts",
-    "test-multipage.ts",
-    "test-facture-horodatee.ts",
-    "test-validation.ts",
-    "test-invoice-generation.ts",
-    "src/test-multi-page.ts"
+    "examples/generate-all.ts",
+    "examples/test-long-descriptions.ts",
+    "examples/test-multipage.ts",
+    "examples/test-facture-horodatee.ts",
+    "examples/test-validation.ts",
+    "examples/test-invoice-generation.ts",
+    "legacy/test-multi-page.ts"
   ],
   "exclude": ["node_modules", "dist"]
 }

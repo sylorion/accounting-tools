@@ -2,11 +2,11 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Compléter la pipeline de validation Factur-X pour passer 100% des contrôles Schematron EN16931 + BR-FR, en s'appuyant sur les XSD existants dans src/compliance/.
+**Goal:** Compléter la pipeline de validation Factur-X pour passer 100% des contrôles Schematron EN16931 + BR-FR, en s'appuyant sur les XSD existants dans legacy/compliance/.
 
 **Architecture:** Corrections en 2 phases : Phase 1 corrige les 10 erreurs Schematron bloquantes (URN, XML manquant, notes FR). Phase 2 ajoute la validation Schematron locale et la vraie validation XSD. Le code existant dans ValidationPipeline.ts, ProfileValidator.ts et XsdValidator.ts sert de fondation.
 
-**Tech Stack:** TypeScript, xmlbuilder2, fast-xml-parser, @xmldom/xmldom, Jest, XSD schemas (src/compliance/xsd/)
+**Tech Stack:** TypeScript, xmlbuilder2, fast-xml-parser, @xmldom/xmldom, Jest, XSD schemas (legacy/compliance/xsd/)
 
 ---
 
@@ -15,8 +15,8 @@
 ### Task 1: Corriger les URN de guideline
 
 **Files:**
-- Modify: `lib/factur-x-ts/src/core/constants.ts:25-43`
-- Test: `lib/factur-x-ts/tests/unit/constants.test.ts`
+- Modify: `packages/core/src/core/constants.ts:25-43`
+- Test: `packages/core/tests/unit/constants.test.ts`
 
 **Step 1: Mettre à jour les tests pour les URN correctes**
 
@@ -46,7 +46,7 @@ it('should have correct guideline URN for EXTENDED', () => {
 
 **Step 2: Vérifier que les tests échouent**
 
-Run: `cd lib/factur-x-ts && npx jest tests/unit/constants.test.ts -v`
+Run: `cd packages/core && npx jest tests/unit/constants.test.ts -v`
 Expected: FAIL sur BASICWL, BASIC, EN16931, EXTENDED
 
 **Step 3: Corriger les URN dans constants.ts**
@@ -63,13 +63,13 @@ export const GUIDELINE_URNS = new Map<FacturxProfile, string>([
 
 **Step 4: Vérifier que les tests passent**
 
-Run: `cd lib/factur-x-ts && npx jest tests/unit/constants.test.ts -v`
+Run: `cd packages/core && npx jest tests/unit/constants.test.ts -v`
 Expected: PASS
 
 **Step 5: Commit**
 
 ```bash
-git add lib/factur-x-ts/src/core/constants.ts lib/factur-x-ts/tests/unit/constants.test.ts
+git add packages/core/src/core/constants.ts packages/core/tests/unit/constants.test.ts
 git commit -m "fix: correct guideline URNs for all Factur-X profiles per EN16931 spec"
 ```
 
@@ -78,8 +78,8 @@ git commit -m "fix: correct guideline URNs for all Factur-X profiles per EN16931
 ### Task 2: Ajouter les types manquants (NoteWithCode, electronic address, SIREN scheme)
 
 **Files:**
-- Modify: `lib/factur-x-ts/src/types/index.ts`
-- Test: `lib/factur-x-ts/tests/unit/entities.test.ts`
+- Modify: `packages/core/src/types/index.ts`
+- Test: `packages/core/tests/unit/entities.test.ts`
 
 **Step 1: Ajouter NoteWithCode et les champs manquants dans types**
 
@@ -119,7 +119,7 @@ export interface DocumentHeader {
 **Step 2: Commit**
 
 ```bash
-git add lib/factur-x-ts/src/types/index.ts
+git add packages/core/src/types/index.ts
 git commit -m "feat: add NoteWithCode, electronic address, and legal ID scheme types"
 ```
 
@@ -128,8 +128,8 @@ git commit -m "feat: add NoteWithCode, electronic address, and legal ID scheme t
 ### Task 3: Mettre à jour entities.ts (builders)
 
 **Files:**
-- Modify: `lib/factur-x-ts/src/core/entities.ts`
-- Test: `lib/factur-x-ts/tests/unit/entities.test.ts`
+- Modify: `packages/core/src/core/entities.ts`
+- Test: `packages/core/tests/unit/entities.test.ts`
 
 **Step 1: Ajouter les champs aux builders**
 
@@ -156,7 +156,7 @@ it('should build TradeParty with electronic address', () => {
 **Step 3: Commit**
 
 ```bash
-git add lib/factur-x-ts/src/core/entities.ts lib/factur-x-ts/tests/unit/entities.test.ts
+git add packages/core/src/core/entities.ts packages/core/tests/unit/entities.test.ts
 git commit -m "feat: add electronic address and legal ID scheme to entity builders"
 ```
 
@@ -165,8 +165,8 @@ git commit -m "feat: add electronic address and legal ID scheme to entity builde
 ### Task 4: Corriger TaxCalculator pour exposer allowanceTotal/chargeTotal
 
 **Files:**
-- Modify: `lib/factur-x-ts/src/core/TaxCalculator.ts:105-163`
-- Test: `lib/factur-x-ts/tests/unit/tax-calculator.test.ts`
+- Modify: `packages/core/src/core/TaxCalculator.ts:105-163`
+- Test: `packages/core/tests/unit/tax-calculator.test.ts`
 
 **Step 1: Test**
 
@@ -204,7 +204,7 @@ return { lineTotal, taxBasis, taxTotal, grandTotal, allowanceTotal, chargeTotal,
 **Step 3: Commit**
 
 ```bash
-git add lib/factur-x-ts/src/core/TaxCalculator.ts lib/factur-x-ts/tests/unit/tax-calculator.test.ts
+git add packages/core/src/core/TaxCalculator.ts packages/core/tests/unit/tax-calculator.test.ts
 git commit -m "feat: expose allowanceTotal and chargeTotal in MonetarySummary"
 ```
 
@@ -213,8 +213,8 @@ git commit -m "feat: expose allowanceTotal and chargeTotal in MonetarySummary"
 ### Task 5: Corriger FacturXInvoice.ts - Génération XML complète
 
 **Files:**
-- Modify: `lib/factur-x-ts/src/core/FacturXInvoice.ts` (6 corrections)
-- Test: `lib/factur-x-ts/tests/unit/facturx-invoice.test.ts`
+- Modify: `packages/core/src/core/FacturXInvoice.ts` (6 corrections)
+- Test: `packages/core/tests/unit/facturx-invoice.test.ts`
 
 **Correction 5a: Notes avec SubjectCode (BR-FR-05)**
 
@@ -334,7 +334,7 @@ describe('FR compliance', () => {
 **Step: Commit**
 
 ```bash
-git add lib/factur-x-ts/src/core/FacturXInvoice.ts lib/factur-x-ts/tests/unit/facturx-invoice.test.ts
+git add packages/core/src/core/FacturXInvoice.ts packages/core/tests/unit/facturx-invoice.test.ts
 git commit -m "fix: complete XML generation for Schematron compliance (BR-CO-13, BR-S-08, BR-FR-05/10/12/13)"
 ```
 
@@ -345,12 +345,12 @@ git commit -m "fix: complete XML generation for Schematron compliance (BR-CO-13,
 ### Task 6: Validation XSD réelle avec les schémas existants
 
 **Files:**
-- Create: `lib/factur-x-ts/src/validation/RealXsdValidator.ts`
-- Modify: `lib/smp-factur-x-ts/src/validation/ValidationPipeline.ts`
-- Test: `lib/factur-x-ts/tests/unit/real-xsd-validator.test.ts`
+- Create: `packages/core/src/validation/RealXsdValidator.ts`
+- Modify: `packages/templates/src/validation/ValidationPipeline.ts`
+- Test: `packages/core/tests/unit/real-xsd-validator.test.ts`
 
 **Description:**
-Utiliser les XSD existants dans `src/compliance/xsd/facturx-{profile}/` avec `node-libxml` ou `libxmljs` pour faire une vraie validation XSD (pas juste la vérification structurelle actuelle de XsdValidator.ts).
+Utiliser les XSD existants dans `legacy/compliance/xsd/facturx-{profile}/` avec `node-libxml` ou `libxmljs` pour faire une vraie validation XSD (pas juste la vérification structurelle actuelle de XsdValidator.ts).
 
 **Approche:**
 1. Charger le bon XSD selon le profil détecté dans le XML
@@ -361,11 +361,11 @@ Utiliser les XSD existants dans `src/compliance/xsd/facturx-{profile}/` avec `no
 **Map profil → XSD:**
 ```typescript
 const XSD_PATHS = new Map([
-  ['MINIMUM', 'src/compliance/xsd/facturx-minimum/Factur-X_1.07.2_MINIMUM.xsd'],
-  ['BASICWL', 'src/compliance/xsd/facturx-basicwl/Factur-X_1.07.2_BASICWL.xsd'],
-  ['BASIC', 'src/compliance/xsd/facturx-basic/Factur-X_1.07.2_BASIC.xsd'],
-  ['EN16931', 'src/compliance/xsd/facturx-en16931/Factur-X_1.07.2_EN16931.xsd'],
-  ['EXTENDED', 'src/compliance/xsd/facturx-extended/Factur-X_1.07.2_EXTENDED.xsd'],
+  ['MINIMUM', 'legacy/compliance/xsd/facturx-minimum/Factur-X_1.07.2_MINIMUM.xsd'],
+  ['BASICWL', 'legacy/compliance/xsd/facturx-basicwl/Factur-X_1.07.2_BASICWL.xsd'],
+  ['BASIC', 'legacy/compliance/xsd/facturx-basic/Factur-X_1.07.2_BASIC.xsd'],
+  ['EN16931', 'legacy/compliance/xsd/facturx-en16931/Factur-X_1.07.2_EN16931.xsd'],
+  ['EXTENDED', 'legacy/compliance/xsd/facturx-extended/Factur-X_1.07.2_EXTENDED.xsd'],
 ]);
 ```
 
@@ -374,10 +374,10 @@ const XSD_PATHS = new Map([
 ### Task 7: Validation Schematron locale (règles métier EN16931)
 
 **Files:**
-- Create: `src/compliance/schematron/EN16931-CII-validation.sch` (télécharger depuis CEN TC 434)
-- Create: `src/compliance/schematron/FACTUR-X-FR-rules.sch` (règles BR-FR)
-- Create: `lib/factur-x-ts/src/validation/SchematronValidator.ts`
-- Test: `lib/factur-x-ts/tests/unit/schematron-validator.test.ts`
+- Create: `legacy/compliance/schematron/EN16931-CII-validation.sch` (télécharger depuis CEN TC 434)
+- Create: `legacy/compliance/schematron/FACTUR-X-FR-rules.sch` (règles BR-FR)
+- Create: `packages/core/src/validation/SchematronValidator.ts`
+- Test: `packages/core/tests/unit/schematron-validator.test.ts`
 
 **Description:**
 Implémenter un validateur Schematron qui exécute les ~200 règles métier EN16931 localement, sans dépendre d'un outil en ligne. Options :
@@ -396,9 +396,9 @@ Implémenter un validateur Schematron qui exécute les ~200 règles métier EN16
 ### Task 8: Validation des code lists
 
 **Files:**
-- Create: `src/compliance/codelists/` (JSON extraits des XSD code lists)
-- Create: `lib/factur-x-ts/src/validation/CodeListValidator.ts`
-- Test: `lib/factur-x-ts/tests/unit/codelist-validator.test.ts`
+- Create: `legacy/compliance/codelists/` (JSON extraits des XSD code lists)
+- Create: `packages/core/src/validation/CodeListValidator.ts`
+- Test: `packages/core/tests/unit/codelist-validator.test.ts`
 
 **Description:**
 Valider que les codes utilisés (currency, country, tax category, unit, document type) sont dans les listes officielles.
@@ -416,8 +416,8 @@ Valider que les codes utilisés (currency, country, tax category, unit, document
 ### Task 9: Corriger les stubs dans ValidationPipeline
 
 **Files:**
-- Modify: `lib/smp-factur-x-ts/src/validation/ValidationPipeline.ts:396-509`
-- Test: `lib/smp-factur-x-ts/src/__tests__/validation/integration.test.ts`
+- Modify: `packages/templates/src/validation/ValidationPipeline.ts:396-509`
+- Test: `packages/templates/src/__tests__/validation/integration.test.ts`
 
 **Description:**
 Remplacer les stubs (hasEmbeddedFile hardcodé à true, hasXmpMetadata qui vérifie juste le titre) par de vraies vérifications :
@@ -431,9 +431,9 @@ Remplacer les stubs (hasEmbeddedFile hardcodé à true, hasXmpMetadata qui véri
 ### Task 10: Ajouter la validation post-génération automatique
 
 **Files:**
-- Modify: `lib/smp-factur-x-ts/src/core/TemplateRenderer.ts`
-- Create: `lib/factur-x-ts/src/validation/PostGenerationValidator.ts`
-- Test: `lib/factur-x-ts/tests/unit/post-generation-validator.test.ts`
+- Modify: `packages/templates/src/core/TemplateRenderer.ts`
+- Create: `packages/core/src/validation/PostGenerationValidator.ts`
+- Test: `packages/core/tests/unit/post-generation-validator.test.ts`
 
 **Description:**
 Après chaque génération de PDF, exécuter automatiquement :
@@ -448,8 +448,8 @@ Après chaque génération de PDF, exécuter automatiquement :
 ### Task 11: Tests d'intégration avec les samples officiels Factur-X
 
 **Files:**
-- Create: `src/compliance/samples/` (exemples XML officiels du package Factur-X)
-- Create: `lib/factur-x-ts/tests/integration/official-samples.test.ts`
+- Create: `legacy/compliance/samples/` (exemples XML officiels du package Factur-X)
+- Create: `packages/core/tests/integration/official-samples.test.ts`
 - Test: Validation round-trip
 
 **Description:**
@@ -463,13 +463,13 @@ Télécharger les exemples XML officiels du package Factur-X 1.07.2 et :
 ### Task 12: Support Order-X (fondations)
 
 **Files:**
-- Create: `lib/factur-x-ts/src/core/OrderXDocument.ts`
-- Create: `lib/factur-x-ts/src/validation/OrderXProfileValidator.ts`
-- Leverage: `src/compliance/xsd/orderx-{basic,comfort,extended}/`
-- Test: `lib/factur-x-ts/tests/unit/orderx.test.ts`
+- Create: `packages/core/src/core/OrderXDocument.ts`
+- Create: `packages/core/src/validation/OrderXProfileValidator.ts`
+- Leverage: `legacy/compliance/xsd/orderx-{basic,comfort,extended}/`
+- Test: `packages/core/tests/unit/orderx.test.ts`
 
 **Description:**
-Ajouter le support de base pour Order-X en utilisant les XSD déjà présents dans src/compliance/xsd/orderx-*/. Même architecture que FacturXInvoice mais avec :
+Ajouter le support de base pour Order-X en utilisant les XSD déjà présents dans legacy/compliance/xsd/orderx-*/. Même architecture que FacturXInvoice mais avec :
 - Root element : `rsm:SCRDMCCBDACIOMessageStructure`
 - Namespace CIO au lieu de CII
 - 3 profils : BASIC, COMFORT, EXTENDED

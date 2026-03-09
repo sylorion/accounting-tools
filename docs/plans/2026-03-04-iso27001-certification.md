@@ -111,7 +111,7 @@ Mois 16-18 : Surveillance + amélioration continue
 | Clés privées PKI / Certificats eIDAS | SECRET | RSSI | CRITIQUE |
 | Données SIRET/SIREN/VAT acheteurs | CONFIDENTIEL | DPO | HAUTE |
 | IBAN et données de paiement | CONFIDENTIEL | RSSI | HAUTE |
-| Code source (`lib/factur-x-ts`, `lib/smp-factur-x-ts`) | INTERNE | CTO | HAUTE |
+| Code source (`packages/core`, `packages/templates`) | INTERNE | CTO | HAUTE |
 | Schémas XSD / Schematron officiels | PUBLIC | CTO | MOYENNE |
 | Logs d'audit (génération, validation, envoi) | INTERNE | RSSI | HAUTE |
 | Credentials API (tokens, clés API) | SECRET | RSSI | CRITIQUE |
@@ -483,7 +483,7 @@ pipeline_sécurité:
     - SCA: Snyk OSS ou OWASP Dependency-Check
       - Refus si vulnérabilité CVSS ≥ 7.0 non justifiée
     - License check: Refus licences GPL/AGPL en production
-    - Code review: 2 reviewers minimum pour `lib/factur-x-ts/`
+    - Code review: 2 reviewers minimum pour `packages/core/`
 
   build:
     - Docker image scanning: Trivy (CRITICAL/HIGH → build fail)
@@ -548,7 +548,7 @@ règles_codage_sécurisé:
 │  │  • Clés de chiffrement AES-256 (KEK)             │         │
 │  │  • Clés de signature TSA                          │         │
 │  │                                                    │         │
-│  │  Interface : PKCS#11 (lib/factur-x-ts → HSM)     │         │
+│  │  Interface : PKCS#11 (packages/core → HSM)     │         │
 │  └───────────────────────────────────────────────────┘         │
 │                                                                  │
 │  Flux de signature Factur-X :                                   │
@@ -1051,10 +1051,10 @@ helm install vault hashicorp/vault \
 
 ### Phase 5 — Cryptographie et HSM (Mois 5-7)
 
-**Intégration HSM dans `lib/factur-x-ts` :**
+**Intégration HSM dans `packages/core` :**
 
 ```typescript
-// lib/factur-x-ts/src/crypto/HsmSigner.ts
+// packages/core/src/crypto/HsmSigner.ts
 import { PKCS11 } from 'pkcs11js';
 
 export class HsmSigner {
@@ -1889,7 +1889,7 @@ api_ppf:
 **Arborescence à créer dans le projet :**
 
 ```
-src/pa/
+legacy/pa/
 ├── services/
 │   ├── InvoiceRouter.ts          # Routing émetteur → PA dest. via annuaire
 │   ├── FormatConverter.ts        # Factur-X ↔ UBL ↔ CII (libération)

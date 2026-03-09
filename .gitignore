@@ -1,12 +1,28 @@
-# compiled output
-/dist
-/node_modules
-/build
-*.js
-!jest.config.js
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dist-generate/
+build/
+
+# Generated invoices, quotes, and test PDFs
+output/
+test-results/
+test-output/
+factures-generees/
+*.pdf
+!xsd/**/*.pdf
+!lib/factur-x-ts/examples/output/*.pdf
+*.verapdf.xml
+*.mustang.xml
+
+# Generated XML (except compliance schemas)
+/*.xml
+!xsd/**/*.xml
 
 # Logs
-logs
+logs/
 *.log
 npm-debug.log*
 pnpm-debug.log*
@@ -16,22 +32,21 @@ lerna-debug.log*
 
 # OS
 .DS_Store
+Icon?
 
 # Tests
-/coverage
-**/coverage
-/.nyc_output
+coverage/
+**/coverage/
+.nyc_output/
 
 # IDEs and editors
-/.idea
+.idea/
 .project
 .classpath
 .c9/
 *.launch
 .settings/
 *.sublime-workspace
-
-# IDE - VSCode
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
@@ -45,24 +60,19 @@ lerna-debug.log*
 .env.production.local
 .env.local
 
-# temp directory
+# Temp
 .temp
 .tmp
 
 # Runtime data
-pids
+pids/
 *.pid
 *.seed
 *.pid.lock
 
-# Diagnostic reports (https://nodejs.org/api/report.html)
+# Diagnostic reports
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
-# Generated invoices and quotes
-/*.pdf
-/*.xml
-!Factur-X/**/*.xml
-
-# Validation artifacts
-*.verapdf.xml
-*.mustang.xml
+# Compiled JS from TypeScript (legacy code)
+legacy/**/*.js
+!jest.config.js

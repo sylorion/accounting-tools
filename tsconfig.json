@@ -4,21 +4,21 @@
     "module": "CommonJS",
     "lib": ["ES2020", "DOM"],
     "outDir": "dist",
-    "rootDir": "src",
+    "rootDir": "legacy",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true
   },
-  "include": ["src/**/*"],
+  "include": ["legacy/**/*"],
   "exclude": [
     "node_modules",
     "dist",
     "test",
     "**/*.test.ts",
-    "src/example-*.ts",
-    "src/test-*.ts",
-    "src/FacturxEngine.ts",
-    "src/OrderxEngine.ts",
-    "src/OrderxXmlBuilder.ts"
+    "legacy/example-*.ts",
+    "legacy/test-*.ts",
+    "legacy/FacturxEngine.ts",
+    "legacy/OrderxEngine.ts",
+    "legacy/OrderxXmlBuilder.ts"
   ]
 }

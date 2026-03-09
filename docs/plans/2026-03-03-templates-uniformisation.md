@@ -39,7 +39,7 @@
 ## Task 1: Préparer TemplateRenderer — imports et constantes
 
 **Files:**
-- Modify: `lib/smp-factur-x-ts/src/core/TemplateRenderer.ts`
+- Modify: `packages/templates/src/core/TemplateRenderer.ts`
 
 **Step 1: Ajouter les imports manquants en haut du fichier**
 
@@ -88,7 +88,7 @@ protected addPage(): void {
 
 **Step 4: Vérifier que le build passe**
 ```bash
-cd lib/smp-factur-x-ts && npm run build 2>&1 | tail -5
+cd packages/templates && npm run build 2>&1 | tail -5
 ```
 Attendu : aucune erreur TypeScript.
 
@@ -97,7 +97,7 @@ Attendu : aucune erreur TypeScript.
 ## Task 2: Ajouter `buildInvoiceQRData()` dans TemplateRenderer
 
 **Files:**
-- Modify: `lib/smp-factur-x-ts/src/core/TemplateRenderer.ts`
+- Modify: `packages/templates/src/core/TemplateRenderer.ts`
 
 **Step 1: Ajouter la méthode après `getGeneratedDateText()`**
 
@@ -149,7 +149,7 @@ protected buildInvoiceQRData(): string {
 
 **Step 2: Build**
 ```bash
-cd lib/smp-factur-x-ts && npm run build 2>&1 | tail -5
+cd packages/templates && npm run build 2>&1 | tail -5
 ```
 
 ---
@@ -157,7 +157,7 @@ cd lib/smp-factur-x-ts && npm run build 2>&1 | tail -5
 ## Task 3: Ajouter `renderQRCode()` dans TemplateRenderer
 
 **Files:**
-- Modify: `lib/smp-factur-x-ts/src/core/TemplateRenderer.ts`
+- Modify: `packages/templates/src/core/TemplateRenderer.ts`
 
 **Step 1: Ajouter la méthode protégée après `buildInvoiceQRData()`**
 
@@ -218,7 +218,7 @@ protected async renderQRCode(
 
 **Step 2: Build**
 ```bash
-cd lib/smp-factur-x-ts && npm run build 2>&1 | tail -5
+cd packages/templates && npm run build 2>&1 | tail -5
 ```
 
 ---
@@ -226,7 +226,7 @@ cd lib/smp-factur-x-ts && npm run build 2>&1 | tail -5
 ## Task 4: Ajouter `drawContinuationPageHeaders()` dans TemplateRenderer
 
 **Files:**
-- Modify: `lib/smp-factur-x-ts/src/core/TemplateRenderer.ts`
+- Modify: `packages/templates/src/core/TemplateRenderer.ts`
 
 **Step 1: Ajouter la méthode après `drawAllPageFooters()`**
 
@@ -341,7 +341,7 @@ await this.drawContinuationPageHeaders();
 
 **Step 3: Build**
 ```bash
-cd lib/smp-factur-x-ts && npm run build 2>&1 | tail -5
+cd packages/templates && npm run build 2>&1 | tail -5
 ```
 
 ---
@@ -351,7 +351,7 @@ cd lib/smp-factur-x-ts && npm run build 2>&1 | tail -5
 Ces méthodes sont utilisées par **ModernTemplate** directement.
 
 **Files:**
-- Modify: `lib/smp-factur-x-ts/src/core/TemplateRenderer.ts`
+- Modify: `packages/templates/src/core/TemplateRenderer.ts`
 
 **Step 1: Rendre `renderHeader()` async et ajouter support logo**
 
@@ -406,7 +406,7 @@ if (sellerSiret) {
 
 **Step 3: Build**
 ```bash
-cd lib/smp-factur-x-ts && npm run build 2>&1 | tail -5
+cd packages/templates && npm run build 2>&1 | tail -5
 ```
 
 ---
@@ -414,7 +414,7 @@ cd lib/smp-factur-x-ts && npm run build 2>&1 | tail -5
 ## Task 6: ModernTemplate — QR paiement
 
 **Files:**
-- Modify: `lib/smp-factur-x-ts/src/templates/ModernTemplate.ts`
+- Modify: `packages/templates/src/templates/ModernTemplate.ts`
 
 **Step 1: Rendre `renderContent()` async**
 ```typescript
@@ -448,7 +448,7 @@ await this.renderPaymentAndTotals();
 
 **Step 4: Build**
 ```bash
-cd lib/smp-factur-x-ts && npm run build 2>&1 | tail -5
+cd packages/templates && npm run build 2>&1 | tail -5
 ```
 
 ---
@@ -456,7 +456,7 @@ cd lib/smp-factur-x-ts && npm run build 2>&1 | tail -5
 ## Task 7: BrandTemplate — logo + SIREN/SIRET + wrapping + QR paiement
 
 **Files:**
-- Modify: `lib/smp-factur-x-ts/src/templates/BrandTemplate.ts`
+- Modify: `packages/templates/src/templates/BrandTemplate.ts`
 
 **Step 1: Rendre `renderContent()` et les méthodes concernées async**
 ```typescript
@@ -545,7 +545,7 @@ await this.renderQRCode(qrX, qrY, paymentLink, qrSize, 'Scannez pour payer', '#0
 
 **Step 6: Build**
 ```bash
-cd lib/smp-factur-x-ts && npm run build 2>&1 | tail -5
+cd packages/templates && npm run build 2>&1 | tail -5
 ```
 
 ---
@@ -553,7 +553,7 @@ cd lib/smp-factur-x-ts && npm run build 2>&1 | tail -5
 ## Task 8: CorporateTemplate — logo + SIREN/SIRET + wrapping + QR paiement
 
 **Files:**
-- Modify: `lib/smp-factur-x-ts/src/templates/CorporateTemplate.ts`
+- Modify: `packages/templates/src/templates/CorporateTemplate.ts`
 
 Même pattern que BrandTemplate (Task 7) adapté aux couleurs corporate (`#293a73`, `#b8a643`).
 
@@ -577,7 +577,7 @@ Couleur QR : `#293a73`.
 
 **Step 6: Build**
 ```bash
-cd lib/smp-factur-x-ts && npm run build 2>&1 | tail -5
+cd packages/templates && npm run build 2>&1 | tail -5
 ```
 
 ---
@@ -585,7 +585,7 @@ cd lib/smp-factur-x-ts && npm run build 2>&1 | tail -5
 ## Task 9: MinimalTemplate — logo + SIREN/SIRET + wrapping + QR paiement
 
 **Files:**
-- Modify: `lib/smp-factur-x-ts/src/templates/MinimalTemplate.ts`
+- Modify: `packages/templates/src/templates/MinimalTemplate.ts`
 
 Même pattern. Couleurs : `#000000` / `#333333` / `#808080`.
 
@@ -619,7 +619,7 @@ Couleur QR : `#000000`. Après `if (invoice.payment.termsDescription)`.
 
 **Step 6: Build**
 ```bash
-cd lib/smp-factur-x-ts && npm run build 2>&1 | tail -5
+cd packages/templates && npm run build 2>&1 | tail -5
 ```
 
 ---
@@ -631,7 +631,7 @@ La continuation header est gérée par la base (Task 4).
 
 **Vérification uniquement — aucune modification nécessaire :**
 ```bash
-cd lib/smp-factur-x-ts && npm run build 2>&1 | tail -5
+cd packages/templates && npm run build 2>&1 | tail -5
 ```
 
 ---
@@ -644,7 +644,7 @@ cd lib/smp-factur-x-ts && npm run build 2>&1 | tail -5
 **Step 1: Build complet de la lib**
 ```bash
 cd /Users/smpceo/Documents/smp/accounting-tools
-cd lib/smp-factur-x-ts && npm run build 2>&1
+cd packages/templates && npm run build 2>&1
 ```
 Attendu : aucune erreur TypeScript.
 
@@ -663,7 +663,7 @@ Attendu : tous les PDFs ont une taille > 0, les multi-pages (extended-multi-*) o
 
 **Step 4: Commit**
 ```bash
-git add lib/smp-factur-x-ts/src/ generate-all.ts docs/plans/
+git add packages/templates/src/ generate-all.ts docs/plans/
 git commit -m "feat: uniformise all templates with logo, SIREN/SIRET, text wrapping, dual QR codes
 
 - TemplateRenderer: renderQRCode(), buildInvoiceQRData(), drawContinuationPageHeaders()

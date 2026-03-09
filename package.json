@@ -7,16 +7,16 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "start": "tsc -p tsconfig.json && node dist/index.js",
-    "dev": "ts-node src/index.ts",
-    "invoice": "ts-node src/example-invoice.ts",
-    "xml": "ts-node src/example-xml.ts",
-    "xsd": "ts-node src/example-validation.ts",
-    "loi": "ts-node src/example-loi.ts",
-    "hbs": "ts-node src/example-hbs.ts",
-    "order": "ts-node src/example-order.ts",
-    "cli": "ts-node src/cli.ts",
-    "generate:all": "ts-node --project tsconfig.generate.json -r tsconfig-paths/register generate-all.ts",
-    "build:libs": "cd lib/factur-x-ts && npm run build && cd ../smp-factur-x-ts && npm run build",
+    "dev": "ts-node legacy/index.ts",
+    "invoice": "ts-node legacy/example-invoice.ts",
+    "xml": "ts-node legacy/example-xml.ts",
+    "xsd": "ts-node legacy/example-validation.ts",
+    "loi": "ts-node legacy/example-loi.ts",
+    "hbs": "ts-node legacy/example-hbs.ts",
+    "order": "ts-node legacy/example-order.ts",
+    "cli": "ts-node legacy/cli.ts",
+    "generate:all": "ts-node --project tsconfig.generate.json -r tsconfig-paths/register examples/generate-all.ts",
+    "build:libs": "cd packages/core && npm run build && cd ../templates && npm run build",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
@@ -24,7 +24,7 @@
     "check": "./check-libs.sh",
     "check:quick": "./check-libs.sh --skip-build",
     "check:strict": "./check-libs.sh --coverage-threshold=99",
-    "check:libs": "cd lib/factur-x-ts && npm run build && npm run test:coverage",
+    "check:libs": "cd packages/core && npm run build && npm run test:coverage",
     "setup:validation": "./scripts/setup-validation-tools.sh",
     "validate:external": "./scripts/validate-facturx.sh"
   },
@@ -72,16 +72,16 @@
     "preset": "ts-jest",
     "testEnvironment": "node",
     "roots": [
-      "<rootDir>/src"
+      "<rootDir>/legacy"
     ],
     "testMatch": [
       "**/__tests__/**/*.test.ts"
     ],
     "collectCoverageFrom": [
-      "src/**/*.ts",
-      "!src/**/*.test.ts",
-      "!src/example-*.ts",
-      "!src/cli.ts"
+      "legacy/**/*.ts",
+      "!legacy/**/*.test.ts",
+      "!legacy/example-*.ts",
+      "!legacy/cli.ts"
     ]
   }
 }

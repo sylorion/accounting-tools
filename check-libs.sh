@@ -71,23 +71,23 @@ print_info() {
 OVERALL_STATUS=0
 
 # ==============================================================================
-# Check lib/factur-x-ts
+# Check packages/core
 # ==============================================================================
 
 check_facturx() {
-  print_header "Checking lib/factur-x-ts"
+  print_header "Checking packages/core"
 
-  cd "$PROJECT_ROOT/lib/factur-x-ts"
+  cd "$PROJECT_ROOT/packages/core"
 
   # Check if node_modules exists
   if [ ! -d "node_modules" ]; then
-    print_info "Installing dependencies for factur-x-ts..."
+    print_info "Installing dependencies for core..."
     npm install
   fi
 
   # Build
   if [ "$SKIP_BUILD" = false ]; then
-    print_info "Building factur-x-ts..."
+    print_info "Building core..."
     if npm run build; then
       print_success "Build successful"
     else
@@ -130,29 +130,29 @@ check_facturx() {
 }
 
 # ==============================================================================
-# Check lib/smp-factur-x-ts
+# Check packages/templates
 # ==============================================================================
 
 check_smp_facturx() {
-  print_header "Checking lib/smp-factur-x-ts"
+  print_header "Checking packages/templates"
 
-  cd "$PROJECT_ROOT/lib/smp-factur-x-ts"
+  cd "$PROJECT_ROOT/packages/templates"
 
   # Check if package.json exists
   if [ ! -f "package.json" ]; then
-    print_warning "No package.json found - skipping smp-factur-x-ts"
+    print_warning "No package.json found - skipping smp-core"
     return 0
   fi
 
   # Check if node_modules exists
   if [ ! -d "node_modules" ]; then
-    print_info "Installing dependencies for smp-factur-x-ts..."
+    print_info "Installing dependencies for smp-core..."
     npm install
   fi
 
   # Build
   if [ "$SKIP_BUILD" = false ]; then
-    print_info "Building smp-factur-x-ts..."
+    print_info "Building smp-core..."
     if npm run build 2>/dev/null; then
       print_success "Build successful"
     else
@@ -181,20 +181,20 @@ print_info "Project: $(basename "$PROJECT_ROOT")"
 print_info "Coverage threshold: ${COVERAGE_THRESHOLD}%"
 print_info "Skip build: $SKIP_BUILD"
 
-# Check factur-x-ts
+# Check core
 if check_facturx; then
-  print_success "factur-x-ts passed all checks"
+  print_success "core passed all checks"
 else
-  print_error "factur-x-ts failed checks"
+  print_error "core failed checks"
   OVERALL_STATUS=1
 fi
 
-# Check smp-factur-x-ts
+# Check smp-core
 if check_smp_facturx; then
-  print_success "smp-factur-x-ts passed all checks"
+  print_success "smp-core passed all checks"
 else
-  print_warning "smp-factur-x-ts checks incomplete"
-  # Don't fail overall for smp-factur-x-ts yet (0% coverage)
+  print_warning "smp-core checks incomplete"
+  # Don't fail overall for smp-core yet (0% coverage)
 fi
 
 # Final summary
