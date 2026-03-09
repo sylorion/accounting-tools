@@ -307,7 +307,7 @@ function validateWithLibxmljs(
     // Parse the XML document
     let xmlDoc: any;
     try {
-      xmlDoc = _libxmljs.parseXml(xmlContent);
+      xmlDoc = _libxmljs.parseXml(xmlContent, { nonet: true, noent: false, dtdload: false });
     } catch (parseErr: any) {
       return {
         isValid: false,
@@ -460,9 +460,9 @@ export class RealXsdValidator {
       this.complianceBasePath = complianceBasePath;
     } else {
       // This file is at packages/core/src/validation/RealXsdValidator.ts
-      // The compliance dir is at src/compliance (relative to repo root)
+      // The compliance dir is at legacy/compliance (relative to repo root)
       const repoRoot = path.resolve(__dirname, '..', '..', '..', '..');
-      this.complianceBasePath = path.join(repoRoot, 'src', 'compliance');
+      this.complianceBasePath = path.join(repoRoot, 'legacy', 'compliance');
     }
 
     this.enableCache = options?.enableCache ?? true;

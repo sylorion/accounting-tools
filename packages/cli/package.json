@@ -9,7 +9,13 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
-    "dev": "ts-node src/index.ts"
+    "dev": "ts-node src/index.ts",
+    "prepublishOnly": "npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sylorion/accounting-tools",
+    "directory": "packages/cli"
   },
   "keywords": [
     "factur-x",
@@ -19,6 +25,14 @@
   ],
   "author": "SMP Solutions",
   "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "dependencies": {
     "@facturx/core": "file:../core",
     "@facturx/templates": "file:../templates"
@@ -26,6 +40,6 @@
   "devDependencies": {
     "@types/node": "^20.10.6",
     "ts-node": "^10.9.2",
-    "typescript": "^5.3.3"
+    "typescript": "^5.9.3"
   }
 }

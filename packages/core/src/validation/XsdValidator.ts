@@ -310,7 +310,7 @@ export class XsdValidator {
         parseAttributeValue: false,
         parseTagValue: false,
         trimValues: true,
-        processEntities: true,
+        processEntities: false,
         allowBooleanAttributes: true,
       });
       parsedXml = parser.parse(xml);

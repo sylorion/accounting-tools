@@ -406,7 +406,7 @@ export class FacturXInvoice {
       acTax.ele('ram:TypeCode').txt('VAT');
       acTax.ele('ram:CategoryCode').txt(ac.taxCategoryCode ?? 'S');
       acTax.ele('ram:RateApplicablePercent')
-        .txt(formatAmount((ac.taxRate ?? 0.20) * 100));
+        .txt(formatAmount((ac.taxRate ?? 0) * 100));
     }
 
     // 5. Payment terms

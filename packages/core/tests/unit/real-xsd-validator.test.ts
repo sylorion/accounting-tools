@@ -29,7 +29,7 @@ import {
 // ============================================================================
 
 const REPO_ROOT = path.resolve(__dirname, '..', '..', '..', '..');
-const COMPLIANCE_PATH = path.join(REPO_ROOT, 'src', 'compliance');
+const COMPLIANCE_PATH = path.join(REPO_ROOT, 'legacy', 'compliance');
 
 // ============================================================================
 // HELPERS - Create valid XML for each profile

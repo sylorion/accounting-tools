@@ -2,6 +2,9 @@
   "name": "@services/accounting",
   "version": "0.1.1",
   "description": "TypeScript library for invoice generation, compliance, and digital signing.",
+  "workspaces": [
+    "packages/*"
+  ],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {

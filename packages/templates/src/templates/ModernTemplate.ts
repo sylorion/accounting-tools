@@ -101,25 +101,25 @@ export class ModernTemplate extends TemplateRenderer {
       const qrX = margins.left + 5;
       const minY = margins.bottom + TemplateRenderer.PAGE_FOOTER_HEIGHT + 5;
       const qrY = Math.max(currentPaymentY - qrSize, minY);
-      await this.renderQRCode(qrX, qrY, paymentLink, qrSize, 'Scannez pour payer', '#2563eb');
+      await this.renderQRCode(qrX, qrY, paymentLink, qrSize, this.strings.scanToPay, '#2563eb');
     }
 
     // ---- RIGHT: Totals ----
     let y = startY;
 
     this.drawText(this.strings.subtotal, rightX, y, { size: 10 });
-    this.drawText(formatAmount(summary.lineTotal) + ' €', rightX + 130, y, { size: 10 });
+    this.drawText(formatAmount(summary.lineTotal) + ' ' + this.currencySymbol, rightX + 130, y, { size: 10 });
     y -= 20;
 
     this.drawText(this.strings.taxTotal, rightX, y, { size: 10 });
-    this.drawText(formatAmount(summary.taxTotal) + ' €', rightX + 130, y, { size: 10 });
+    this.drawText(formatAmount(summary.taxTotal) + ' ' + this.currencySymbol, rightX + 130, y, { size: 10 });
     y -= 25;
 
     // Grand total highlight
     const totalBoxW = contentWidth - leftWidth - 10;
     this.drawRect(rightX - 10, y - 8, totalBoxW, 28, { fillColor: '#2563eb' });
     this.drawText(this.strings.grandTotal, rightX, y, { size: 13, bold: true, color: '#ffffff' });
-    this.drawText(formatAmount(summary.grandTotal) + ' €', rightX + 130, y, { size: 13, bold: true, color: '#ffffff' });
+    this.drawText(formatAmount(summary.grandTotal) + ' ' + this.currencySymbol, rightX + 130, y, { size: 13, bold: true, color: '#ffffff' });
 
     this.renderContext.currentY = y - 20;
   }
@@ -150,8 +150,8 @@ export class ModernTemplate extends TemplateRenderer {
 
     for (const taxSum of summary.taxSummaries) {
       this.drawText(`${taxSum.rate}%`, rightX, y, { size: 9 });
-      this.drawText(formatAmount(taxSum.taxable) + ' €', rightX + 50, y, { size: 9 });
-      this.drawText(formatAmount(taxSum.taxAmount) + ' €', rightX + 130, y, { size: 9 });
+      this.drawText(formatAmount(taxSum.taxable) + ' ' + this.currencySymbol, rightX + 50, y, { size: 9 });
+      this.drawText(formatAmount(taxSum.taxAmount) + ' ' + this.currencySymbol, rightX + 130, y, { size: 9 });
       y -= 14;
     }
 

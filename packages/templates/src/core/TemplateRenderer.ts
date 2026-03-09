@@ -68,6 +68,11 @@ export abstract class TemplateRenderer {
   // Validation pipeline
   private validationPipeline: ValidationPipeline;
 
+  /** Currency symbol derived from invoice currency code */
+  protected get currencySymbol(): string {
+    return this.context?.invoice?.currency || 'EUR';
+  }
+
   constructor() {
     this.validationPipeline = new ValidationPipeline();
   }
@@ -114,7 +119,7 @@ export abstract class TemplateRenderer {
       generatedAt: new Date(),
     };
 
-    this.strings = LOCALIZED_STRINGS[fullOptions.language];
+    this.strings = LOCALIZED_STRINGS[fullOptions.language] ?? LOCALIZED_STRINGS['en'];
 
     // STEP 3: Create PDF document
     this.pdfDoc = await PDFDocument.create();
@@ -1155,11 +1160,11 @@ export abstract class TemplateRenderer {
       x = margins.left + 5 + colWidths.description;
       this.drawText(String(line.quantity), x, colY, { size: 9 });
       x += colWidths.quantity;
-      this.drawText(formatAmount(line.unitPrice) + ' €', x, colY, { size: 9 });
+      this.drawText(formatAmount(line.unitPrice) + ' ' + this.currencySymbol, x, colY, { size: 9 });
       x += colWidths.unitPrice;
       this.drawText(formatAmount(line.vatRate * 100) + '%', x, colY, { size: 9 });
       x += colWidths.vatRate;
-      this.drawText(formatAmount(line.lineTotal) + ' €', x, colY, { size: 9 });
+      this.drawText(formatAmount(line.lineTotal) + ' ' + this.currencySymbol, x, colY, { size: 9 });
 
       y -= rowHeight;
     }
@@ -1186,17 +1191,17 @@ export abstract class TemplateRenderer {
 
     // Subtotal
     this.drawText(this.strings.subtotal, totalsX, y, { size: 10 });
-    this.drawText(formatAmount(summary.lineTotal) + ' €', totalsX + 120, y, { size: 10 });
+    this.drawText(formatAmount(summary.lineTotal) + ' ' + this.currencySymbol, totalsX + 120, y, { size: 10 });
     y -= 20;
 
     // Tax total
     this.drawText(this.strings.taxTotal, totalsX, y, { size: 10 });
-    this.drawText(formatAmount(summary.taxTotal) + ' €', totalsX + 120, y, { size: 10 });
+    this.drawText(formatAmount(summary.taxTotal) + ' ' + this.currencySymbol, totalsX + 120, y, { size: 10 });
     y -= 25;
 
     // Grand total
     this.drawText(this.strings.grandTotal, totalsX, y, { size: 12, bold: true });
-    this.drawText(formatAmount(summary.grandTotal) + ' €', totalsX + 120, y, {
+    this.drawText(formatAmount(summary.grandTotal) + ' ' + this.currencySymbol, totalsX + 120, y, {
       size: 12,
       bold: true,
     });

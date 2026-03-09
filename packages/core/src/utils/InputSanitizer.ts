@@ -65,9 +65,9 @@ export const sanitizeString = (
     result = result.substring(0, options.maxLength);
   }
 
-  // Remove control characters (optimized regex)
+  // Remove control characters (preserve \n and \r when allowNewlines is set)
   if (!options?.allowNewlines) {
-    result = result.replace(/[\x00-\x09\x0B-\x0C\x0E-\x1F\x7F]/g, '');
+    result = result.replace(/[\x00-\x1F\x7F]/g, '');
   } else {
     result = result.replace(/[\x00-\x09\x0B-\x0C\x0E-\x1F\x7F]/g, '');
   }

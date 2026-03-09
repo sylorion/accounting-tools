@@ -36,7 +36,7 @@ module.exports = {
     ],
   },
   moduleNameMapper: {
-    '^@facturx/core$': '<rootDir>/../factur-x-ts/dist',
+    '^@facturx/core$': '<rootDir>/../core/dist',
   },
   // Ignore node_modules except for specific packages if needed
   transformIgnorePatterns: [

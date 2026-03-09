@@ -288,11 +288,11 @@ export class BrandTemplate extends TemplateRenderer {
       let x = margins.left + 8 + colWidths.description;
       this.drawText(String(line.quantity), x, colY, { size: 9 });
       x += colWidths.quantity;
-      this.drawText(formatAmount(line.unitPrice) + ' €', x, colY, { size: 9 });
+      this.drawText(formatAmount(line.unitPrice) + ' ' + this.currencySymbol, x, colY, { size: 9 });
       x += colWidths.unitPrice;
       this.drawText(`${formatAmount(line.vatRate * 100)}%`, x, colY, { size: 9 });
       x += colWidths.vatRate;
-      this.drawText(formatAmount(line.lineTotal) + ' €', x, colY, { size: 9, bold: true, color: '#0d2f5e' });
+      this.drawText(formatAmount(line.lineTotal) + ' ' + this.currencySymbol, x, colY, { size: 9, bold: true, color: '#0d2f5e' });
 
       y -= rowHeight;
     }
@@ -349,24 +349,24 @@ export class BrandTemplate extends TemplateRenderer {
       const qrX = margins.left + 10;
       const minY = margins.bottom + TemplateRenderer.PAGE_FOOTER_HEIGHT + 14;
       const qrY = Math.max(py - qrSize, minY);
-      await this.renderQRCode(qrX, qrY, paymentLink, qrSize, 'Scannez pour payer', '#0d2f5e');
+      await this.renderQRCode(qrX, qrY, paymentLink, qrSize, this.strings.scanToPay, '#0d2f5e');
     }
 
     // ---- RIGHT: Totals with orange highlight ----
     let y = startY - 15;
 
     this.drawText(this.strings.subtotal, rightX, y, { size: 10 });
-    this.drawText(formatAmount(summary.lineTotal) + ' €', rightX + rightW - 80, y, { size: 10 });
+    this.drawText(formatAmount(summary.lineTotal) + ' ' + this.currencySymbol, rightX + rightW - 80, y, { size: 10 });
     this.drawLine(rightX, y - 5, rightX + rightW, y - 5, { color: '#cccccc', width: 0.5 });
     y -= 22;
 
     this.drawText(this.strings.taxTotal, rightX, y, { size: 10 });
-    this.drawText(formatAmount(summary.taxTotal) + ' €', rightX + rightW - 80, y, { size: 10 });
+    this.drawText(formatAmount(summary.taxTotal) + ' ' + this.currencySymbol, rightX + rightW - 80, y, { size: 10 });
     y -= 28;
 
     this.drawRect(rightX - 5, y - 10, rightW + 5, 30, { fillColor: '#ff6600' });
     this.drawText(this.strings.grandTotal, rightX, y, { size: 13, bold: true, color: '#ffffff' });
-    this.drawText(formatAmount(summary.grandTotal) + ' €', rightX + rightW - 80, y, { size: 13, bold: true, color: '#ffffff' });
+    this.drawText(formatAmount(summary.grandTotal) + ' ' + this.currencySymbol, rightX + rightW - 80, y, { size: 13, bold: true, color: '#ffffff' });
 
     this.renderContext.currentY = y - 20;
   }
@@ -394,8 +394,8 @@ export class BrandTemplate extends TemplateRenderer {
 
     for (const taxSum of summary.taxSummaries) {
       this.drawText(`${taxSum.rate}%`, rightX, y, { size: 9 });
-      this.drawText(formatAmount(taxSum.taxable) + ' €', rightX + 60, y, { size: 9 });
-      this.drawText(formatAmount(taxSum.taxAmount) + ' €', rightX + 140, y, { size: 9, color: '#ff6600' });
+      this.drawText(formatAmount(taxSum.taxable) + ' ' + this.currencySymbol, rightX + 60, y, { size: 9 });
+      this.drawText(formatAmount(taxSum.taxAmount) + ' ' + this.currencySymbol, rightX + 140, y, { size: 9, color: '#ff6600' });
       y -= 14;
     }
 

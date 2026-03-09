@@ -142,7 +142,7 @@ export class CorporateTemplate extends TemplateRenderer {
     // VAT and SIREN/SIRET in seller block
     let vatY = y - 75;
     if (invoice.seller.vatId) {
-      this.drawText(`N° TVA: ${invoice.seller.vatId}`, margins.left + 12, vatY, { size: 8, color: '#999999' });
+      this.drawText(`${this.strings.vatNumber}: ${invoice.seller.vatId}`, margins.left + 12, vatY, { size: 8, color: '#999999' });
       vatY -= 12;
     }
 
@@ -170,7 +170,7 @@ export class CorporateTemplate extends TemplateRenderer {
       this.drawText(a.countryCode, buyerX + 12, ay, { size: 9 });
     }
     if (invoice.buyer.vatId) {
-      this.drawText(`N° TVA: ${invoice.buyer.vatId}`, buyerX + 12, y - 80, { size: 8, color: '#999999' });
+      this.drawText(`${this.strings.vatNumber}: ${invoice.buyer.vatId}`, buyerX + 12, y - 80, { size: 8, color: '#999999' });
     }
 
     this.renderContext.currentY = startY - 120;
@@ -254,11 +254,11 @@ export class CorporateTemplate extends TemplateRenderer {
       let x = margins.left + 10 + colWidths.description;
       this.drawText(String(line.quantity), x, colY, { size: 9 });
       x += colWidths.quantity;
-      this.drawText(formatAmount(line.unitPrice) + ' €', x, colY, { size: 9 });
+      this.drawText(formatAmount(line.unitPrice) + ' ' + this.currencySymbol, x, colY, { size: 9 });
       x += colWidths.unitPrice;
       this.drawText(`${formatAmount(line.vatRate * 100)}%`, x, colY, { size: 9 });
       x += colWidths.vatRate;
-      this.drawText(formatAmount(line.lineTotal) + ' €', x, colY, { size: 9, bold: true, color: '#293a73' });
+      this.drawText(formatAmount(line.lineTotal) + ' ' + this.currencySymbol, x, colY, { size: 9, bold: true, color: '#293a73' });
 
       y -= rowHeight;
     }
@@ -316,18 +316,18 @@ export class CorporateTemplate extends TemplateRenderer {
       const qrX = margins.left + 10;
       const minY = margins.bottom + TemplateRenderer.PAGE_FOOTER_HEIGHT + 14;
       const qrY = Math.max(py - qrSize, minY);
-      await this.renderQRCode(qrX, qrY, paymentLink, qrSize, 'Scannez pour payer', '#293a73');
+      await this.renderQRCode(qrX, qrY, paymentLink, qrSize, this.strings.scanToPay, '#293a73');
     }
 
     // ---- RIGHT: Totals with corporate styling ----
     let y = startY - 15;
 
     this.drawText(this.strings.subtotal, rightX, y, { size: 10 });
-    this.drawText(formatAmount(summary.lineTotal) + ' €', rightX + rightW - 80, y, { size: 10 });
+    this.drawText(formatAmount(summary.lineTotal) + ' ' + this.currencySymbol, rightX + rightW - 80, y, { size: 10 });
     y -= 20;
 
     this.drawText(this.strings.taxTotal, rightX, y, { size: 10 });
-    this.drawText(formatAmount(summary.taxTotal) + ' €', rightX + rightW - 80, y, { size: 10 });
+    this.drawText(formatAmount(summary.taxTotal) + ' ' + this.currencySymbol, rightX + rightW - 80, y, { size: 10 });
 
     y -= 8;
     this.drawLine(rightX, y, rightX + rightW, y, { color: '#293a73', width: 0.5 });
@@ -337,7 +337,7 @@ export class CorporateTemplate extends TemplateRenderer {
 
     this.drawRect(rightX - 5, y - 8, rightW + 5, 26, { fillColor: '#d9e5f2', borderColor: '#293a73', borderWidth: 1 });
     this.drawText(this.strings.grandTotal, rightX, y, { size: 12, bold: true, color: '#293a73' });
-    this.drawText(formatAmount(summary.grandTotal) + ' €', rightX + rightW - 80, y, { size: 12, bold: true, color: '#293a73' });
+    this.drawText(formatAmount(summary.grandTotal) + ' ' + this.currencySymbol, rightX + rightW - 80, y, { size: 12, bold: true, color: '#293a73' });
 
     this.renderContext.currentY = y - 20;
   }
@@ -366,8 +366,8 @@ export class CorporateTemplate extends TemplateRenderer {
 
     for (const taxSum of summary.taxSummaries) {
       this.drawText(`${taxSum.rate}%`, rightX, y, { size: 9 });
-      this.drawText(formatAmount(taxSum.taxable) + ' €', rightX + 60, y, { size: 9 });
-      this.drawText(formatAmount(taxSum.taxAmount) + ' €', rightX + 140, y, { size: 9, bold: true, color: '#293a73' });
+      this.drawText(formatAmount(taxSum.taxable) + ' ' + this.currencySymbol, rightX + 60, y, { size: 9 });
+      this.drawText(formatAmount(taxSum.taxAmount) + ' ' + this.currencySymbol, rightX + 140, y, { size: 9, bold: true, color: '#293a73' });
       y -= 14;
     }
 

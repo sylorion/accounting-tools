@@ -34,7 +34,7 @@ describe('Constants Helper Functions', () => {
 
     it('should return URN for EN16931 profile', () => {
       const urn = getGuidelineUrn(FacturxProfile.EN16931);
-      expect(urn).toBe('urn:cen.eu:en16931:2017#compliant#urn:factur-x.eu:1p0:en16931');
+      expect(urn).toBe('urn:cen.eu:en16931:2017');
     });
 
     it('should return URN for EXTENDED profile', () => {

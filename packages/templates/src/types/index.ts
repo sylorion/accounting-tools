@@ -52,7 +52,7 @@ export interface TemplateOptions {
     bottom: number;
     left: number;
   };
-  readonly language?: 'fr' | 'en' | 'de' | 'es';
+  readonly language?: 'fr' | 'en' | 'de';
   readonly showLineNumbers?: boolean;
   readonly showTaxBreakdown?: boolean;
   readonly showPaymentTerms?: boolean;
@@ -185,6 +185,8 @@ export interface LocalizedStrings {
   readonly taxBase: string;
   readonly taxAmount: string;
   readonly notes: string;
+  readonly vatNumber: string;
+  readonly scanToPay: string;
 }
 
 export const LOCALIZED_STRINGS: Record<string, LocalizedStrings> = {
@@ -215,6 +217,8 @@ export const LOCALIZED_STRINGS: Record<string, LocalizedStrings> = {
     taxBase: 'Base HT',
     taxAmount: 'Montant TVA',
     notes: 'Notes',
+    vatNumber: 'N° TVA',
+    scanToPay: 'Scannez pour payer',
   },
   en: {
     invoice: 'INVOICE',
@@ -243,6 +247,8 @@ export const LOCALIZED_STRINGS: Record<string, LocalizedStrings> = {
     taxBase: 'Tax Base',
     taxAmount: 'Tax Amount',
     notes: 'Notes',
+    vatNumber: 'VAT No.',
+    scanToPay: 'Scan to pay',
   },
   de: {
     invoice: 'RECHNUNG',
@@ -271,5 +277,7 @@ export const LOCALIZED_STRINGS: Record<string, LocalizedStrings> = {
     taxBase: 'Steuerbasis',
     taxAmount: 'Steuerbetrag',
     notes: 'Notizen',
+    vatNumber: 'USt-IdNr.',
+    scanToPay: 'Scannen zum Bezahlen',
   },
 };

@@ -217,8 +217,8 @@ describe('Validation Integration Tests', () => {
       expect(xml).toContain('SpecifiedLegalOrganization');
       expect(xml).toContain('schemeID="0002"');
       expect(xml).toContain('currencyID="EUR"');
-      expect(xml).toContain('AllowanceTotalAmount');
-      expect(xml).toContain('ChargeTotalAmount');
+      // AllowanceTotalAmount and ChargeTotalAmount are only emitted when > 0
+      expect(xml).toContain('TaxBasisTotalAmount');
     });
   });
 });

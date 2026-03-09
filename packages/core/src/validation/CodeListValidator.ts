@@ -833,7 +833,7 @@ export class CodeListValidator {
         parseAttributeValue: false,
         parseTagValue: false,
         trimValues: true,
-        processEntities: true,
+        processEntities: false,
         allowBooleanAttributes: true,
         isArray: (_tagName: string, _jPath: string, isLeafNode: boolean, isAttribute: boolean) => {
           // Force arrays for elements that can repeat

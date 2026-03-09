@@ -163,7 +163,7 @@ export class FancyTemplate extends TemplateRenderer {
     // VAT + SIREN/SIRET
     let sellerInfoY = startY - 97;
     if (invoice.seller.vatId) {
-      this.drawText(`TVA: ${invoice.seller.vatId}`, margins.left + 10, sellerInfoY, { size: 9, color: '#6b7280' });
+      this.drawText(`${this.strings.vatNumber}: ${invoice.seller.vatId}`, margins.left + 10, sellerInfoY, { size: 9, color: '#6b7280' });
       sellerInfoY -= 12;
     }
     const { sellerSiren, sellerSiret } = this.context.options;
@@ -193,7 +193,7 @@ export class FancyTemplate extends TemplateRenderer {
       this.drawText(addr.countryCode, buyerX + 10, y, { size: 9 });
     }
     if (invoice.buyer.vatId) {
-      this.drawText(`TVA: ${invoice.buyer.vatId}`, buyerX + 10, startY - 105, { size: 9, color: '#6b7280' });
+      this.drawText(`${this.strings.vatNumber}: ${invoice.buyer.vatId}`, buyerX + 10, startY - 105, { size: 9, color: '#6b7280' });
     }
 
     this.renderContext.currentY -= 130;
@@ -278,11 +278,11 @@ export class FancyTemplate extends TemplateRenderer {
       let x = margins.left + 8 + colWidths.description;
       this.drawText(String(line.quantity), x, colY, { size: 9 });
       x += colWidths.quantity;
-      this.drawText(formatAmount(line.unitPrice) + ' \u20AC', x, colY, { size: 9 });
+      this.drawText(formatAmount(line.unitPrice) + ' ' + this.currencySymbol, x, colY, { size: 9 });
       x += colWidths.unitPrice;
       this.drawText(`${formatAmount(line.vatRate * 100)}%`, x, colY, { size: 9 });
       x += colWidths.vatRate;
-      this.drawText(formatAmount(line.lineTotal) + ' \u20AC', x, colY, { size: 9, bold: true });
+      this.drawText(formatAmount(line.lineTotal) + ' ' + this.currencySymbol, x, colY, { size: 9, bold: true });
 
       y -= rowHeight;
     }
@@ -367,7 +367,7 @@ export class FancyTemplate extends TemplateRenderer {
         }
 
         // Label below QR
-        this.drawText('Scannez pour payer', qrX, qrY - 12, { size: 8, bold: true, color: '#3b82f6' });
+        this.drawText(this.strings.scanToPay, qrX, qrY - 12, { size: 8, bold: true, color: '#3b82f6' });
 
         // Display truncated link
         const maxLinkLen = 35;
@@ -386,17 +386,17 @@ export class FancyTemplate extends TemplateRenderer {
     let y = startY - 20;
 
     this.drawText(this.strings.subtotal, rightX, y, { size: 10 });
-    this.drawText(formatAmount(summary.lineTotal) + ' \u20AC', rightX + rightW - 80, y, { size: 10 });
+    this.drawText(formatAmount(summary.lineTotal) + ' ' + this.currencySymbol, rightX + rightW - 80, y, { size: 10 });
     y -= 22;
 
     this.drawText(this.strings.taxTotal, rightX, y, { size: 10 });
-    this.drawText(formatAmount(summary.taxTotal) + ' \u20AC', rightX + rightW - 80, y, { size: 10 });
+    this.drawText(formatAmount(summary.taxTotal) + ' ' + this.currencySymbol, rightX + rightW - 80, y, { size: 10 });
     y -= 28;
 
     // Grand total pink highlight
     this.drawRect(rightX - 10, y - 8, rightW + 10, 25, { fillColor: '#db2777' });
     this.drawText(this.strings.grandTotal, rightX, y, { size: 13, bold: true, color: '#ffffff' });
-    this.drawText(formatAmount(summary.grandTotal) + ' \u20AC', rightX + rightW - 80, y, { size: 13, bold: true, color: '#ffffff' });
+    this.drawText(formatAmount(summary.grandTotal) + ' ' + this.currencySymbol, rightX + rightW - 80, y, { size: 13, bold: true, color: '#ffffff' });
 
     this.renderContext.currentY = startY - totalsBoxH - 10;
   }
@@ -429,8 +429,8 @@ export class FancyTemplate extends TemplateRenderer {
 
     for (const taxSum of summary.taxSummaries) {
       this.drawText(`${taxSum.rate}%`, rightX, y, { size: 9 });
-      this.drawText(formatAmount(taxSum.taxable) + ' \u20AC', rightX + 60, y, { size: 9 });
-      this.drawText(formatAmount(taxSum.taxAmount) + ' \u20AC', rightX + 140, y, { size: 9 });
+      this.drawText(formatAmount(taxSum.taxable) + ' ' + this.currencySymbol, rightX + 60, y, { size: 9 });
+      this.drawText(formatAmount(taxSum.taxAmount) + ' ' + this.currencySymbol, rightX + 140, y, { size: 9 });
       y -= 16;
     }
 
